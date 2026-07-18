@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -20,11 +21,21 @@ import (
 // ---------------------------------------------------------------------------
 
 type fakeOrgPaddleClient struct {
-	checkoutURL string
-	portalURL   string
+	mu                 sync.Mutex
+	checkoutURL        string
+	portalURL          string
+	checkoutRequest    paddle.CheckoutRequest
+	seatSubscriptionID string
+	seatPriceID        string
+	seatQuantity       int
+	seatMode           string
+	seatError          error
 }
 
-func (f *fakeOrgPaddleClient) CreateCheckout(_ context.Context, _ paddle.CheckoutRequest) (paddle.CheckoutResult, error) {
+func (f *fakeOrgPaddleClient) CreateCheckout(_ context.Context, req paddle.CheckoutRequest) (paddle.CheckoutResult, error) {
+	f.mu.Lock()
+	f.checkoutRequest = req
+	f.mu.Unlock()
 	return paddle.CheckoutResult{
 		TransactionID: "txn_fake",
 		CheckoutURL:   f.checkoutURL,
@@ -57,6 +68,50 @@ func (f *fakeOrgPaddleClient) GetInvoicePDFURL(_ context.Context, _ string) (str
 
 func (f *fakeOrgPaddleClient) ChangeSubscriptionPrice(_ context.Context, _, _, _ string) error {
 	return nil
+}
+
+func (f *fakeOrgPaddleClient) UpdateSubscriptionQuantity(
+	_ context.Context,
+	subscriptionID, priceID string,
+	quantity int,
+	prorationBillingMode string,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.seatSubscriptionID = subscriptionID
+	f.seatPriceID = priceID
+	f.seatQuantity = quantity
+	f.seatMode = prorationBillingMode
+	return f.seatError
+}
+
+func TestOrgBillingCheckoutUsesActiveMemberCount(t *testing.T) {
+	client := &fakeOrgPaddleClient{checkoutURL: "https://checkout.paddle.com/fake"}
+
+	scenario := tests.ApiScenario{
+		Name:            "checkout includes every active Organisation Seat",
+		Method:          http.MethodPost,
+		URL:             "/api/v1/orgs/orgbill00000061/billing/checkout",
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"checkout_url":"https://checkout.paddle.com/fake"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithOrgBilling(t, client)
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, "orgbill00000061", "Acme GmbH", "test1@example.com")
+			seedOrgMembership(t, app, "orgbill00000061", "test2@example.com", "member", false)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			client.mu.Lock()
+			defer client.mu.Unlock()
+			if client.checkoutRequest.Quantity != 2 {
+				t.Errorf("checkout quantity = %d, want 2", client.checkoutRequest.Quantity)
+			}
+		},
+	}
+
+	scenario.Test(t)
 }
 
 func (f *fakeOrgPaddleClient) CreateOneTimeCharge(_ context.Context, _, _ string, _ int64, _ string) (string, error) {

@@ -103,6 +103,19 @@ type Client interface {
 	CreateOneTimeCharge(ctx context.Context, subscriptionID, priceID string, quantity int64, idempotencyKey string) (string, error)
 }
 
+// SeatQuantityUpdater is the narrower Paddle capability used by Organisation
+// invite acceptance. Keeping it separate from Client lets handlers and tests
+// depend only on the one mutating operation needed for immediate Seat
+// proration.
+type SeatQuantityUpdater interface {
+	UpdateSubscriptionQuantity(
+		ctx context.Context,
+		subscriptionID, priceID string,
+		quantity int,
+		prorationBillingMode string,
+	) error
+}
+
 // HTTPClient talks to the real Paddle Billing API.
 type HTTPClient struct {
 	BaseURL string
@@ -617,6 +630,27 @@ func (c *HTTPClient) ChangeSubscriptionPrice(
 		c.BaseURL+"/subscriptions/"+subscriptionID,
 		map[string]any{
 			"items":                  []map[string]any{{"price_id": newPriceID, "quantity": 1}},
+			"proration_billing_mode": prorationBillingMode,
+		},
+	)
+}
+
+// UpdateSubscriptionQuantity replaces the Organisation subscription's single
+// Seat item quantity. Paddle applies additions immediately using its native
+// proration when prorationBillingMode is "prorated_immediately".
+func (c *HTTPClient) UpdateSubscriptionQuantity(
+	ctx context.Context,
+	subscriptionID, priceID string,
+	quantity int,
+	prorationBillingMode string,
+) error {
+	if quantity < 1 {
+		return fmt.Errorf("subscription quantity must be at least 1")
+	}
+	return c.patchJSON(ctx,
+		c.BaseURL+"/subscriptions/"+subscriptionID,
+		map[string]any{
+			"items":                  []map[string]any{{"price_id": priceID, "quantity": quantity}},
 			"proration_billing_mode": prorationBillingMode,
 		},
 	)

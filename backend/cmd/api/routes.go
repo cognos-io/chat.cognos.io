@@ -587,9 +587,13 @@ func addPocketBaseRoutes(
 	)
 
 	// Invite acceptance (any authenticated user with the token).
+	var orgSeatUpdater paddle.SeatQuantityUpdater
+	if updater, ok := paddleClient.(paddle.SeatQuantityUpdater); ok {
+		orgSeatUpdater = updater
+	}
 	e.Router.POST(
 		"/api/v1/org-invites/accept",
-		handler.OrgInvitesAccept(app, organisations.NewPocketBaseRepo(app)),
+		handler.OrgInvitesAccept(app, organisations.NewPocketBaseRepo(app), orgSeatUpdater),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

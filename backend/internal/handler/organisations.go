@@ -223,9 +223,9 @@ type orgUsageResponse struct {
 	Members      []orgUsageMember `json:"members"`
 }
 
-// OrganisationBillingCheckout creates a Paddle hosted checkout for a single
-// org seat. Quantity is always 1; custom_data carries org_id so the webhook
-// can route the subscription to the correct Organisation.
+// OrganisationBillingCheckout creates a Paddle hosted checkout for every
+// currently-active Organisation Seat. custom_data carries org_id so the
+// webhook can route the subscription to the correct Organisation.
 func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		org, role, err := memberOrganisationOr404(params.App, e)
@@ -246,13 +246,21 @@ func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(
 		}
 
 		customerID := orgCustomerID(params.App, org.ID)
+		members, err := organisations.NewPocketBaseRepo(params.App).ListMembers(org.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to calculate Organisation Seats", err)
+		}
+		quantity := len(members)
+		if quantity < 1 {
+			quantity = 1
+		}
 
 		result, err := params.Client.CreateCheckout(e.Request.Context(), paddle.CheckoutRequest{
 			PriceID:    params.PriceID,
 			UserID:     user.ID,
 			CustomerID: customerID,
 			OrgID:      org.ID,
-			Quantity:   1,
+			Quantity:   quantity,
 		})
 		if err != nil {
 			if params.Logger != nil {

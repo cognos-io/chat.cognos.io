@@ -17,6 +17,7 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
 
 // ---------------------------------------------------------------------------
@@ -226,7 +227,11 @@ func OrgInvitesRevoke(app core.App) func(e *core.RequestEvent) error {
 // Accept invite
 // ---------------------------------------------------------------------------
 
-func OrgInvitesAccept(app core.App, orgRepo organisations.Repo) func(e *core.RequestEvent) error {
+func OrgInvitesAccept(
+	app core.App,
+	orgRepo organisations.Repo,
+	seatUpdater paddle.SeatQuantityUpdater,
+) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		user := auth.ExtractUser(e)
 		if user == nil {
@@ -268,6 +273,35 @@ func OrgInvitesAccept(app core.App, orgRepo organisations.Repo) func(e *core.Req
 				Organisation: orgID,
 				Role:         string(existingRole),
 			})
+		}
+
+		billingRecord, billingErr := app.FindFirstRecordByFilter(
+			"org_billing",
+			"organisation = {:org}",
+			dbx.Params{"org": orgID},
+		)
+		if billingErr == nil && billingRecord != nil && billingRecord.GetString("plan_type") == "payg" {
+			subscriptionID := billingRecord.GetString("paddle_subscription_id")
+			priceID := billingRecord.GetString("paddle_price_id")
+			if subscriptionID == "" || priceID == "" || seatUpdater == nil {
+				if !app.IsDev() {
+					return apis.NewApiError(http.StatusServiceUnavailable, "Organisation Seat billing is unavailable. Please try again.", nil)
+				}
+			} else {
+				members, err := orgRepo.ListMembers(orgID)
+				if err != nil {
+					return apis.NewApiError(http.StatusInternalServerError, "Failed to calculate Organisation Seats.", err)
+				}
+				if err := seatUpdater.UpdateSubscriptionQuantity(
+					e.Request.Context(),
+					subscriptionID,
+					priceID,
+					len(members)+1,
+					"prorated_immediately",
+				); err != nil {
+					return apis.NewApiError(http.StatusBadGateway, "Could not add the Organisation Seat. Please try again.", err)
+				}
+			}
 		}
 
 		role, err := orgRepo.ReactivateOrCreateMembership(orgID, user.ID)

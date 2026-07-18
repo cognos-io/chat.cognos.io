@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -626,6 +627,94 @@ func TestOrgInvitesAcceptHappyPath(t *testing.T) {
 			}
 			if membership.GetString("role") != "member" {
 				t.Fatalf("membership role = %q, want member", membership.GetString("role"))
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestOrgInvitesAcceptUpdatesPaddleSeatQuantity(t *testing.T) {
+	fake := &fakeOrgPaddleClient{}
+
+	scenario := tests.ApiScenario{
+		Name:            "accept immediately adds the billed Paddle seat",
+		Method:          http.MethodPost,
+		URL:             "/api/v1/org-invites/accept",
+		Body:            strings.NewReader(`{"token":"accept-token-seat"}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{"organisation"},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithOrgBilling(t, fake)
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, "orginvite000024", "Acme GmbH", "test1@example.com")
+			seedOrgBillingFields(t, app, "orginvite000024", map[string]any{
+				"paddle_subscription_id": "sub_org_seats",
+				"paddle_price_id":        "pri_org_seats",
+				"seat_quantity":          1,
+				"pending_seat_quantity":  1,
+			})
+			seedOrgInviteWithID(t, app, "orginvitacpt008", "orginvite000024", "test2@example.com", "member", "accept-token-seat", time.Now().UTC().Add(24*time.Hour), false)
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if fake.seatSubscriptionID != "sub_org_seats" {
+				t.Errorf("subscription id = %q, want sub_org_seats", fake.seatSubscriptionID)
+			}
+			if fake.seatPriceID != "pri_org_seats" {
+				t.Errorf("price id = %q, want pri_org_seats", fake.seatPriceID)
+			}
+			if fake.seatQuantity != 2 {
+				t.Errorf("quantity = %d, want 2", fake.seatQuantity)
+			}
+			if fake.seatMode != "prorated_immediately" {
+				t.Errorf("mode = %q, want prorated_immediately", fake.seatMode)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestOrgInvitesAcceptDoesNotCreateSeatWhenPaddleFails(t *testing.T) {
+	fake := &fakeOrgPaddleClient{seatError: errors.New("paddle unavailable")}
+
+	scenario := tests.ApiScenario{
+		Name:            "Paddle failure leaves invite and membership unchanged",
+		Method:          http.MethodPost,
+		URL:             "/api/v1/org-invites/accept",
+		Body:            strings.NewReader(`{"token":"accept-token-seat-fail"}`),
+		ExpectedStatus:  http.StatusBadGateway,
+		ExpectedContent: []string{"Could not add the Organisation Seat"},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithOrgBilling(t, fake)
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, "orginvite000025", "Acme GmbH", "test1@example.com")
+			seedOrgBillingFields(t, app, "orginvite000025", map[string]any{
+				"paddle_subscription_id": "sub_org_seats_fail",
+				"paddle_price_id":        "pri_org_seats",
+				"seat_quantity":          1,
+				"pending_seat_quantity":  1,
+			})
+			seedOrgInviteWithID(t, app, "orginvitacpt009", "orginvite000025", "test2@example.com", "member", "accept-token-seat-fail", time.Now().UTC().Add(24*time.Hour), false)
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if _, err := app.FindFirstRecordByFilter(
+				"org_memberships",
+				"organisation = {:org} && user = {:user} && removed_at = ''",
+				dbx.Params{"org": "orginvite000025", "user": "xq9ndvc2kbrvrng"},
+			); err == nil {
+				t.Fatal("membership was created despite Paddle failure")
+			}
+			invite, err := app.FindRecordById("org_invites", "orginvitacpt009")
+			if err != nil {
+				t.Fatalf("FindRecordById invite: %v", err)
+			}
+			if !invite.GetDateTime("consumed_at").IsZero() {
+				t.Fatal("invite was consumed despite Paddle failure")
 			}
 		},
 	}
