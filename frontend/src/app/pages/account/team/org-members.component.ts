@@ -111,7 +111,11 @@ import {
                       <cog-avatar [name]="memberName(member)" [size]="32" />
                       <span class="org-members__identity">
                         <span class="org-members__name">{{ memberName(member) }}</span>
-                        @if (member.email) {
+                        @if (
+                          member.email &&
+                          member.display_name &&
+                          member.email !== member.display_name
+                        ) {
                           <span class="org-members__email">{{ member.email }}</span>
                         }
                       </span>
@@ -126,16 +130,16 @@ import {
                   <td class="org-members__actions">
                     <cog-button
                       appearance="subtle"
+                      [ariaLabel]="
+                        t('team.members.removeSuffix', { name: memberName(member) })
+                      "
                       [disabled]="removeLockReason(member) !== null || removePending()"
                       [title]="
                         removeLockReason(member) ? t(removeLockReason(member)!) : ''
                       "
                       (click)="offboard(member)"
                     >
-                      {{ t('team.members.remove')
-                      }}<span class="org-members__visually-hidden">{{
-                        t('team.members.removeSuffix', { name: memberName(member) })
-                      }}</span>
+                      {{ t('team.members.remove') }}
                     </cog-button>
                   </td>
                 </tr>

@@ -147,6 +147,30 @@ describe('OrgMembersComponent', () => {
     expect(adminBtn?.disabled).toBe(false);
   });
 
+  it('does not repeat an email when the Account has no display name', async () => {
+    const member = makeMember({ display_name: '', email: 'pat@example.com' });
+    listOrgMembers = vi.fn(() => of([member]));
+    await render(makeOrg('owner'));
+
+    const row = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
+    expect(row.querySelector('.org-members__name')?.textContent?.trim()).toBe(
+      'pat@example.com',
+    );
+    expect(row.querySelector('.org-members__email')).toBeNull();
+  });
+
+  it('gives the remove button one localised accessible name', async () => {
+    const member = makeMember({ display_name: 'Pat', email: 'pat@example.com' });
+    listOrgMembers = vi.fn(() => of([member]));
+    await render(makeOrg('owner'));
+
+    const button = fixture.nativeElement.querySelector(
+      'tbody tr cog-button button',
+    ) as HTMLButtonElement;
+    expect(button.getAttribute('aria-label')).toBe('Remove Pat');
+    expect(button.textContent?.trim()).toBe('Remove');
+  });
+
   it("disables remove for the caller's own row", async () => {
     authUser.set({ id: 'user_self' });
     const self = makeMember({ user_id: 'user_self', role: 'member' });

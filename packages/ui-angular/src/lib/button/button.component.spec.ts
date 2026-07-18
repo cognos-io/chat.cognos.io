@@ -54,4 +54,11 @@ describe('CognosButtonComponent', () => {
     );
     expect(button.getAttribute('type')).toBe('submit');
   });
+
+  it('forwards an accessible label when supplied', () => {
+    const fixture = render({ ariaLabel: 'Remove Pat' });
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+
+    expect(button.getAttribute('aria-label')).toBe('Remove Pat');
+  });
 });
