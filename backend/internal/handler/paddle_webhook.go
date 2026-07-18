@@ -25,6 +25,8 @@ const (
 	paygCycleSummariesColl  = "payg_cycle_summaries"
 	balanceTransactionsColl = "balance_transactions"
 	refundsColl             = "refunds"
+	orgBillingColl          = "org_billing"
+	orgCycleSummariesColl   = "org_cycle_summaries"
 	refundGuaranteeDays     = 60
 	cycleSummaryIDLen       = 15
 	webhookPBDateLayout     = "2006-01-02 15:04:05.000Z"
@@ -159,11 +161,21 @@ func dispatchPaddleEvent(
 		if err != nil {
 			return err
 		}
+		cd := extractCustomData(event.Data)
+		subject := resolveWebhookSubject(app, cd.UserID, cd.OrgID, sub.CustomerID, sub.ID)
+		if subject.Kind == billing.SubjectOrg {
+			return activateOrgSubscription(app, params, sub, subject.ID)
+		}
 		return activateSubscription(app, params, sub)
 	case "subscription.updated":
 		sub, err := event.Subscription()
 		if err != nil {
 			return err
+		}
+		cd := extractCustomData(event.Data)
+		subject := resolveWebhookSubject(app, cd.UserID, cd.OrgID, sub.CustomerID, sub.ID)
+		if subject.Kind == billing.SubjectOrg {
+			return updateOrgSubscription(ctx, app, params, sub, subject.ID)
 		}
 		return updateSubscription(ctx, app, params, sub)
 	case "subscription.canceled":
@@ -171,11 +183,21 @@ func dispatchPaddleEvent(
 		if err != nil {
 			return err
 		}
+		cd := extractCustomData(event.Data)
+		subject := resolveWebhookSubject(app, cd.UserID, cd.OrgID, sub.CustomerID, sub.ID)
+		if subject.Kind == billing.SubjectOrg {
+			return cancelOrgSubscription(app, params, sub)
+		}
 		return cancelSubscription(app, params, sub)
 	case "subscription.past_due":
 		sub, err := event.Subscription()
 		if err != nil {
 			return err
+		}
+		cd := extractCustomData(event.Data)
+		subject := resolveWebhookSubject(app, cd.UserID, cd.OrgID, sub.CustomerID, sub.ID)
+		if subject.Kind == billing.SubjectOrg {
+			return markOrgPastDue(app, params, sub)
 		}
 		return markSubscriptionPastDue(app, params, sub)
 	case "transaction.completed":
@@ -183,7 +205,7 @@ func dispatchPaddleEvent(
 		if err != nil {
 			return err
 		}
-		return recordCycleTransaction(params, txn)
+		return recordCycleTransaction(app, params, txn)
 	case "adjustment.created":
 		adj, err := event.Adjustment()
 		if err != nil {
@@ -194,6 +216,64 @@ func dispatchPaddleEvent(
 		return nil
 	}
 }
+
+// extractCustomData pulls user_id and org_id from raw event JSON. The
+// SubscriptionData/TransactionData types only expose user_id; this lets the
+// handler resolve org-bound events without modifying the paddle package.
+func extractCustomData(raw json.RawMessage) struct{ UserID, OrgID string } {
+	var wrapper struct {
+		CustomData struct {
+			UserID string `json:"user_id"`
+			OrgID  string `json:"org_id"`
+		} `json:"custom_data"`
+	}
+	if err := json.Unmarshal(raw, &wrapper); err == nil {
+		return struct{ UserID, OrgID string }{
+			UserID: wrapper.CustomData.UserID,
+			OrgID:  wrapper.CustomData.OrgID,
+		}
+	}
+	return struct{ UserID, OrgID string }{}
+}
+
+// resolveWebhookSubject maps a Paddle event to a Cognos billing subject:
+//   1. custom_data.org_id
+//   2. custom_data.user_id
+//   3. paddle_subscription_id lookup in org_billing, then user_billing
+//   4. paddle_customer_id lookup on users, then organisations
+func resolveWebhookSubject(app core.App, customDataUserID, customDataOrgID, customerID, subscriptionID string) billing.Subject {
+	if customDataOrgID != "" {
+		if _, err := app.FindRecordById("organisations", customDataOrgID); err == nil {
+			return billing.OrgSubject(customDataOrgID)
+		}
+	}
+	if customDataUserID != "" {
+		if _, err := app.FindRecordById("users", customDataUserID); err == nil {
+			return billing.UserSubject(customDataUserID)
+		}
+	}
+	if subscriptionID != "" {
+		if rec, _ := app.FindFirstRecordByData(orgBillingColl, "paddle_subscription_id", subscriptionID); rec != nil {
+			return billing.OrgSubject(rec.GetString("organisation"))
+		}
+		if rec, _ := app.FindFirstRecordByData(webhookUserBillingColl, "paddle_subscription_id", subscriptionID); rec != nil {
+			return billing.UserSubject(rec.GetString("user_id"))
+		}
+	}
+	if customerID != "" {
+		if user, _ := app.FindFirstRecordByData("users", "paddle_customer_id", customerID); user != nil {
+			return billing.UserSubject(user.Id)
+		}
+		if org, _ := app.FindFirstRecordByData("organisations", "paddle_customer_id", customerID); org != nil {
+			return billing.OrgSubject(org.Id)
+		}
+	}
+	return billing.Subject{}
+}
+
+// ---------------------------------------------------------------------------
+// User path (existing — untouched except for callers above)
+// ---------------------------------------------------------------------------
 
 // activateSubscription flips the user onto the paid plan the price maps to and
 // snapshots the Paddle subscription + cycle. Idempotent: re-delivery re-applies
@@ -291,19 +371,26 @@ func cancelSubscription(
 // recordCycleTransaction links a paid Paddle cycle transaction to its PAYG
 // cycle summary for audit/reconciliation. Non-PAYG transactions (no matching
 // open summary) are a no-op; the raw event is still stored.
-func recordCycleTransaction(params PaddleWebhookParams, txn paddle.TransactionData) error {
+func recordCycleTransaction(app core.App, params PaddleWebhookParams, txn paddle.TransactionData) error {
 	if params.Reconciler == nil || txn.SubscriptionID == "" {
 		return nil
 	}
-	_, err := params.Reconciler.RecordCycleTransaction(
+	reconciled, err := params.Reconciler.RecordCycleTransaction(
 		txn.SubscriptionID, txn.ID, txn.GrandTotalMinor(), nowRFC3339(),
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	if reconciled {
+		return nil
+	}
+	// No user cycle matched — try an org cycle.
+	return reconcileOrgCycleTransaction(app, txn)
 }
 
 // recordAdjustment records a Paddle refund/credit/chargeback as a `refunds`
 // ledger row (spec §5.4, §7). It sets the one-refund-per-lifetime flag and, for
-// a chargeback, drops the user to inactive (§7.5). Idempotent on the adjustment
+// a chargeback, drops the subject to inactive (§7.5). Idempotent on the adjustment
 // id; reversals are ignored (Paddle already netted them). No balance is touched
 // — Paddle has already moved the money.
 func recordAdjustment(app core.App, params PaddleWebhookParams, adj paddle.AdjustmentData) error {
@@ -319,20 +406,37 @@ func recordAdjustment(app core.App, params PaddleWebhookParams, adj paddle.Adjus
 		return nil
 	}
 
-	userID := resolveAdjustmentUserID(app, adj)
-	if userID == "" {
+	subject := resolveAdjustmentSubject(app, adj)
+	if subject.ID == "" {
 		if params.Logger != nil {
-			params.Logger.Warn("paddle adjustment could not be mapped to a user",
+			params.Logger.Warn("paddle adjustment could not be mapped",
 				"adjustment_id", adj.ID, "subscription_id", adj.SubscriptionID)
 		}
 		return nil
 	}
 
-	billingRecord, _ := app.FindFirstRecordByData(webhookUserBillingColl, "user_id", userID)
-	insideWindow := false
-	if billingRecord != nil {
-		eligible := billingRecord.GetDateTime("refund_eligible_until_at").Time()
-		insideWindow = !eligible.IsZero() && time.Now().UTC().Before(eligible)
+	var insideWindow bool
+	var userID string
+	var billingRecord *core.Record
+
+	switch subject.Kind {
+	case billing.SubjectOrg:
+		orgID := subject.ID
+		userID = orgOwnerID(app, orgID)
+		billingRecord, _ = app.FindFirstRecordByData(orgBillingColl, "organisation", orgID)
+		// Org billing has no refund_eligible_until_at; window is always false.
+		insideWindow = false
+	case billing.SubjectUser:
+		userID = subject.ID
+		billingRecord, _ = app.FindFirstRecordByData(webhookUserBillingColl, "user_id", userID)
+		if billingRecord != nil {
+			eligible := billingRecord.GetDateTime("refund_eligible_until_at").Time()
+			insideWindow = !eligible.IsZero() && time.Now().UTC().Before(eligible)
+		}
+	}
+
+	if userID == "" {
+		return nil
 	}
 
 	collection, err := app.FindCollectionByNameOrId(refundsColl)
@@ -355,11 +459,14 @@ func recordAdjustment(app core.App, params PaddleWebhookParams, adj paddle.Adjus
 	record.Set("operator_id", "paddle_webhook")
 	record.Set("inside_guarantee_window", insideWindow)
 	record.Set("paddle_adjustment_ids_json", string(payload))
+	if subject.Kind == billing.SubjectOrg {
+		record.Set("organisation", subject.ID)
+	}
 	if err := app.Save(record); err != nil {
 		return err
 	}
 
-	// One refund per lifetime (spec §7, decision #3).
+	// One refund per lifetime for the user (org owner for org refunds).
 	if user, err := app.FindRecordById("users", userID); err == nil && user != nil &&
 		!user.GetBool("refund_used") {
 		user.Set("refund_used", true)
@@ -368,7 +475,7 @@ func recordAdjustment(app core.App, params PaddleWebhookParams, adj paddle.Adjus
 		}
 	}
 
-	// Chargeback drops the user to inactive (spec §7.5).
+	// Chargeback deactivates the subject.
 	if adj.IsChargeback() && billingRecord != nil {
 		billingRecord.Set("plan_type", string(billing.PlanTypeInactive))
 		billingRecord.Set("paddle_subscription_id", "")
@@ -381,22 +488,26 @@ func recordAdjustment(app core.App, params PaddleWebhookParams, adj paddle.Adjus
 	return nil
 }
 
-// resolveAdjustmentUserID maps a Paddle adjustment to a Cognos user via the
-// subscription it adjusts, falling back to the customer id.
-func resolveAdjustmentUserID(app core.App, adj paddle.AdjustmentData) string {
+// resolveAdjustmentSubject maps a Paddle adjustment to a Cognos billing subject
+// via the subscription it adjusts, falling back to the customer id.
+func resolveAdjustmentSubject(app core.App, adj paddle.AdjustmentData) billing.Subject {
 	if adj.SubscriptionID != "" {
-		if record, _ := app.FindFirstRecordByData(
-			webhookUserBillingColl, "paddle_subscription_id", adj.SubscriptionID,
-		); record != nil {
-			return record.GetString("user_id")
+		if rec, _ := app.FindFirstRecordByData(orgBillingColl, "paddle_subscription_id", adj.SubscriptionID); rec != nil {
+			return billing.OrgSubject(rec.GetString("organisation"))
+		}
+		if rec, _ := app.FindFirstRecordByData(webhookUserBillingColl, "paddle_subscription_id", adj.SubscriptionID); rec != nil {
+			return billing.UserSubject(rec.GetString("user_id"))
 		}
 	}
 	if adj.CustomerID != "" {
 		if user, _ := app.FindFirstRecordByData("users", "paddle_customer_id", adj.CustomerID); user != nil {
-			return user.Id
+			return billing.UserSubject(user.Id)
+		}
+		if org, _ := app.FindFirstRecordByData("organisations", "paddle_customer_id", adj.CustomerID); org != nil {
+			return billing.OrgSubject(org.Id)
 		}
 	}
-	return ""
+	return billing.Subject{}
 }
 
 // markSubscriptionPastDue flags the user's billing row when Paddle reports a
@@ -666,6 +777,295 @@ func upsertUserBilling(app core.App, userID string, mutate func(*core.Record)) e
 	}
 	mutate(record)
 	return app.Save(record)
+}
+
+// ---------------------------------------------------------------------------
+// Org path (new)
+// ---------------------------------------------------------------------------
+
+// activateOrgSubscription flips the Organisation onto the paid plan and
+// snapshots the Paddle subscription + cycle. Idempotent: re-delivery re-applies
+// the same values.
+func activateOrgSubscription(
+	app core.App,
+	params PaddleWebhookParams,
+	sub paddle.SubscriptionData,
+	orgID string,
+) error {
+	plan := params.PriceToPlan[sub.PriceID()]
+	if plan == "" {
+		if params.Logger != nil {
+			params.Logger.Warn("paddle org subscription with unmapped price",
+				"price_id", sub.PriceID(), "subscription_id", sub.ID)
+		}
+		return nil
+	}
+
+	// Persist the Paddle customer id on the org so the portal can resolve it.
+	if sub.CustomerID != "" {
+		if org, err := app.FindRecordById("organisations", orgID); err == nil && org != nil &&
+			org.GetString("paddle_customer_id") != sub.CustomerID {
+			org.Set("paddle_customer_id", sub.CustomerID)
+			if err := app.Save(org); err != nil && params.Logger != nil {
+				params.Logger.Error("failed to persist paddle_customer_id on org", "err", err)
+			}
+		}
+	}
+
+	seatQty := int64(1)
+	if len(sub.Items) > 0 {
+		seatQty = int64(sub.Items[0].Quantity)
+	}
+
+	record, err := app.FindFirstRecordByData(orgBillingColl, "organisation", orgID)
+	if err != nil || record == nil {
+		collection, collErr := app.FindCollectionByNameOrId(orgBillingColl)
+		if collErr != nil {
+			return collErr
+		}
+		record = core.NewRecord(collection)
+		record.Set("organisation", orgID)
+	}
+	record.Set("plan_type", string(plan))
+	record.Set("paddle_subscription_id", sub.ID)
+	record.Set("paddle_price_id", sub.PriceID())
+	record.Set("paddle_customer_id", sub.CustomerID)
+	record.Set("past_due", false)
+	record.Set("seat_quantity", seatQty)
+	if sub.CurrentBillingPeriod.StartsAt != "" {
+		record.Set("paddle_cycle_start_at", sub.CurrentBillingPeriod.StartsAt)
+	}
+	if sub.CurrentBillingPeriod.EndsAt != "" {
+		record.Set("paddle_cycle_end_at", sub.CurrentBillingPeriod.EndsAt)
+	}
+	return app.Save(record)
+}
+
+// updateOrgSubscription refreshes the org_billing snapshot and detects cycle
+// rollover. For PAYG, it closes the cycle that just ended using the closing
+// cycle's seat quantity, then applies any pending_seat_quantity.
+func updateOrgSubscription(
+	ctx context.Context,
+	app core.App,
+	params PaddleWebhookParams,
+	sub paddle.SubscriptionData,
+	orgID string,
+) error {
+	record, err := app.FindFirstRecordByData(orgBillingColl, "organisation", orgID)
+	if err != nil || record == nil {
+		if params.Logger != nil {
+			params.Logger.Warn("paddle subscription.updated for unknown org", "org_id", orgID)
+		}
+		return nil
+	}
+
+	oldStart := record.GetDateTime("paddle_cycle_start_at").Time().UTC()
+	oldEnd := record.GetDateTime("paddle_cycle_end_at").Time().UTC()
+	oldPlan := record.GetString("plan_type")
+	oldSeatQty := int64(record.GetInt("seat_quantity"))
+	pendingSeatQty := int64(record.GetInt("pending_seat_quantity"))
+
+	newStart, _ := time.Parse(time.RFC3339, sub.CurrentBillingPeriod.StartsAt)
+	rolledOver := !oldStart.IsZero() && !newStart.IsZero() && newStart.After(oldStart)
+	if rolledOver && oldPlan == string(billing.PlanTypePayG) && !oldEnd.IsZero() {
+		if err := closeOrgPAYGCycle(ctx, app, params, orgID, sub.ID, oldStart, oldEnd, oldSeatQty); err != nil {
+			return err
+		}
+		// Apply pending seat change after the cycle that used the old qty closed.
+		if pendingSeatQty > 0 {
+			record.Set("seat_quantity", pendingSeatQty)
+			record.Set("pending_seat_quantity", 0)
+		} else if len(sub.Items) > 0 {
+			record.Set("seat_quantity", int64(sub.Items[0].Quantity))
+		}
+	}
+
+	plan := params.PriceToPlan[sub.PriceID()]
+	if plan != "" {
+		record.Set("plan_type", string(plan))
+		record.Set("paddle_price_id", sub.PriceID())
+	}
+	record.Set("paddle_subscription_id", sub.ID)
+	if sub.CurrentBillingPeriod.StartsAt != "" {
+		record.Set("paddle_cycle_start_at", sub.CurrentBillingPeriod.StartsAt)
+	}
+	if sub.CurrentBillingPeriod.EndsAt != "" {
+		record.Set("paddle_cycle_end_at", sub.CurrentBillingPeriod.EndsAt)
+	}
+	// A scheduled cancellation surfaces here; its absence means any prior
+	// schedule was cleared (resume). Org billing has no plan_ends_at field.
+	if sub.ScheduledChange != nil && sub.ScheduledChange.Action == "cancel" {
+		// No-op: org_billing does not track scheduled cancellations.
+	}
+
+	// Sync quantity on non-rollover updates.
+	if !rolledOver && len(sub.Items) > 0 {
+		record.Set("seat_quantity", int64(sub.Items[0].Quantity))
+	}
+
+	return app.Save(record)
+}
+
+// cancelOrgSubscription drops the org to inactive once Paddle reports the
+// subscription canceled.
+func cancelOrgSubscription(
+	app core.App,
+	params PaddleWebhookParams,
+	sub paddle.SubscriptionData,
+) error {
+	record, err := app.FindFirstRecordByData(orgBillingColl, "paddle_subscription_id", sub.ID)
+	if err != nil || record == nil {
+		if params.Logger != nil {
+			params.Logger.Warn("paddle cancellation for unknown org subscription",
+				"subscription_id", sub.ID)
+		}
+		return nil
+	}
+
+	record.Set("plan_type", string(billing.PlanTypeInactive))
+	record.Set("paddle_subscription_id", "")
+	record.Set("past_due", false)
+	return app.Save(record)
+}
+
+// markOrgPastDue flags the org's billing row when Paddle reports a failed
+// renewal. Idempotent: a re-delivered past_due re-sets the same flag.
+func markOrgPastDue(
+	app core.App,
+	params PaddleWebhookParams,
+	sub paddle.SubscriptionData,
+) error {
+	record, err := app.FindFirstRecordByData(orgBillingColl, "paddle_subscription_id", sub.ID)
+	if err != nil || record == nil {
+		if params.Logger != nil {
+			params.Logger.Warn("paddle past_due for unknown org subscription",
+				"subscription_id", sub.ID)
+		}
+		return nil
+	}
+
+	record.Set("past_due", true)
+	return app.Save(record)
+}
+
+// closeOrgPAYGCycle writes an org_cycle_summaries row for the pooled cycle that
+// just ended. The floor is seatQuantity x commit. Idempotent — keyed on the
+// same deterministic id used for user cycles.
+func closeOrgPAYGCycle(
+	ctx context.Context,
+	app core.App,
+	params PaddleWebhookParams,
+	orgID, subscriptionID string,
+	cycleStart, cycleEnd time.Time,
+	seatQuantity int64,
+) error {
+	id := cycleSummaryID(subscriptionID, cycleEnd)
+	if existing, _ := app.FindRecordById(orgCycleSummariesColl, id); existing != nil {
+		return nil // cycle already closed
+	}
+
+	usageMicro, err := sumOrgPAYGUsageMicro(app, orgID, cycleStart, cycleEnd)
+	if err != nil {
+		return err
+	}
+	usageRappen := billing.CeilRappenFromMicro(usageMicro)
+
+	commit := params.MinCommitRappen
+	if commit <= 0 {
+		commit = billing.DefaultPAYGMinCommitRappen
+	}
+	summary := billing.ComputeOrgCycleSummary(usageRappen, seatQuantity, commit)
+
+	collection, err := app.FindCollectionByNameOrId(orgCycleSummariesColl)
+	if err != nil {
+		return err
+	}
+	record := core.NewRecord(collection)
+	record.Id = id
+	record.Set("organisation", orgID)
+	record.Set("paddle_subscription_id", subscriptionID)
+	record.Set("cycle_start_at", cycleStart.UTC().Format(time.RFC3339))
+	record.Set("cycle_end_at", cycleEnd.UTC().Format(time.RFC3339))
+	record.Set("seat_quantity", summary.SeatQuantity)
+	record.Set("pooled_usage_rappen", summary.PooledUsageRappen)
+	record.Set("pooled_usage_microrappen", usageMicro)
+	record.Set("local_expected_bill_rappen", summary.LocalExpectedBillRappen)
+	record.Set("overage_charge_rappen", summary.OverageChargeRappen)
+	record.Set("reconciled", false)
+	record.Set("closed_at", nowRFC3339())
+	if err := app.Save(record); err != nil {
+		return err
+	}
+
+	postOverageCharge(ctx, app, params, record, subscriptionID, id, summary.OverageChargeRappen)
+	return nil
+}
+
+// sumOrgPAYGUsageMicro totals the microrappen cost of org-attributed `usage`
+// ledger rows in the half-open cycle window [start, end).
+func sumOrgPAYGUsageMicro(app core.App, orgID string, start, end time.Time) (int64, error) {
+	var result struct {
+		Total int64 `db:"total"`
+	}
+	err := app.DB().NewQuery(`
+		SELECT COALESCE(SUM(user_cost_microrappen), 0) AS total
+		FROM ` + balanceTransactionsColl + `
+		WHERE organisation = {:org_id}
+		  AND type = {:type}
+		  AND occurred_at >= {:start}
+		  AND occurred_at < {:end}
+	`).Bind(dbx.Params{
+		"org_id": orgID,
+		"type":   billing.UsageTransactionType,
+		"start":  start.UTC().Format(webhookPBDateLayout),
+		"end":    end.UTC().Format(webhookPBDateLayout),
+	}).One(&result)
+	return result.Total, err
+}
+
+// reconcileOrgCycleTransaction links a paid Paddle cycle transaction to an open
+// org_cycle_summaries row. Mirrors the user reconciler behaviour.
+func reconcileOrgCycleTransaction(app core.App, txn paddle.TransactionData) error {
+	if txn.SubscriptionID == "" || txn.ID == "" {
+		return nil
+	}
+	// Already recorded this transaction → no-op.
+	existing, _ := app.FindRecordsByFilter(
+		orgCycleSummariesColl,
+		"paddle_transaction_id = {:txn}",
+		"", 1, 0,
+		dbx.Params{"txn": txn.ID},
+	)
+	if len(existing) > 0 {
+		return nil
+	}
+
+	// Match the oldest still-open summary (no transaction recorded) for the sub.
+	candidates, err := app.FindRecordsByFilter(
+		orgCycleSummariesColl,
+		"paddle_subscription_id = {:sub} && (paddle_transaction_id = '' || paddle_transaction_id = null)",
+		"cycle_end_at", 1, 0,
+		dbx.Params{"sub": txn.SubscriptionID},
+	)
+	if err != nil || len(candidates) == 0 {
+		return nil
+	}
+
+	record := candidates[0]
+	expected := int64(record.GetInt("local_expected_bill_rappen"))
+	record.Set("paddle_transaction_id", txn.ID)
+	record.Set("paddle_billed_rappen", txn.GrandTotalMinor())
+	record.Set("reconciled", txn.GrandTotalMinor() >= expected)
+	return app.Save(record)
+}
+
+// orgOwnerID returns the owner user id of an Organisation.
+func orgOwnerID(app core.App, orgID string) string {
+	org, err := app.FindRecordById("organisations", orgID)
+	if err != nil || org == nil {
+		return ""
+	}
+	return org.GetString("owner")
 }
 
 func nowRFC3339() string {

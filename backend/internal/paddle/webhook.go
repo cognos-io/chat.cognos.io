@@ -78,6 +78,9 @@ type SubscriptionData struct {
 		Price struct {
 			ID string `json:"id"`
 		} `json:"price"`
+		// Quantity is the seat count on Organisation subscriptions; personal
+		// subscriptions always carry quantity 1.
+		Quantity int `json:"quantity"`
 	} `json:"items"`
 	CurrentBillingPeriod struct {
 		StartsAt string `json:"starts_at"`
