@@ -756,3 +756,64 @@ func revokeProjectParticipant(t testing.TB, app *tests.TestApp, projectID, userI
 		t.Fatalf("Save(revoke) error = %v", err)
 	}
 }
+
+// Org-owned Project creation via the projects API: only active org members
+// may set the organisation field; misses get the neutral organisation 404.
+func TestProjectsCreateWithOrganisation(t *testing.T) {
+	t.Parallel()
+
+	const orgID = "orgprojcreate01"
+
+	cases := []struct {
+		name        string
+		authEmail   string
+		seed        func(t testing.TB, app *tests.TestApp, e *core.ServeEvent)
+		wantStatus  int
+		wantContent []string
+	}{
+		{
+			name:      "active org member creates an org-owned project",
+			authEmail: "test2@example.com",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, orgID, "Proj Create Org", "test1@example.com")
+				seedOrgMembership(t, app, orgID, "test2@example.com", "member", false)
+			},
+			wantStatus:  http.StatusCreated,
+			wantContent: []string{`"organisation":"` + orgID + `"`},
+		},
+		{
+			name:      "non-member gets neutral organisation 404",
+			authEmail: "test2@example.com",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, orgID, "Proj Create Org", "test1@example.com")
+			},
+			wantStatus:  http.StatusNotFound,
+			wantContent: []string{`"message":"Organisation not found."`},
+		},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			s := tests.ApiScenario{
+				Name:   c.name,
+				Method: http.MethodPost,
+				URL:    "/api/v1/projects",
+				Body: strings.NewReader(`{
+					"data": "eyJ2ZXJzaW9uIjoiMSJ9",
+					"wrapped_project_key": "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM=",
+					"organisation": "` + orgID + `"
+				}`),
+				ExpectedStatus:  c.wantStatus,
+				ExpectedContent: c.wantContent,
+				TestAppFactory:  setupTestApp,
+				BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+					c.seed(t, app, e)
+					withRecordAuth("users", c.authEmail)(t, app, e)
+				},
+			}
+			s.Test(t)
+		})
+	}
+}

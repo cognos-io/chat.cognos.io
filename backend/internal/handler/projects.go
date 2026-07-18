@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
@@ -43,6 +44,10 @@ type createProjectRequest struct {
 	// (name/description/settings) is encrypted client-side under the project
 	// content key and never reaches the server.
 	Data string `json:"data"`
+	// Organisation optionally makes the Project org-owned: it bills the
+	// Organisation and its participants must be active org members. The
+	// caller must be an active member of that Organisation.
+	Organisation string `json:"organisation"`
 	// WrappedProjectKey is the symmetric project content key sealed to the
 	// creator's own public key (base64). Without it the creator could not
 	// decrypt their own project on a fresh session, so it is mandatory and
@@ -122,6 +127,20 @@ func ProjectsCreate(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewBadRequestError("wrapped_project_key is required", nil)
 		}
 
+		req.Organisation = strings.TrimSpace(req.Organisation)
+		if req.Organisation != "" {
+			// Only active org members may create org-owned Projects; misses get
+			// the same neutral 404 as a nonexistent organisation.
+			orgRepo := organisations.NewPocketBaseRepo(app)
+			active, err := orgRepo.IsActiveMember(req.Organisation, user.ID)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to verify organisation access", err)
+			}
+			if !active {
+				return apis.NewNotFoundError("Organisation not found", nil)
+			}
+		}
+
 		projectsCollection, err := app.FindCollectionByNameOrId("projects")
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load projects collection", err)
@@ -138,6 +157,9 @@ func ProjectsCreate(app core.App) func(e *core.RequestEvent) error {
 		record := core.NewRecord(projectsCollection)
 		record.Set("creator", user.ID)
 		record.Set("data", req.Data)
+		if req.Organisation != "" {
+			record.Set("organisation", req.Organisation)
+		}
 		record.Set("key_version", 1)
 
 		// All three rows land together or none do: a stranded project with no
