@@ -26,7 +26,10 @@ export const environment = {
   featureFlags: {
     usage: false,
     security: true,
-    team: false,
+    // Organisations/Teams v1 — on in development and e2e (environment.e2e.ts
+    // inherits this) so the persona walkthroughs can exercise it; production
+    // (environment.ts) stays false until the walkthrough gate passes.
+    team: true,
     notifications: false,
     // Encrypted projects — on in development so the shell and e2e can exercise
     // it while phases 2–3 are built.
