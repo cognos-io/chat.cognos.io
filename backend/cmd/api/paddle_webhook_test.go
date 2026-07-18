@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -46,12 +47,33 @@ func paddleWebhookConfig() *config.APIConfig {
 
 func signPaddle(t testing.TB, secret, body string) string {
 	t.Helper()
-	const ts = "1700000000"
+	return signPaddleAt(t, secret, body, time.Now().Unix())
+}
+
+func signPaddleAt(t testing.TB, secret, body string, timestamp int64) string {
+	t.Helper()
+	ts := strconv.FormatInt(timestamp, 10)
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(ts))
 	mac.Write([]byte(":"))
 	mac.Write([]byte(body))
 	return "ts=" + ts + ";h1=" + hex.EncodeToString(mac.Sum(nil))
+}
+
+func TestPaddleWebhookRejectsStaleSignedEventBeforeWriting(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+	signature := signPaddleAt(
+		t, webhookSecret, subscriptionCreatedBody,
+		time.Now().Add(-paddle.DefaultWebhookTimestampTolerance-time.Second).Unix(),
+	)
+
+	rec := postWebhook(mux, subscriptionCreatedBody, signature)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want 401 — body: %s", rec.Code, rec.Body.String())
+	}
+	if n := countEvents(t, app); n != 0 {
+		t.Errorf("paddle_events count = %d, want 0 (no write on stale signature)", n)
+	}
 }
 
 // bootWebhookMux boots a test app with Paddle configured and returns its HTTP

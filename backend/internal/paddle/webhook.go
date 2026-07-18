@@ -7,24 +7,44 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // ErrInvalidSignature is returned when a webhook body fails HMAC verification.
 var ErrInvalidSignature = errors.New("paddle: invalid webhook signature")
 
+// DefaultWebhookTimestampTolerance bounds replay of a valid, previously
+// unseen Paddle event while allowing reasonable clock and delivery skew.
+const DefaultWebhookTimestampTolerance = 5 * time.Minute
+
 // VerifySignature checks a Paddle webhook against the notification-destination
 // secret. Paddle signs `ts:rawBody` with HMAC-SHA256 and sends the result in
 // the `Paddle-Signature` header as `ts=<unix>;h1=<hex>`. The comparison is
-// constant-time. Replay is handled separately by event-id idempotency, so we
-// don't enforce a timestamp window here.
+// constant-time. Event-id idempotency prevents duplicate processing; the
+// timestamp window also rejects a valid old event that this deployment has
+// never seen before.
 func VerifySignature(secret, signatureHeader string, rawBody []byte) error {
+	return verifySignatureAt(secret, signatureHeader, rawBody, time.Now().UTC())
+}
+
+func verifySignatureAt(secret, signatureHeader string, rawBody []byte, now time.Time) error {
 	if secret == "" {
 		return fmt.Errorf("paddle: webhook secret not configured")
 	}
 
 	ts, h1 := parseSignatureHeader(signatureHeader)
 	if ts == "" || h1 == "" {
+		return ErrInvalidSignature
+	}
+	timestamp, err := strconv.ParseInt(ts, 10, 64)
+	if err != nil {
+		return ErrInvalidSignature
+	}
+	eventTime := time.Unix(timestamp, 0)
+	if eventTime.Before(now.Add(-DefaultWebhookTimestampTolerance)) ||
+		eventTime.After(now.Add(DefaultWebhookTimestampTolerance)) {
 		return ErrInvalidSignature
 	}
 
