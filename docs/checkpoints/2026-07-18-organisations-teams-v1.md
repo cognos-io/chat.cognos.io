@@ -22,32 +22,30 @@ org-owned Project, Workspace). Personas [`PER-005`](../personas/05-team-lead-org
 | `b73025aa`  | frontend: OrganisationService (per-user persisted workspace), sidebar Workspace switcher behind `team` flag, billing-context badges (composer + project headers), workspace-scoped project lists, org API client, `workspace.*` i18n ×6, draft-preservation pin test                                                                                                                                                                                                                                                                |
 | `224c8131`  | backend: org billing core — `org_billing` + `org_cycle_summaries` + ledger `organisation` migrations (1760000075/76), `billing.Subject`, `ResolveState` (conversation→project→org, resolved only after access check), `EvaluateOrgAccess` fail-closed 402 `ORG_BILLING_INACTIVE`/`ORG_BILLING_PAST_DUE` (neutral member `message` + actionable `admin_message`, organisation_id/name fields), org usage attribution (organisation + acting user, no balance mutation), pooled cycle maths + property tests, billing-access-gate doc |
 
-## In flight (uncommitted working tree)
+Later commits (same order of work):
 
-Org admin UI (frontend, task: replace `team` placeholder settings section) — components EXIST and
-build+suite are green, but the authoring agent died at the org spend limit; remaining gaps:
+- `a148091e` backend: subject-dispatched Paddle webhooks (user vs org via custom_data /
+  subscription-id / customer-id fallbacks), org activation → org_billing with seats, seat sync,
+  pooled cycle close with old-quantity floor + pending decrement applied after, overage one-time
+  charge, lapse on past_due/cancel/chargeback, refunds.organisation + organisations
+  .paddle_customer_id (migration 1760000077), 13 org webhook tests + 3 per-user fallback pins.
+- `ab7a7aaf` backend: org billing endpoints per contract — owner-only checkout
+  (custom_data.org_id, quantity 1, config `paddle.price_org_seat` / PADDLE_PRICE_ORG_SEAT) and
+  portal; owner/admin billing state (floor/pooled/projected overage) and per-member usage metadata;
+  CheckoutRequest gains OrgID/Quantity; role-gate + aggregation tests; api-permissions rows.
+- (frontend admin pages committed earlier as `feat(frontend): organisation admin pages`.)
 
-1. ~~117 `team.*` i18n keys~~ DONE: merged into all six catalogs (117 keys, identical structure,
-   language tripwires verified: de no-ß/du, fr vous, pt-PT tu no-você, es tú, it tu).
-2. **Component specs iterating**: five spec files exist for team-settings / org-members /
-   org-invites / org-billing / offboard-member-dialog; they compile (protected members accessed via
-   bracket notation; `redirect` mock typed) but ~34 tests still fail — assertions are being
-   corrected against the real rendered English copy (catalog merged mid-iteration). Failure log at
-   scratchpad `team-spec-failures2.txt`; if iteration with the second model doesn't converge, fix
-   by hand against the log — the failures are assertion/selector mismatches, not component bugs
-   found so far.
-3. Files: `frontend/src/app/pages/account/team/*`, `app.routes.ts` (placeholder already swapped to
-   `TeamSettingsComponent`), `billing/pricing.ts`, `interfaces/organisation.ts`,
-   `cognos-api.service.ts` (org billing/invite/usage methods), `utils/currency.{ts,spec.ts}`.
+## In flight
+
+Slice 3 (invites/offboarding): org_invites migration + red API tests being drafted by the second
+model; implementation next. Everything earlier is committed; working tree should be clean apart
+from this checkpoint file.
 
 ## To do (ordered; each = one vertical slice, one conventional commit)
 
-### 1. Finish org admin UI (frontend)
+### 1. Finish org admin UI (frontend) — DONE (committed)
 
-i18n keys + component specs as above → full `CI=true pnpm --dir frontend test` + build + lint →
-commit `feat(frontend): organisation admin pages`.
-
-### 2. Paddle org subscriptions (backend) — highest risk
+### 2. Paddle org subscriptions (backend) — DONE (commits a148091e + ab7a7aaf)
 
 Follow the saved plan (kimi analysis) — saved at
 [2026-07-18-paddle-webhook-org-plan.md](./2026-07-18-paddle-webhook-org-plan.md):
