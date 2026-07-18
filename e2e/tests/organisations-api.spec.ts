@@ -149,9 +149,51 @@ test.describe('organisations API lifecycle', () => {
         expect(res.status()).toBe(404);
       });
 
+      await test.step('A renames the organisation and reads the persisted name', async () => {
+        const updateRes = await userA.api.patch(`/api/v1/orgs/${orgId}`, {
+          data: { name: 'Acme E2E Group AG' },
+        });
+        expect(
+          updateRes.ok(),
+          `update org: ${updateRes.status()} ${await updateRes.text()}`,
+        ).toBe(true);
+        expect((await updateRes.json()) as OrgResponse).toMatchObject({
+          id: orgId,
+          name: 'Acme E2E Group AG',
+        });
+
+        const getRes = await userA.api.get(`/api/v1/orgs/${orgId}`);
+        expect(getRes.ok()).toBe(true);
+        expect((await getRes.json()) as OrgResponse).toMatchObject({
+          id: orgId,
+          name: 'Acme E2E Group AG',
+        });
+      });
+
       // ---------------------------------------------------------------------
       // 4. Invite flow: A invites B, B accepts, second accept → 404
       // ---------------------------------------------------------------------
+      await test.step('A revokes a pending invite', async () => {
+        const createRes = await userA.api.post(`/api/v1/orgs/${orgId}/invites`, {
+          data: { email: `revoked-${Date.now()}@example.com`, role: 'member' },
+        });
+        expect(createRes.status()).toBe(201);
+
+        const listRes = await userA.api.get(`/api/v1/orgs/${orgId}/invites`);
+        expect(listRes.ok()).toBe(true);
+        const pending = (await listRes.json()) as OrgInviteListItem[];
+        expect(pending).toHaveLength(1);
+
+        const revokeRes = await userA.api.delete(
+          `/api/v1/orgs/${orgId}/invites/${pending[0].id}`,
+        );
+        expect(revokeRes.status()).toBe(204);
+
+        const afterRes = await userA.api.get(`/api/v1/orgs/${orgId}/invites`);
+        expect(afterRes.ok()).toBe(true);
+        expect((await afterRes.json()) as OrgInviteListItem[]).toEqual([]);
+      });
+
       await test.step('A creates a member invite → token returned once', async () => {
         const res = await userA.api.post(`/api/v1/orgs/${orgId}/invites`, {
           data: { email: userB.account.email, role: 'member' },
@@ -226,9 +268,31 @@ test.describe('organisations API lifecycle', () => {
       // 5. Billing gate: without org_billing, org completion 402s
       //    Also verify billing GET permissions.
       // ---------------------------------------------------------------------
+      await test.step('owner starts checkout for all active Seats', async () => {
+        const res = await userA.api.post(`/api/v1/orgs/${orgId}/billing/checkout`);
+        expect(res.ok(), `checkout: ${res.status()} ${await res.text()}`).toBe(true);
+        expect(await res.json()).toEqual({
+          checkout_url: 'https://checkout.paddle.test/e2e-organisation',
+        });
+      });
+
+      await test.step('owner opens the organisation billing portal', async () => {
+        const res = await userA.api.get(`/api/v1/orgs/${orgId}/billing/portal`);
+        expect(res.ok(), `portal: ${res.status()} ${await res.text()}`).toBe(true);
+        expect(await res.json()).toEqual({
+          portal_url: 'https://customer-portal.paddle.test/e2e-organisation',
+        });
+      });
+
+      await test.step('owner can read the empty usage summary before activation', async () => {
+        const res = await userA.api.get(`/api/v1/orgs/${orgId}/usage`);
+        expect(res.ok(), `usage: ${res.status()} ${await res.text()}`).toBe(true);
+        expect(await res.json()).toMatchObject({ total_rappen: 0, members: null });
+      });
+
       await test.step('org billing GET for owner → inactive/missing shape', async () => {
         const res = await userA.api.get(`/api/v1/orgs/${orgId}/billing`);
-        // No checkout done → org_billing row does not exist. Pin: the handler
+        // No activation webhook received → org_billing row does not exist. Pin: the handler
         // reports the fail-closed default shape (inactive) rather than a 404,
         // which is what the admin UI's create-then-checkout flow builds on.
         expect(res.status()).toBe(200);
@@ -510,6 +574,24 @@ test.describe('organisations API lifecycle', () => {
         expect(
           (await anon.get('/api/v1/users/usr000000000001/public-key')).status(),
         ).toBe(401);
+      });
+
+      await test.step('POST /orgs/anyid/billing/checkout → 401', async () => {
+        expect(
+          (await anon.post('/api/v1/orgs/org000000000001/billing/checkout')).status(),
+        ).toBe(401);
+      });
+
+      await test.step('GET /orgs/anyid/billing/portal → 401', async () => {
+        expect(
+          (await anon.get('/api/v1/orgs/org000000000001/billing/portal')).status(),
+        ).toBe(401);
+      });
+
+      await test.step('GET /orgs/anyid/usage → 401', async () => {
+        expect((await anon.get('/api/v1/orgs/org000000000001/usage')).status()).toBe(
+          401,
+        );
       });
     } finally {
       await anon.dispose();
