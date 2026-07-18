@@ -37,9 +37,19 @@ Later commits (same order of work):
 
 ## In flight
 
-Slice 3 (invites/offboarding): org_invites migration + red API tests being drafted by the second
-model; implementation next. Everything earlier is committed; working tree should be clean apart
-from this checkpoint file.
+**Teams v1 is feature-complete** (backend + frontend + API e2e all committed and green). Later
+commits beyond the table above: org invites/offboarding/public-key (`feat(backend): org invites,
+offboarding and gated public-key lookup`), project sharing + rotation routes (`feat(backend):
+project sharing routes and forward-only key rotation`), org lifecycle e2e + client org-project
+creation (`feat: org lifecycle API e2e and client org-project creation`, 144 e2e green), and the
+final frontend slice (`feat(frontend): invite accept, org billing banners and project sharing`,
+1526 vitest green).
+
+Currently in flight: P2 org policies (migration 1760000079 + red tests being drafted).
+
+Known deferred items: authGuard drops ?token= deep links for signed-out invitees (manual paste
+covers it — pre-existing TODO); org dissolution flow (spec §8.3) unimplemented; browser e2e folded
+into the persona-walkthrough gate; `team` feature flag still FALSE everywhere.
 
 ## To do (ordered; each = one vertical slice, one conventional commit)
 
