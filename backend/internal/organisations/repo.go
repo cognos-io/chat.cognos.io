@@ -52,6 +52,10 @@ type Organisation struct {
 	OwnerID string
 	Created string
 	Updated string
+	// Policy fields (P2): enforced ceilings/defaults for org-owned Projects.
+	PolicyPrivacyTier   string
+	PolicyRetentionDays int
+	PolicyMFARequired   bool
 }
 
 // Membership is the read-shape of a single active org_memberships row.
@@ -362,10 +366,13 @@ func (r *PocketBaseRepo) activeMembershipRecord(orgID, userID string) (*core.Rec
 
 func recordToOrganisation(record *core.Record) Organisation {
 	return Organisation{
-		ID:      record.Id,
-		Name:    record.GetString("name"),
-		OwnerID: record.GetString("owner"),
-		Created: record.GetString("created"),
-		Updated: record.GetString("updated"),
+		ID:                  record.Id,
+		Name:                record.GetString("name"),
+		OwnerID:             record.GetString("owner"),
+		Created:             record.GetString("created"),
+		Updated:             record.GetString("updated"),
+		PolicyPrivacyTier:   record.GetString("policy_privacy_tier"),
+		PolicyRetentionDays: record.GetInt("policy_retention_days"),
+		PolicyMFARequired:   record.GetBool("policy_mfa_required"),
 	}
 }

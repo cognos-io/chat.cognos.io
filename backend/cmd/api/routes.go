@@ -494,6 +494,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.PATCH(
+		"/api/v1/orgs/{orgID}/policies",
+		handler.OrganisationPoliciesUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.GET(
 		"/api/v1/orgs/{orgID}/members",
 		handler.OrganisationMembersList(app),

@@ -37,6 +37,11 @@ type organisationResponse struct {
 	CallerRole string `json:"caller_role,omitempty"`
 	Created    string `json:"created"`
 	Updated    string `json:"updated"`
+	// Policy fields are readable by every member; writable via
+	// PATCH /orgs/{id}/policies by owners/admins only.
+	PolicyPrivacyTier   string `json:"policy_privacy_tier,omitempty"`
+	PolicyRetentionDays int    `json:"policy_retention_days,omitempty"`
+	PolicyMFARequired   bool   `json:"policy_mfa_required,omitempty"`
 }
 
 type orgMemberResponse struct {
@@ -530,11 +535,14 @@ func memberOrganisationOr404(
 	}
 
 	return organisations.Organisation{
-		ID:      record.Id,
-		Name:    record.GetString("name"),
-		OwnerID: record.GetString("owner"),
-		Created: record.GetString("created"),
-		Updated: record.GetString("updated"),
+		ID:                  record.Id,
+		Name:                record.GetString("name"),
+		OwnerID:             record.GetString("owner"),
+		Created:             record.GetString("created"),
+		Updated:             record.GetString("updated"),
+		PolicyPrivacyTier:   record.GetString("policy_privacy_tier"),
+		PolicyRetentionDays: record.GetInt("policy_retention_days"),
+		PolicyMFARequired:   record.GetBool("policy_mfa_required"),
 	}, role, nil
 }
 
@@ -570,11 +578,14 @@ func organisationToResponse(
 	callerRole organisations.Role,
 ) organisationResponse {
 	return organisationResponse{
-		ID:         org.ID,
-		Name:       org.Name,
-		Owner:      org.OwnerID,
-		CallerRole: string(callerRole),
-		Created:    org.Created,
-		Updated:    org.Updated,
+		ID:                  org.ID,
+		Name:                org.Name,
+		Owner:               org.OwnerID,
+		CallerRole:          string(callerRole),
+		Created:             org.Created,
+		Updated:             org.Updated,
+		PolicyPrivacyTier:   org.PolicyPrivacyTier,
+		PolicyRetentionDays: org.PolicyRetentionDays,
+		PolicyMFARequired:   org.PolicyMFARequired,
 	}
 }

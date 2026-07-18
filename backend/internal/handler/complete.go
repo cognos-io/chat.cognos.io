@@ -582,6 +582,37 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			}
 		}
 
+		// Org-project policy gates: MFA and privacy-tier ceiling. They run
+		// after conversation access is confirmed (no existence leak) and only
+		// on org-billed paths; personal conversations are untouched.
+		if billingConversationID != "" && params.App != nil {
+			projectID := ""
+			if convRecord, convErr := params.App.FindRecordById("conversations", billingConversationID); convErr == nil {
+				projectID = convRecord.GetString("project")
+			}
+			project, projErr := (*core.Record)(nil), error(nil)
+			if projectID != "" {
+				project, projErr = params.App.FindRecordById("projects", projectID)
+			}
+			if projErr == nil && project != nil {
+				if orgID := project.GetString("organisation"); orgID != "" {
+					if err := requireOrgMFA(params.App, orgID, owner.ID); err != nil {
+						return err
+					}
+					if orgTier, ok := orgPrivacyCeiling(params.App, orgID); ok {
+						userTier := catalogue.NormalizePrivacyTier(e.Auth.GetString("privacy_tier"))
+						effectiveTier := mostRestrictiveTier(userTier, orgTier)
+						if !catalogue.IsEligibleForTier(effectiveTier, model.PrivacyTier) {
+							return e.JSON(http.StatusForbidden, CompleteBillingRestriction{
+								Error:   "ORG_PRIVACY_TIER",
+								Message: "This model is not available under the organisation's privacy tier ceiling.",
+							})
+						}
+					}
+				}
+			}
+		}
+
 		if params.GatewayClient == nil {
 			params.Logger.Error("gateway client unavailable")
 			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", nil)
@@ -1263,4 +1294,27 @@ func completeBillingRestrictionResponse(
 	response.OrganisationName = restriction.OrganisationName
 	response.AdminMessage = restriction.AdminMessage
 	return response
+}
+
+// tierRank orders privacy tiers from most to least restrictive.
+func tierRank(tier catalogue.PrivacyTier) int {
+	switch tier {
+	case catalogue.PrivacyTierCHOnly:
+		return 0
+	case catalogue.PrivacyTierEU:
+		return 1
+	case catalogue.PrivacyTierGlobal:
+		return 2
+	default:
+		return 1
+	}
+}
+
+// mostRestrictiveTier picks the tighter of two privacy tiers — the effective
+// ceiling when both a member tier and an org policy ceiling apply.
+func mostRestrictiveTier(a, b catalogue.PrivacyTier) catalogue.PrivacyTier {
+	if tierRank(a) <= tierRank(b) {
+		return a
+	}
+	return b
 }

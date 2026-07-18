@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -172,6 +173,9 @@ func ConversationProjectUpdate(app core.App) func(e *core.RequestEvent) error {
 
 			if targetProjectID != "" {
 				conversation.Set("project", targetProjectID)
+				if orgID := targetProject.GetString("organisation"); orgID != "" {
+					applyOrgRetentionDefault(txApp, conversation, orgID)
+				}
 				if err := txApp.Save(conversation); err != nil {
 					return err
 				}
@@ -280,6 +284,10 @@ func ProjectConversationsCreate(app core.App) func(e *core.RequestEvent) error {
 		conversation.Set("data", req.Data)
 		conversation.Set("key_version", 1)
 		conversation.Set("last_activity_at", time.Now().UTC())
+
+		if orgID := project.GetString("organisation"); orgID != "" {
+			applyOrgRetentionDefault(app, conversation, orgID)
+		}
 
 		if err := app.RunInTransaction(func(txApp core.App) error {
 			if err := txApp.Save(conversation); err != nil {
@@ -414,5 +422,34 @@ func projectConversationToResponse(
 		KeyVersion:                   keyVersion,
 		ProjectKeyVersion:            projectKeyVersion,
 		WrappedConversationSecretKey: wrappedSecretKey,
+	}
+}
+
+// applyOrgRetentionDefault sets the conversation's expiry_duration to the
+// organisation's default when policy_retention_days > 0 and the conversation
+// has no retention of its own or a longer one — the shorter duration always
+// wins, so an org default can never weaken a stricter per-conversation policy.
+func applyOrgRetentionDefault(app core.App, conversation *core.Record, orgID string) {
+	if orgID == "" {
+		return
+	}
+	org, err := app.FindRecordById("organisations", orgID)
+	if err != nil {
+		return
+	}
+	retentionDays := org.GetInt("policy_retention_days")
+	if retentionDays <= 0 {
+		return
+	}
+	orgDuration := time.Duration(retentionDays) * 24 * time.Hour
+	orgValue := strconv.Itoa(retentionDays*24) + "h"
+	existing := conversation.GetString("expiry_duration")
+	if existing == "" {
+		conversation.Set("expiry_duration", orgValue)
+		return
+	}
+	existingDur, err := time.ParseDuration(existing)
+	if err != nil || orgDuration < existingDur {
+		conversation.Set("expiry_duration", orgValue)
 	}
 }

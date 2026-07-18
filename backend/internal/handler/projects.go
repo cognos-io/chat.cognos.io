@@ -282,6 +282,11 @@ func accessibleProjectRecord(app core.App, e *core.RequestEvent, projectID strin
 	if !active {
 		return nil, apis.NewNotFoundError("Project not found", nil)
 	}
+	if orgID := record.GetString("organisation"); orgID != "" {
+		if err := requireOrgMFA(app, orgID, user.ID); err != nil {
+			return nil, err
+		}
+	}
 	return record, nil
 }
 

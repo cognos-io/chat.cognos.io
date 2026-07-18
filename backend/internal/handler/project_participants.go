@@ -53,13 +53,21 @@ func orgAdminAccessibleProjectRecord(app core.App, e *core.RequestEvent, project
 	if err != nil {
 		return nil, apis.NewApiError(http.StatusInternalServerError, "Failed to verify project access", err)
 	}
-	if active {
-		return record, nil
+	accessible := active
+	if !accessible {
+		if ok, _ := canAdminProject(app, record, user.ID); ok {
+			accessible = true
+		}
 	}
-	if ok, _ := canAdminProject(app, record, user.ID); ok {
-		return record, nil
+	if !accessible {
+		return nil, apis.NewNotFoundError("Project not found", nil)
 	}
-	return nil, apis.NewNotFoundError("Project not found", nil)
+	if orgID := record.GetString("organisation"); orgID != "" {
+		if err := requireOrgMFA(app, orgID, user.ID); err != nil {
+			return nil, err
+		}
+	}
+	return record, nil
 }
 
 // ProjectParticipantsList returns the currently-active participants for a
