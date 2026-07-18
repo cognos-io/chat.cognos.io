@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
@@ -196,6 +197,13 @@ func ProjectKeyRotate(app core.App) func(e *core.RequestEvent) error {
 			return nil
 		}); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to rotate project key", err)
+		}
+
+		if orgID := project.GetString("organisation"); orgID != "" {
+			organisations.RecordAudit(
+				app, orgID, caller.ID,
+				organisations.AuditProjectRotated, projectID,
+			)
 		}
 
 		return e.JSON(http.StatusOK, rotateProjectKeyResponse{

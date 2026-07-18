@@ -243,6 +243,12 @@ func ProjectParticipantsAdd(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to add project participant", err)
 		}
 
+		// Compound opaque target "projectID:userID" — never the wrapped key.
+		organisations.RecordAudit(
+			app, orgID, caller.ID,
+			organisations.AuditProjectParticipantAdded, projectID+":"+req.UserID,
+		)
+
 		return e.JSON(http.StatusCreated, projectParticipantResponse{
 			ID:      participantRecord.Id,
 			Project: projectID,
@@ -289,6 +295,13 @@ func ProjectParticipantsRevoke(app core.App) func(e *core.RequestEvent) error {
 				return apis.NewNotFoundError("Participant not found", nil)
 			}
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to revoke participant", err)
+		}
+
+		if orgID := project.GetString("organisation"); orgID != "" {
+			organisations.RecordAudit(
+				app, orgID, caller.ID,
+				organisations.AuditProjectParticipantRevoked, projectID+":"+targetUserID,
+			)
 		}
 
 		return e.NoContent(http.StatusNoContent)

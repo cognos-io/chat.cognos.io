@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/pocketbase/pocketbase/apis"
@@ -57,6 +58,10 @@ func OrganisationPoliciesUpdate(app core.App) func(e *core.RequestEvent) error {
 
 		if err := app.Save(record); err != nil {
 			return organisationWriteError("Failed to update organisation policies", err)
+		}
+
+		if caller := auth.ExtractUser(e); caller != nil {
+			organisations.RecordAudit(app, org.ID, caller.ID, organisations.AuditPoliciesUpdated, "")
 		}
 
 		return e.JSON(http.StatusOK, organisationToResponse(organisationFromRecord(record), role))

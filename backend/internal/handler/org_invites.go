@@ -119,6 +119,9 @@ func OrgInvitesCreate(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to save invite.", err)
 		}
 
+		// Audit target is the invite ROW id — never the invited email.
+		organisations.RecordAudit(app, org.ID, user.ID, organisations.AuditInviteCreated, record.Id)
+
 		return e.JSON(http.StatusCreated, orgInviteResponse{
 			ID:           record.Id,
 			Organisation: org.ID,
@@ -213,6 +216,8 @@ func OrgInvitesRevoke(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to revoke invite.", err)
 		}
 
+		organisations.RecordAudit(app, org.ID, user.ID, organisations.AuditInviteRevoked, inviteID)
+
 		return e.NoContent(http.StatusNoContent)
 	}
 }
@@ -275,6 +280,8 @@ func OrgInvitesAccept(app core.App, orgRepo organisations.Repo) func(e *core.Req
 		if err := app.Save(invite); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to update invite.", err)
 		}
+
+		organisations.RecordAudit(app, orgID, user.ID, organisations.AuditInviteAccepted, invite.Id)
 
 		return e.JSON(http.StatusOK, acceptOrgInviteResponse{
 			Organisation: orgID,
@@ -372,6 +379,8 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 		}); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to offboard member.", err)
 		}
+
+		organisations.RecordAudit(app, org.ID, caller.ID, organisations.AuditMemberOffboarded, targetUserID)
 
 		return e.NoContent(http.StatusNoContent)
 	}

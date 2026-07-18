@@ -264,6 +264,13 @@ func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(
 			}
 		}
 
+		// Target is the opaque Paddle transaction id — useful for billing
+		// reconciliation, never content.
+		organisations.RecordAudit(
+			params.App, org.ID, user.ID,
+			organisations.AuditBillingCheckoutStarted, result.TransactionID,
+		)
+
 		return e.JSON(http.StatusOK, map[string]string{
 			"checkout_url": result.CheckoutURL,
 		})

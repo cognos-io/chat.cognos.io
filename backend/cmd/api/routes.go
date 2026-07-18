@@ -604,6 +604,32 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Revoke a member's sessions (token-key rotation) — owner/admin only.
+	e.Router.POST(
+		"/api/v1/orgs/{orgID}/members/{userID}/revoke-sessions",
+		handler.OrgMemberSessionsRevoke(app, organisations.NewPocketBaseRepo(app)),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Content-free audit log — owner/admin only.
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/audit",
+		handler.OrgAuditList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/audit/export",
+		handler.OrgAuditExport(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	// Public key resolution (relationship-gated).
 	e.Router.GET(
 		"/api/v1/users/{userID}/public-key",
