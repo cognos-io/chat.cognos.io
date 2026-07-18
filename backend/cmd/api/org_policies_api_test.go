@@ -558,6 +558,7 @@ func TestOrgRetentionDefaultOnConversationCreate(t *testing.T) {
 		TestAppFactory:  setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, orgID, "Acme", "test1@example.com")
+			seedOrgBilling(t, app, orgID, "payg", false, 1)
 			seedOrgPolicies(t, app, orgID, "", 7, false)
 			seedOwnedProject(t, app, projectID, "test1@example.com")
 			seedOrgProject(t, app, projectID, orgID)
@@ -608,6 +609,7 @@ func TestOrgRetentionDefaultOnMove(t *testing.T) {
 		TestAppFactory:  setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, orgID, "Acme", "test1@example.com")
+			seedOrgBilling(t, app, orgID, "payg", false, 1)
 			seedOrgPolicies(t, app, orgID, "", 7, false)
 			seedOwnedProject(t, app, projectID, "test1@example.com")
 			seedOrgProject(t, app, projectID, orgID)
@@ -648,6 +650,7 @@ func TestOrgRetentionShorterOwnWins(t *testing.T) {
 		TestAppFactory:  setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, orgID, "Acme", "test1@example.com")
+			seedOrgBilling(t, app, orgID, "payg", false, 1)
 			seedOrgPolicies(t, app, orgID, "", 7, false)
 			seedOwnedProject(t, app, projectID, "test1@example.com")
 			seedOrgProject(t, app, projectID, orgID)
@@ -698,6 +701,7 @@ func TestOrgRetentionLongerOwnLoses(t *testing.T) {
 		TestAppFactory:  setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, orgID, "Acme", "test1@example.com")
+			seedOrgBilling(t, app, orgID, "payg", false, 1)
 			seedOrgPolicies(t, app, orgID, "", 7, false)
 			seedOwnedProject(t, app, projectID, "test1@example.com")
 			seedOrgProject(t, app, projectID, orgID)
