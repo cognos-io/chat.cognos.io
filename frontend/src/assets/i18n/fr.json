@@ -1200,7 +1200,8 @@
       "daysAgo": "il y a {{count}} jours",
       "lastWeek": "La semaine dernière"
     },
-    "close": "Fermer"
+    "close": "Fermer",
+    "loading": "Chargement…"
   },
   "library": {
     "title": "Bibliothèque de fichiers",
