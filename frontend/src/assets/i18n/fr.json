@@ -1841,6 +1841,7 @@
       "selfLocked": "Vous ne pouvez pas vous retirer vous-même ici.",
       "removedToast": "{{ name }} a été retiré.",
       "removedRotationPending": "L’accès a été supprimé. {{ count }} projets restent verrouillés jusqu’à ce qu’un administrateur termine la mise à jour de sécurité.",
+      "removeNeedsProjectAdmin": "Attribuez le rôle d’administrateur de projet à une autre personne avant de retirer ce membre.",
       "removeError": "Impossible de retirer le membre. Veuillez réessayer."
     },
     "invites": {

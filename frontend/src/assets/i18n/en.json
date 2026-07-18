@@ -1841,6 +1841,7 @@
       "selfLocked": "You cannot remove yourself here.",
       "removedToast": "{{ name }} has been removed.",
       "removedRotationPending": "Access was removed. {{ count }} Projects remain locked until an Admin finishes the security update.",
+      "removeNeedsProjectAdmin": "Assign another Project Admin before removing this member.",
       "removeError": "Could not remove the member. Please try again."
     },
     "invites": {

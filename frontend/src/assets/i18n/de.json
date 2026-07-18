@@ -1841,6 +1841,7 @@
       "selfLocked": "Du kannst dich hier nicht selbst entfernen.",
       "removedToast": "{{ name }} wurde entfernt.",
       "removedRotationPending": "Der Zugriff wurde entfernt. {{ count }} Projekte bleiben gesperrt, bis ein Admin die Sicherheitsaktualisierung abschliesst.",
+      "removeNeedsProjectAdmin": "Weise vor dem Entfernen dieses Mitglieds einen anderen Projekt-Admin zu.",
       "removeError": "Das Mitglied konnte nicht entfernt werden. Bitte versuche es erneut."
     },
     "invites": {

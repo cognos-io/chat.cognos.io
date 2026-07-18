@@ -1,4 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
@@ -289,6 +290,30 @@ describe('OrgMembersComponent', () => {
     await component['offboard'](member);
 
     expect(errorAlert).toHaveBeenCalled();
+  });
+
+  it('explains how to unblock offboarding when the member is the last Project Admin', async () => {
+    TestBed.resetTestingModule();
+    removeOrgMember = vi.fn(() =>
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: {
+              message: 'Assign another Project Admin before offboarding this member.',
+            },
+          }),
+      ),
+    );
+    const member = makeMember({ user_id: 'user_x', role: 'member' });
+    listOrgMembers = vi.fn(() => of([member]));
+
+    await render(makeOrg('owner'));
+    await component['offboard'](member);
+
+    expect(errorAlert).toHaveBeenCalledWith(
+      'Assign another Project Admin before removing this member.',
+    );
   });
 
   it('uses display_name fallback to email then user_id', () => {

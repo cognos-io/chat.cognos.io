@@ -1,5 +1,6 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -391,10 +392,14 @@ export class OrgMembersComponent {
           });
           this.reload();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.removePending.set(false);
           this.rotationPending.set(false);
-          this._errors.alert(this._transloco.translate('team.members.removeError'));
+          const messageKey =
+            error instanceof HttpErrorResponse && error.status === 409
+              ? 'team.members.removeNeedsProjectAdmin'
+              : 'team.members.removeError';
+          this._errors.alert(this._transloco.translate(messageKey));
         },
       });
   }
