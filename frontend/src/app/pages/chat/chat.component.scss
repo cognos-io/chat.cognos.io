@@ -10,7 +10,8 @@
 
 .chat-shell__nav {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  // Brand, workspace switcher, new chat, search, then the scrollable list.
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   gap: var(--cog-space-200);
   height: 100%;
   min-height: 0;
