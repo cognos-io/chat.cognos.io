@@ -170,7 +170,7 @@ func projectMemberOr404(app core.App, e *core.RequestEvent, projectID string) (s
 		if err != nil {
 			return "", apis.NewNotFoundError("Project not found", nil)
 		}
-		if err := requireProjectWritable(project); err != nil {
+		if err := requireProjectContentWritable(app, project); err != nil {
 			return "", err
 		}
 	}

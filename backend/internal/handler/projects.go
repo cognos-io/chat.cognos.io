@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 	"github.com/pocketbase/dbx"
@@ -139,6 +140,9 @@ func ProjectsCreate(app core.App) func(e *core.RequestEvent) error {
 			}
 			if !active {
 				return apis.NewNotFoundError("Organisation not found", nil)
+			}
+			if err := requireOrgBillingWritable(app, req.Organisation); err != nil {
+				return err
 			}
 		}
 
@@ -289,7 +293,7 @@ func accessibleProjectRecord(app core.App, e *core.RequestEvent, projectID strin
 		}
 	}
 	if e.Request.Method != http.MethodGet && e.Request.Method != http.MethodDelete {
-		if err := requireProjectWritable(record); err != nil {
+		if err := requireProjectContentWritable(app, record); err != nil {
 			return nil, err
 		}
 	}
@@ -307,6 +311,45 @@ func requireProjectWritable(project *core.Record) error {
 	return nil
 }
 
+// requireProjectContentWritable composes the security key-rotation lock with
+// the Organisation billing lock. Personal Projects never enter the org gate.
+func requireProjectContentWritable(app core.App, project *core.Record) error {
+	if err := requireProjectWritable(project); err != nil {
+		return err
+	}
+	if project == nil {
+		return nil
+	}
+	return requireOrgBillingWritable(app, project.GetString("organisation"))
+}
+
+func requireOrgBillingWritable(app core.App, orgID string) error {
+	if orgID == "" {
+		return nil
+	}
+	state, err := billing.NewPocketBaseRepo(app).StateForOrg(orgID)
+	if err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to verify organisation billing", err)
+	}
+	resolved := billing.ResolvedState{Subject: billing.OrgSubject(orgID), State: state}
+	if organisation, err := app.FindRecordById("organisations", orgID); err == nil {
+		resolved.OrganisationName = organisation.GetString("name")
+	}
+	restriction := billing.NewService().EvaluateOrgAccess(resolved)
+	if restriction == nil {
+		return nil
+	}
+	apiErr := apis.NewApiError(http.StatusPaymentRequired, restriction.Message, nil)
+	apiErr.Data = map[string]any{
+		"error":             restriction.Error,
+		"next_step":         restriction.NextStep,
+		"organisation_id":   restriction.OrganisationID,
+		"organisation_name": restriction.OrganisationName,
+		"admin_message":     restriction.AdminMessage,
+	}
+	return apiErr
+}
+
 func requireConversationWritable(app core.App, conversation *core.Record) error {
 	if conversation == nil {
 		return nil
@@ -319,7 +362,7 @@ func requireConversationWritable(app core.App, conversation *core.Record) error 
 	if err != nil {
 		return apis.NewNotFoundError("Project not found", err)
 	}
-	return requireProjectWritable(project)
+	return requireProjectContentWritable(app, project)
 }
 
 func requireConversationWritableByID(app core.App, conversationID string) error {

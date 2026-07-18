@@ -113,6 +113,174 @@ func seedOrgConversationFixture(
 	return seedProjectConversation(t, app, projectID, conversationID, ownerEmail)
 }
 
+// Direct ciphertext routes share the same fail-closed gate as provider-backed
+// completions. A healthy personal plan must never become a fallback payer for
+// an org-owned Project whose billing is missing.
+func TestOrgBillingGateBlocksDirectContentWrites(t *testing.T) {
+	t.Parallel()
+
+	encodedData := "eyJ0aXRsZSI6IkNoYW5nZWQifQ=="
+	publicKey := "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MEE="
+	cases := []struct {
+		name           string
+		method         string
+		url            string
+		body           string
+		orgID          string
+		projectID      string
+		conversationID string
+		planType       string
+		pastDue        bool
+		wantError      string
+	}{
+		{
+			name:      "Project title edit",
+			method:    http.MethodPatch,
+			url:       "/api/v1/projects/orgwriteproj001",
+			body:      `{"data":"` + encodedData + `"}`,
+			orgID:     "orgwriteblock01",
+			projectID: "orgwriteproj001",
+			wantError: billing.OrgBillingInactiveError,
+		},
+		{
+			name:      "Project Conversation create",
+			method:    http.MethodPost,
+			url:       "/api/v1/projects/orgwriteproj002/conversations",
+			body:      `{"data":"` + encodedData + `","public_key":"` + publicKey + `","wrapped_conversation_secret_key":"d3JhcHBlZA=="}`,
+			orgID:     "orgwriteblock02",
+			projectID: "orgwriteproj002",
+			wantError: billing.OrgBillingInactiveError,
+		},
+		{
+			name:           "Project Conversation title edit",
+			method:         http.MethodPatch,
+			url:            "/api/v1/conversations/orgwriteconv003",
+			body:           `{"data":"` + encodedData + `"}`,
+			orgID:          "orgwriteblock03",
+			projectID:      "orgwriteproj003",
+			conversationID: "orgwriteconv003",
+			wantError:      billing.OrgBillingInactiveError,
+		},
+		{
+			name:      "Project memory create",
+			method:    http.MethodPost,
+			url:       "/api/v1/projects/orgwriteproj004/memory",
+			body:      `{"data":"c2VhbGVkLW1lbW9yeQ=="}`,
+			orgID:     "orgwriteblock04",
+			projectID: "orgwriteproj004",
+			wantError: billing.OrgBillingInactiveError,
+		},
+		{
+			name:      "past-due Project title edit",
+			method:    http.MethodPatch,
+			url:       "/api/v1/projects/orgwriteproj005",
+			body:      `{"data":"` + encodedData + `"}`,
+			orgID:     "orgwriteblock05",
+			projectID: "orgwriteproj005",
+			planType:  "payg",
+			pastDue:   true,
+			wantError: billing.OrgBillingPastDueError,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			scenario := tests.ApiScenario{
+				Name:            tt.name + " fails closed",
+				Method:          tt.method,
+				URL:             tt.url,
+				Body:            strings.NewReader(tt.body),
+				ExpectedStatus:  http.StatusPaymentRequired,
+				ExpectedContent: []string{`"error":"` + tt.wantError + `"`, `"organisation_id":"` + tt.orgID + `"`},
+				TestAppFactory:  setupTestApp,
+				BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+					seedOrganisation(t, app, tt.orgID, "Lapsed AG", "test1@example.com")
+					seedOwnedProject(t, app, tt.projectID, "test1@example.com")
+					seedOrgProject(t, app, tt.projectID, tt.orgID)
+					if tt.planType != "" {
+						seedOrgBilling(t, app, tt.orgID, tt.planType, tt.pastDue, 1)
+					}
+					if tt.conversationID != "" {
+						seedProjectConversation(t, app, tt.projectID, tt.conversationID, "test1@example.com")
+					}
+					seedUserBillingBalance(t, app, "test1@example.com", "payg", 10_000)
+					withRecordAuth("users", "test1@example.com")(t, app, e)
+				},
+			}
+			scenario.Test(t)
+		})
+	}
+}
+
+func TestOrgBillingGateReactivationRestoresDirectWrites(t *testing.T) {
+	t.Parallel()
+
+	projectID := "orgwriteactive1"
+	orgID := "orgwriteactive2"
+	encodedData := "eyJ0aXRsZSI6IlJlc3RvcmVkIn0="
+	scenario := tests.ApiScenario{
+		Name:            "active org Project title edit is writable",
+		Method:          http.MethodPatch,
+		URL:             "/api/v1/projects/" + projectID,
+		Body:            strings.NewReader(`{"data":"` + encodedData + `"}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"data":"` + encodedData + `"`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, orgID, "Restored AG", "test1@example.com")
+			seedOwnedProject(t, app, projectID, "test1@example.com")
+			seedOrgProject(t, app, projectID, orgID)
+			seedOrgBilling(t, app, orgID, "payg", false, 1)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestOrgBillingGateBlocksProjectCreateWithoutPersonalFallback(t *testing.T) {
+	t.Parallel()
+
+	orgID := "orgwritecreate1"
+	encodedData := "eyJ0aXRsZSI6Ik5ldyBQcm9qZWN0In0="
+	scenario := tests.ApiScenario{
+		Name:            "Project create in inactive org fails closed",
+		Method:          http.MethodPost,
+		URL:             "/api/v1/projects",
+		Body:            strings.NewReader(`{"data":"` + encodedData + `","wrapped_project_key":"d3JhcHBlZA==","organisation":"` + orgID + `"}`),
+		ExpectedStatus:  http.StatusPaymentRequired,
+		ExpectedContent: []string{`"error":"ORG_BILLING_INACTIVE"`, `"organisation_id":"` + orgID + `"`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, orgID, "No Billing AG", "test1@example.com")
+			seedUserBillingBalance(t, app, "test1@example.com", "payg", 10_000)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestOrgBillingGateLeavesPersonalProjectWritesUnaffected(t *testing.T) {
+	t.Parallel()
+
+	projectID := "personalwrite01"
+	encodedData := "eyJ0aXRsZSI6IlBlcnNvbmFsIn0="
+	scenario := tests.ApiScenario{
+		Name:            "personal Project title edit remains writable",
+		Method:          http.MethodPatch,
+		URL:             "/api/v1/projects/" + projectID,
+		Body:            strings.NewReader(`{"data":"` + encodedData + `"}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"data":"` + encodedData + `"`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedProject(t, app, projectID, "test1@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+	scenario.Test(t)
+}
+
 // StateForContext resolution matrix: which subject pays, purely from the
 // conversation → project → organisation chain.
 func TestStateForContextResolutionMatrix(t *testing.T) {
