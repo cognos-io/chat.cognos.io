@@ -166,6 +166,11 @@ resulting amount. We never push per-completion events to Paddle.
 > what the customer used (and for our margin against provider cost), and Paddle is the source of
 > truth for what the customer is charged — the recurring commit plus the one overage charge we
 > compute and post per cycle.
+>
+> **Organisation billing** reuses this PAYG floor and overage machinery per
+> [`organisations.md`](./organisations.md): one subscription per Organisation at CHF 15/Seat/month,
+> billed for **at least three Seats** (`N = max(members, 3)`), with pooled overage
+> `max(0, usage − N × CHF 15)` at cycle close.
 
 ### 3.3 Unlimited
 

@@ -74,46 +74,21 @@ import { OverageDisplay, overageDisplay } from './org-overage';
           <cog-callout tone="danger" icon="triangle-alert">
             {{ t('team.billing.loadError') }}
           </cog-callout>
-          <div class="org-billing__retry">
-            <cog-button appearance="default" (click)="reload()">{{
-              t('team.retry')
-            }}</cog-button>
-          </div>
         } @else if (billing(); as b) {
           @if (b.past_due) {
             <cog-callout tone="danger" icon="triangle-alert">
               {{ t('team.billing.pastDueBody') }}
             </cog-callout>
-            <div class="org-billing__cta">
-              @if (isOwner()) {
-                <cog-button
-                  appearance="primary"
-                  icon="credit-card"
-                  [disabled]="actionPending()"
-                  (click)="openPortal()"
-                  >{{ t('team.billing.pastDueAction') }}</cog-button
-                >
-              } @else {
-                <p class="org-billing__ask">{{ t('team.billing.pastDueAskOwner') }}</p>
-              }
-            </div>
+            @if (!isOwner()) {
+              <p class="org-billing__ask">{{ t('team.billing.pastDueAskOwner') }}</p>
+            }
           } @else if (b.plan_type === 'inactive') {
             <cog-callout tone="warning" icon="info">
               {{ t('team.billing.inactiveBody') }}
             </cog-callout>
-            <div class="org-billing__cta">
-              @if (isOwner()) {
-                <cog-button
-                  appearance="primary"
-                  icon="credit-card"
-                  [disabled]="actionPending()"
-                  (click)="startCheckout()"
-                  >{{ t('team.billing.inactiveAction') }}</cog-button
-                >
-              } @else {
-                <p class="org-billing__ask">{{ t('team.billing.inactiveAskOwner') }}</p>
-              }
-            </div>
+            @if (!isOwner()) {
+              <p class="org-billing__ask">{{ t('team.billing.inactiveAskOwner') }}</p>
+            }
           } @else {
             <dl class="org-billing__stats">
               <div class="org-billing__stat">
@@ -121,7 +96,13 @@ import { OverageDisplay, overageDisplay } from './org-overage';
                 <dd>
                   {{ b.seat_quantity }}
                   <span class="org-billing__stat-hint">{{
-                    t('team.billing.seatsHint', { price: seatPrice })
+                    t('team.billing.seatsHint', {
+                      price: seatPrice,
+                      minSeats: minSeats,
+                    })
+                  }}</span>
+                  <span class="org-billing__stat-note">{{
+                    t('team.billing.seatsMinimum', { minSeats: minSeats })
                   }}</span>
                   @if (b.pending_seat_quantity < b.seat_quantity) {
                     <span class="org-billing__stat-note">{{
@@ -189,6 +170,38 @@ import { OverageDisplay, overageDisplay } from './org-overage';
             }
           }
         }
+
+        @if (billingError()) {
+          <ng-container card-actions>
+            <cog-button appearance="default" (click)="reload()">{{
+              t('team.retry')
+            }}</cog-button>
+          </ng-container>
+        }
+        @if (billing(); as b) {
+          @if (b.past_due && isOwner()) {
+            <ng-container card-actions>
+              <cog-button
+                appearance="primary"
+                icon="credit-card"
+                [disabled]="actionPending()"
+                (click)="openPortal()"
+                >{{ t('team.billing.pastDueAction') }}</cog-button
+              >
+            </ng-container>
+          }
+          @if (!b.past_due && b.plan_type === 'inactive' && isOwner()) {
+            <ng-container card-actions>
+              <cog-button
+                appearance="primary"
+                icon="credit-card"
+                [disabled]="actionPending()"
+                (click)="startCheckout()"
+                >{{ t('team.billing.inactiveAction') }}</cog-button
+              >
+            </ng-container>
+          }
+        }
       </cog-card>
 
       <cog-card
@@ -201,11 +214,6 @@ import { OverageDisplay, overageDisplay } from './org-overage';
           <cog-callout tone="danger" icon="triangle-alert">
             {{ t('team.billing.usageLoadError') }}
           </cog-callout>
-          <div class="org-billing__retry">
-            <cog-button appearance="default" (click)="reload()">{{
-              t('team.retry')
-            }}</cog-button>
-          </div>
         } @else if (memberUsage().length === 0) {
           <p class="org-billing__state" role="status">
             {{ t('team.billing.usageEmpty') }}
@@ -243,19 +251,28 @@ import { OverageDisplay, overageDisplay } from './org-overage';
             </table>
           </div>
         }
+
+        @if (usageError()) {
+          <ng-container card-actions>
+            <cog-button appearance="default" (click)="reload()">{{
+              t('team.retry')
+            }}</cog-button>
+          </ng-container>
+        }
       </cog-card>
     </ng-container>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      gap: var(--cog-space-200);
+    }
+
     .org-billing__state {
       margin: 0;
       color: var(--cog-text-muted);
       font-size: var(--cog-fs-body);
-    }
-
-    .org-billing__retry,
-    .org-billing__cta {
-      margin-top: var(--cog-space-100);
     }
 
     .org-billing__ask {
@@ -380,6 +397,7 @@ export class OrgBillingComponent {
   protected readonly actionPending = signal(false);
 
   protected readonly seatPrice = BILLING_PRICES.orgSeatMonthly;
+  protected readonly minSeats = BILLING_PRICES.orgSeatMinimum;
 
   protected readonly isOwner = computed(() => this.org().role === 'owner');
 

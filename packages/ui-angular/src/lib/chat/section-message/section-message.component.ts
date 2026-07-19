@@ -17,7 +17,7 @@ export type CognosSectionMessageTone = 'info' | 'success';
         <cog-icon [name]="resolvedIcon()" [size]="18" [tone]="iconTone()" />
       </span>
 
-      <div class="cog-section-message__copy">
+      <div class="cog-section-message__content">
         @if (title()) {
           <div class="cog-section-message__title">{{ title() }}</div>
         }
@@ -25,10 +25,10 @@ export type CognosSectionMessageTone = 'info' | 'success';
         <div class="cog-section-message__body">
           <ng-content />
         </div>
-      </div>
 
-      <div class="cog-section-message__action">
-        <ng-content select="[cogSectionMessageAction]" />
+        <div class="cog-section-message__action">
+          <ng-content select="[cogSectionMessageAction]" />
+        </div>
       </div>
     </section>
   `,
@@ -64,10 +64,11 @@ export type CognosSectionMessageTone = 'info' | 'success';
         padding-top: var(--cog-space-025);
       }
 
-      .cog-section-message__copy {
+      .cog-section-message__content {
         display: grid;
         gap: var(--cog-space-050);
         min-width: 0;
+        flex: 1;
       }
 
       .cog-section-message__title {
@@ -82,16 +83,22 @@ export type CognosSectionMessageTone = 'info' | 'success';
         line-height: var(--cog-lh-body-sm);
       }
 
-      .cog-section-message__copy {
-        flex: 1;
-      }
-
       .cog-section-message__action {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
         gap: var(--cog-space-100);
-        flex: none;
-        align-self: center;
+        width: 100%;
+        margin-top: var(--cog-space-050);
+      }
+
+      .cog-section-message__action ::ng-deep cog-button {
+        display: block;
+        width: 100%;
+      }
+
+      .cog-section-message__action ::ng-deep .cog-button {
+        width: 100%;
       }
 
       .cog-section-message__action:empty {

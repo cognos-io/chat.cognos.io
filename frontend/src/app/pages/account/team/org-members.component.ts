@@ -81,11 +81,6 @@ import {
         <cog-callout tone="danger" icon="triangle-alert">
           {{ t('team.members.loadError') }}
         </cog-callout>
-        <div class="org-members__retry">
-          <cog-button appearance="default" (click)="reload()">{{
-            t('team.retry')
-          }}</cog-button>
-        </div>
       } @else if (members().length === 0) {
         <cog-empty-state
           icon="users"
@@ -157,6 +152,14 @@ import {
           </table>
         </div>
       }
+
+      @if (error()) {
+        <ng-container card-actions>
+          <cog-button appearance="default" (click)="reload()">{{
+            t('team.retry')
+          }}</cog-button>
+        </ng-container>
+      }
     </cog-card>
   `,
   styles: `
@@ -164,10 +167,6 @@ import {
       margin: 0;
       color: var(--cog-text-muted);
       font-size: var(--cog-fs-body);
-    }
-
-    .org-members__retry {
-      margin-top: var(--cog-space-100);
     }
 
     .org-members__scroll {

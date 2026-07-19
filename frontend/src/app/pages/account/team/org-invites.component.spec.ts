@@ -131,7 +131,7 @@ describe('OrgInvitesComponent', () => {
 
   // ---- Create invite + shown-once token -------------------------------------
 
-  it('creates an invite and shows the token once', async () => {
+  it('creates an invite and shows the shareable link once', async () => {
     await render();
 
     component['email'].set('new@example.com');
@@ -144,32 +144,35 @@ describe('OrgInvitesComponent', () => {
     });
 
     fixture.detectChanges();
-    const tokenInput = fixture.nativeElement.querySelector(
+    const linkInput = fixture.nativeElement.querySelector(
       'cog-text-field input',
     ) as HTMLInputElement | null;
-    expect(tokenInput?.value).toBe('tok_abc123');
+    expect(linkInput?.value).toMatch(/\/invite\?token=tok_abc123$/);
+    expect(fixture.nativeElement.textContent).toContain(
+      'Send this link to your colleague.',
+    );
   });
 
-  it('dismissing the token clears it from DOM and recreates the form', async () => {
+  it('dismissing the link clears it from DOM and recreates the form', async () => {
     await render();
 
     component['email'].set('new@example.com');
     component['create']();
     fixture.detectChanges();
-    const tokenInputBefore = fixture.nativeElement.querySelector(
+    const linkBefore = fixture.nativeElement.querySelector(
       'cog-text-field input',
     ) as HTMLInputElement | null;
-    expect(tokenInputBefore?.value).toBe('tok_abc123');
+    expect(linkBefore?.value).toMatch(/\/invite\?token=tok_abc123$/);
 
     component['dismissToken']();
     fixture.detectChanges();
 
-    // The create form returns (with its own email cog-text-field), so assert
-    // the token value itself is gone rather than the absence of any field.
     const inputs = Array.from(
       fixture.nativeElement.querySelectorAll('cog-text-field input'),
     ) as HTMLInputElement[];
-    expect(inputs.some((i) => i.value === 'tok_abc123')).toBe(false);
+    expect(inputs.some((i) => i.value.endsWith('/invite?token=tok_abc123'))).toBe(
+      false,
+    );
     expect(fixture.nativeElement.querySelector('form')).not.toBeNull();
   });
 
@@ -183,16 +186,18 @@ describe('OrgInvitesComponent', () => {
     expect(createOrgInvite).toHaveBeenCalledWith('org_1', { role: 'member' });
   });
 
-  it('copies token to clipboard and shows toast', async () => {
+  it('copies the invite link to clipboard and shows toast', async () => {
     await render();
 
     component['email'].set('x@y');
     component['create']();
     fixture.detectChanges();
 
-    await component['copyToken']();
+    await component['copyLink']();
 
-    expect(writeText).toHaveBeenCalledWith('tok_abc123');
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringMatching(/\/invite\?token=tok_abc123$/),
+    );
     expect(toastNotify).toHaveBeenCalled();
   });
 
@@ -202,10 +207,10 @@ describe('OrgInvitesComponent', () => {
 
     component['email'].set('x@y');
     component['create']();
-    await component['copyToken']();
+    await component['copyLink']();
 
     expect(errorAlert).toHaveBeenCalledWith(
-      'Could not copy the invite token. Select it and copy it manually.',
+      'Could not copy the invite link. Select it and copy it manually.',
     );
   });
 
@@ -239,6 +244,14 @@ describe('OrgInvitesComponent', () => {
     component['create']();
 
     expect(errorAlert).toHaveBeenCalled();
+  });
+
+  it('does not copy when the invite link is empty', async () => {
+    await render();
+
+    await component['copyLink']();
+
+    expect(writeText).not.toHaveBeenCalled();
   });
 
   // ---- Revoke ---------------------------------------------------------------

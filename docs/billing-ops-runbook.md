@@ -9,12 +9,12 @@ Behaviour reference is `docs/specs/billing.md`; the build status is in
 
 The production Paddle catalogue and every customer-facing surface must use these values:
 
-| Plan              | Price                                 |
-| ----------------- | ------------------------------------- |
-| Pay as you go     | CHF 15 monthly minimum, plus overage  |
-| Unlimited monthly | CHF 150 per month                     |
-| Unlimited annual  | CHF 1'500 per year (two months free)  |
-| Organisation Seat | CHF 15 per Seat per month             |
+| Plan              | Price                                                           |
+| ----------------- | --------------------------------------------------------------- |
+| Pay as you go     | CHF 15 monthly minimum, plus overage                            |
+| Unlimited monthly | CHF 150 per month                                               |
+| Unlimited annual  | CHF 1'500 per year (two months free)                            |
+| Organisation Seat | CHF 15 per Seat per month (minimum 3 Seats, CHF 45/month floor) |
 
 Prices exclude applicable tax/VAT, which Paddle calculates at checkout. Subscriptions renew for
 the same billing period until cancelled. Cancellation stops the next renewal; access continues to
@@ -37,8 +37,8 @@ usage is CHF 8.00, there is no overage and the charge remains CHF 15, plus appli
     - `cognos-unlimited-y` — recurring annual, **CHF 1500.00** (two months free compared with
       monthly billing).
     - `cognos-org-seat` — recurring monthly, **CHF 15.00 per Seat**. Allow the quantity range
-      required by the product (at least 1–100); Cognos sends the active Membership count as the
-      checkout quantity.
+      required by the product (at least **3–100**); Cognos sends
+      `max(active Memberships, 3)` as the checkout and sync quantity.
 - Create a **notification destination** → `https://<prod-host>/webhooks/paddle`,
   and subscribe exactly these events:
     - `subscription.created`, `subscription.activated`, `subscription.updated`,
@@ -90,9 +90,10 @@ not exist in the sandbox.
 2. Buy each plan with a sandbox/live test card → `subscription.created` flips the
    user's plan; `/account/billing` shows it.
 3. Switch plans → exactly one subscription on the Paddle customer (no duplicate).
-4. Create an Organisation, add its payment method, and confirm that checkout contains the active
-   Seat quantity. Complete it and verify `org_billing` has the Organisation id, Paddle customer and
-   subscription ids, `plan_type=payg`, and the expected Seat quantity.
+4. Create an Organisation, add its payment method, and confirm that checkout contains **quantity
+   3** (the three-Seat minimum) for a new Organisation with one Owner. Complete it and verify
+   `org_billing` has the Organisation id, Paddle customer and subscription ids, `plan_type=payg`,
+   and `seat_quantity = 3`.
 
 ## 2. How billing behaves (operator view)
 
@@ -103,6 +104,14 @@ not exist in the sandbox.
   renewal. Each closed cycle is a row in `payg_cycle_summaries`.
 - **Unlimited** never bills per request; usage is recorded (`amount_rappen=0`,
   cost in `user_cost_rappen`) for fair-use only.
+- **Organisation** bills `max(N × CHF 15, pooled usage)` per cycle where
+  `N = max(active Seats, 3)` — minimum **CHF 45/month** even for a solo Owner.
+  Paddle charges `N × CHF 15` at renewal; at cycle rollover we sum org-attributed
+  ledger usage and, if it exceeds the pooled floor, post one overage charge
+  (`org_cycle_summaries`, same CHF 0.01-unit mechanism as personal PAYG).
+  Seat adds prorate when quantity rises above the current count; Seat removes
+  schedule `pending_seat_quantity = max(remaining members, 3)` at the next cycle
+  — never below three Seats, no mid-cycle refund.
 - **Dunning**: a failed renewal → `subscription.past_due` sets `user_billing.past_due`;
   the user keeps working (banner shows "update your card"). Recovery
   (`subscription.activated`) clears it; if Paddle gives up, `subscription.canceled`

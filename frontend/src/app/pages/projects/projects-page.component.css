@@ -36,6 +36,10 @@
   font-size: var(--cog-fs-body-sm);
 }
 
+.projects-page__billing-block {
+  display: block;
+}
+
 .projects-page__card {
   display: grid;
   gap: var(--cog-space-100);
@@ -56,6 +60,15 @@
   display: grid;
   gap: var(--cog-space-150);
   margin-top: var(--cog-space-050);
+}
+
+.projects-page__fields {
+  display: grid;
+  gap: var(--cog-space-150);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
 }
 
 .projects-page__field {

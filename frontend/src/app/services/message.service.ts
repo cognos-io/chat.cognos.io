@@ -43,10 +43,7 @@ import { AttachmentUploadService } from '@app/attachments/attachment-upload.serv
 import { AttachmentManifestV1 } from '@app/attachments/attachment.types';
 import { MessageAttachmentChip } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
 import { COG_DOC_INSTRUCTION } from '@app/documents/cog-doc/cog-doc-instruction';
-import {
-  CompletionBillingRestriction,
-  OrgCompletionBillingRestriction,
-} from '@app/interfaces/billing';
+import { CompletionBillingRestriction } from '@app/interfaces/billing';
 import { Conversation } from '@app/interfaces/conversation';
 import {
   Message,
@@ -68,6 +65,7 @@ import {
   containsRedactionToken,
   resolveOverlaps,
 } from '@app/redaction';
+import { parseOrgCompletionBillingRestriction } from '@app/utils/org-billing-restriction';
 import { saveBlob } from '@app/utils/save-blob';
 import { parseBackendDate } from '@app/utils/timestamp';
 
@@ -105,6 +103,11 @@ import { RedactionService } from './redaction.service';
 import { ScopedMemoryService } from './scoped-memory.service';
 import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
+
+export {
+  parseOrgBillingRestriction,
+  parseOrgCompletionBillingRestriction,
+} from '@app/utils/org-billing-restriction';
 
 export enum MessageStatus {
   None, // default state
@@ -787,8 +790,7 @@ export const removeStreamingAssistantMessage = (
 // pass through verbatim (a 402 body.message). Keeping the pure resolver free of
 // TranslocoService means it stays trivially unit-testable.
 export type CompletionErrorCopy =
-  | { kind: 'key'; key: string }
-  | { kind: 'literal'; value: string };
+  { kind: 'key'; key: string } | { kind: 'literal'; value: string };
 
 export const resolveCompletionErrorMessage = (
   error: HttpErrorResponse,
@@ -855,45 +857,6 @@ export const parseCompletionBillingRestriction = (
     balanceChf: body?.balance_chf,
     estimatedCostChf: body?.estimated_cost_chf,
     nextStep: body?.next_step,
-  };
-};
-
-// parseOrgCompletionBillingRestriction recognises the structured 402 for a
-// completion blocked by the owning Organisation's billing (fail closed —
-// docs/specs/organisations.md §5.8). Kept separate from the personal parser:
-// an org pause must never be treated as (or mutate) the member's own plan
-// state, and never suggests the member's personal balance could cover it.
-export const parseOrgCompletionBillingRestriction = (
-  error: unknown,
-): OrgCompletionBillingRestriction | null => {
-  if (!(error instanceof HttpErrorResponse) || error.status !== 402) {
-    return null;
-  }
-  type OrgRestrictionBody = {
-    error?: string;
-    organisation_id?: string;
-    organisation_name?: string;
-    message?: string;
-    admin_message?: string;
-  };
-  const response = error.error as
-    | (OrgRestrictionBody & { data?: OrgRestrictionBody })
-    | null;
-  // Completion billing can be rejected by either the completion handler
-  // (direct JSON) or the central content-write gate (PocketBase ApiError,
-  // whose structured fields live under `data`). Both are the same public 402
-  // contract and must drive the same calm, draft-preserving banner.
-  const body = response?.data ?? response;
-  const code = body?.error;
-  if (code !== 'ORG_BILLING_INACTIVE' && code !== 'ORG_BILLING_PAST_DUE') {
-    return null;
-  }
-  return {
-    code,
-    organisationId: body?.organisation_id ?? '',
-    organisationName: body?.organisation_name ?? '',
-    message: body?.message ?? response?.message ?? '',
-    adminMessage: body?.admin_message ?? '',
   };
 };
 

@@ -150,6 +150,11 @@
   outline-offset: var(--cog-border-width-strong);
 }
 
+.chat-shell__section-action--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .chat-shell__conversation-list {
   display: grid;
   gap: var(--cog-space-050);

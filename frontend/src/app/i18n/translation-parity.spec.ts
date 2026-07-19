@@ -57,6 +57,26 @@ const WEB_SEARCH_KEYS = [
   'chat.message.sources.webResult',
 ];
 
+// Org billing gate copy rendered by OrgBillingBannerComponent across chat and
+// project write surfaces (fail closed, spec §5.8).
+const ORG_BILLING_LOCK_KEYS = [
+  'billing.orgLock.titleInactive',
+  'billing.orgLock.titlePastDue',
+  'billing.orgLock.bodyInactive',
+  'billing.orgLock.bodyPastDue',
+  'billing.orgLock.personalUnaffected',
+  'billing.orgLock.memberNext',
+  'billing.orgLock.adminNextInactive',
+  'billing.orgLock.adminNextPastDue',
+  'billing.orgLock.openTeamBilling',
+];
+
+const ORG_BILLING_LOCK_ORG_PLACEHOLDER_KEYS = ORG_BILLING_LOCK_KEYS.filter(
+  (key) =>
+    key !== 'billing.orgLock.openTeamBilling' &&
+    key !== 'billing.orgLock.personalUnaffected',
+);
+
 describe('i18n translation parity', () => {
   for (const [name, translation] of Object.entries(locales)) {
     it(`${name}.json has exactly the same keys as en.json`, () => {
@@ -136,6 +156,31 @@ describe('i18n translation parity', () => {
         expect(value, `${name}.json ${key} is still the English string`).not.toBe(
           getPath(en, key),
         );
+      }
+    });
+  }
+
+  it('includes every org billing lock key in English', () => {
+    for (const key of ORG_BILLING_LOCK_KEYS) {
+      expect(englishKeys.has(key), `en.json missing ${key}`).toBe(true);
+      expect(getPath(en, key)?.trim(), `en.json empty ${key}`).toBeTruthy();
+    }
+    for (const key of ORG_BILLING_LOCK_ORG_PLACEHOLDER_KEYS) {
+      expect(getPath(en, key)).toContain('{{ org }}');
+    }
+  });
+
+  for (const [name, translation] of Object.entries(locales)) {
+    it(`${name}.json translates every org billing lock key`, () => {
+      for (const key of ORG_BILLING_LOCK_KEYS) {
+        const value = getPath(translation, key);
+        expect(value?.trim(), `${name}.json empty/missing ${key}`).toBeTruthy();
+        expect(value, `${name}.json ${key} is still the English string`).not.toBe(
+          getPath(en, key),
+        );
+      }
+      for (const key of ORG_BILLING_LOCK_ORG_PLACEHOLDER_KEYS) {
+        expect(getPath(translation, key)).toContain('{{ org }}');
       }
     });
   }

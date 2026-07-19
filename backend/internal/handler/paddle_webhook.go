@@ -812,9 +812,9 @@ func activateOrgSubscription(
 		}
 	}
 
-	seatQty := int64(1)
+	seatQty := billing.MinOrgSeatQuantity
 	if len(sub.Items) > 0 {
-		seatQty = int64(sub.Items[0].Quantity)
+		seatQty = billing.ClampOrgSeatQuantity(int64(sub.Items[0].Quantity))
 	}
 
 	record, err := app.FindFirstRecordByData(orgBillingColl, "organisation", orgID)
@@ -873,10 +873,10 @@ func updateOrgSubscription(
 		}
 		// Apply pending seat change after the cycle that used the old qty closed.
 		if pendingSeatQty > 0 {
-			record.Set("seat_quantity", pendingSeatQty)
+			record.Set("seat_quantity", billing.ClampOrgSeatQuantity(pendingSeatQty))
 			record.Set("pending_seat_quantity", 0)
 		} else if len(sub.Items) > 0 {
-			record.Set("seat_quantity", int64(sub.Items[0].Quantity))
+			record.Set("seat_quantity", billing.ClampOrgSeatQuantity(int64(sub.Items[0].Quantity)))
 		}
 	}
 
@@ -900,7 +900,7 @@ func updateOrgSubscription(
 
 	// Sync quantity on non-rollover updates.
 	if !rolledOver && len(sub.Items) > 0 {
-		record.Set("seat_quantity", int64(sub.Items[0].Quantity))
+		record.Set("seat_quantity", billing.ClampOrgSeatQuantity(int64(sub.Items[0].Quantity)))
 	}
 
 	return app.Save(record)

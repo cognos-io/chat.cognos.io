@@ -35,6 +35,7 @@ import { BillingService } from '@app/services/billing.service';
 import { ConversationSearchService } from '@app/services/conversation-search.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { OrgBillingContextService } from '@app/services/org-billing-context.service';
 import { OrganisationService } from '@app/services/organisation.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
@@ -98,6 +99,9 @@ export class ChatComponent {
   // conversation sections hide inside an org Workspace. Accounts without Org
   // memberships see zero change (the switcher renders nothing).
   readonly workspaces = inject(OrganisationService);
+  private readonly _orgBilling = inject(OrgBillingContextService);
+  readonly orgWorkspaceBillingBlock = this._orgBilling.activeOrgBillingBlock;
+  readonly orgWorkspaceWritesBlocked = this._orgBilling.orgWorkspaceWritesBlocked;
   readonly projects = computed(() =>
     this.workspaces.visibleProjects(this._projectService.orderedProjects()),
   );

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   billedOrganisationId,
+  orgBlockAppliesToActiveWorkspace,
   orgBlockAppliesToConversation,
 } from './org-billing-block';
 
@@ -51,5 +52,24 @@ describe('orgBlockAppliesToConversation', () => {
     expect(
       orgBlockAppliesToConversation({ organisationId: '' }, 'proj_personal', projects),
     ).toBe(false);
+  });
+});
+
+describe('orgBlockAppliesToActiveWorkspace', () => {
+  const block = { organisationId: 'org_1' };
+
+  it.each([
+    ['the matching org workspace', 'org_1', true],
+    ['the personal workspace', 'personal', false],
+    ['a different org workspace', 'org_2', false],
+  ])('applies in %s', (_name, workspace, expected) => {
+    expect(orgBlockAppliesToActiveWorkspace(block, workspace)).toBe(expected);
+  });
+
+  it.each([
+    ['no active block', null],
+    ['a block missing its organisation id', { organisationId: '' }],
+  ])('never applies when there is %s', (_name, activeBlock) => {
+    expect(orgBlockAppliesToActiveWorkspace(activeBlock, 'org_1')).toBe(false);
   });
 });

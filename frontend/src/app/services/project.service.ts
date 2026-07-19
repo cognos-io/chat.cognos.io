@@ -28,6 +28,7 @@ import {
   sortProjectsByUpdated,
 } from '../interfaces/project';
 import { AuthService } from './auth.service';
+import { BillingService } from './billing.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { OrganisationService } from './organisation.service';
@@ -60,7 +61,11 @@ export class ProjectService {
 
   // sources
   readonly newProject$ = new Subject<ProjectData>();
+  /** Emits when project creation fails so callers can reset loading UI. */
+  readonly projectCreateFailed$ = new Subject<void>();
   readonly deleteProject$ = new Subject<string>(); // projectId
+
+  private readonly _billing = inject(BillingService);
 
   private state = signalSlice({
     initialState,
@@ -84,6 +89,8 @@ export class ProjectService {
             this.createProject(data).pipe(
               catchError((error) => {
                 console.error(error);
+                this._billing.applyOrgBillingRestriction(error);
+                this.projectCreateFailed$.next();
                 return EMPTY;
               }),
               tap((project) => {

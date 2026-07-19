@@ -1,7 +1,7 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { NEVER, of, throwError } from 'rxjs';
 
@@ -48,7 +48,7 @@ describe('TeamSettingsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TeamSettingsComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', component: TeamSettingsComponent }]),
         {
           provide: CognosApiService,
           useValue: {
@@ -199,7 +199,7 @@ describe('TeamSettingsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TeamSettingsComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', component: TeamSettingsComponent }]),
         {
           provide: CognosApiService,
           useValue: {
@@ -332,10 +332,54 @@ describe('TeamSettingsComponent', () => {
     await render();
     fixture.detectChanges();
 
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
     component['selectTab']('billing');
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { tab: 'billing' },
+        queryParamsHandling: 'merge',
+      }),
+    );
+    expect(component['tab']()).toBe('billing');
+  });
+
+  it('restores the tab from the URL query param on load', async () => {
+    listOrgs = vi.fn(() => of([makeOrg({ role: 'owner' })]));
+    await render();
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/?tab=policies');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component['tab']()).toBe('policies');
+  });
+
+  it('clears the tab query param when returning to members', async () => {
+    listOrgs = vi.fn(() => of([makeOrg({ role: 'owner' })]));
+    await render();
     fixture.detectChanges();
 
-    expect(component['tab']()).toBe('billing');
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/?tab=billing');
+    await fixture.whenStable();
+
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    component['selectTab']('members');
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { tab: null },
+        queryParamsHandling: 'merge',
+      }),
+    );
+    expect(component['tab']()).toBe('members');
   });
 
   it('shows org picker when user administers multiple orgs', async () => {
@@ -417,8 +461,13 @@ describe('TeamSettingsComponent', () => {
   it('does not switch to an invalid tab value', async () => {
     listOrgs = vi.fn(() => of([makeOrg({ role: 'owner' })]));
     await render();
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/?tab=billing');
+    await fixture.whenStable();
 
     component['selectTab']('invalid' as never);
+    await fixture.whenStable();
+
     expect(component['tab']()).toBe('members');
   });
 

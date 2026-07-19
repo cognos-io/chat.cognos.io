@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
@@ -39,10 +40,26 @@ import { OrgPoliciesComponent } from './org-policies.component';
 
 type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'audit' | 'settings';
 
+const ADMIN_TABS = new Set<AdminTab>([
+  'members',
+  'invites',
+  'billing',
+  'policies',
+  'audit',
+  'settings',
+]);
+
+function parseAdminTab(value: string | null): AdminTab {
+  if (value && ADMIN_TABS.has(value as AdminTab)) {
+    return value as AdminTab;
+  }
+  return 'members';
+}
+
 // TeamSettingsComponent is the /account/team page (behind the `team` feature
 // flag). Three shapes, by what the signed-in Account holds:
 // - no Organisations → the create flow: name → POST /orgs → Paddle checkout
-//   (Owner takes the first Seat; no trial — spec §5.1/§7.1);
+//   at the three-Seat minimum (Owner occupies one Seat; no trial — spec §5.1/§7.1);
 // - only Member-role Organisations → a read-only list (Members have no
 //   administrative surface, spec §5.3) plus the create flow;
 // - Owner/Admin Organisations → the admin view: Members, Invites, Billing &
@@ -93,7 +110,13 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'audit' | 'sett
              checkout completes — it can't invite or hold Projects yet. -->
         <cog-card
           [heading]="t('team.create.checkoutHeading', { name: created.name })"
-          [subtitle]="t('team.create.checkoutIntro', { price: seatPrice })"
+          [subtitle]="
+            t('team.create.checkoutIntro', {
+              price: seatPrice,
+              minSeats: minSeats,
+              minimumFloor: minimumFloor,
+            })
+          "
         >
           <cog-callout tone="info" icon="info">
             {{ t('team.create.checkoutNote') }}
@@ -179,9 +202,15 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'audit' | 'sett
           [subtitle]="t('team.create.intro')"
         >
           <p class="team-settings__pricing">
-            {{ t('team.create.pricing', { price: seatPrice }) }}
+            {{
+              t('team.create.pricing', {
+                price: seatPrice,
+                minSeats: minSeats,
+                minimumFloor: minimumFloor,
+              })
+            }}
           </p>
-          <form class="team-settings__form" (submit)="create($event)">
+          <form class="team-card__fields" (submit)="create($event)">
             <cog-field [label]="t('team.create.nameLabel')">
               <cog-text-field
                 [placeholder]="t('team.create.namePlaceholder')"
@@ -190,15 +219,15 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'audit' | 'sett
                 [ariaLabel]="t('team.create.nameLabel')"
               />
             </cog-field>
-            <div>
-              <cog-button
-                appearance="primary"
-                type="submit"
-                [disabled]="createPending() || !name().trim()"
-                >{{ t('team.create.submit') }}</cog-button
-              >
-            </div>
           </form>
+          <cog-button
+            card-actions
+            appearance="primary"
+            type="button"
+            [disabled]="createPending() || !name().trim()"
+            (click)="create()"
+            >{{ t('team.create.submit') }}</cog-button
+          >
         </cog-card>
       }
     </app-settings-page>
@@ -216,11 +245,11 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'audit' | 'sett
       font-size: var(--cog-fs-body);
     }
 
-    .team-settings__form {
-      display: flex;
-      flex-direction: column;
-      gap: var(--cog-space-150);
-      max-width: 480px;
+    .team-card__fields {
+      display: grid;
+      gap: var(--cog-space-200);
+      margin-top: var(--cog-space-100);
+      min-width: 0;
     }
 
     .team-settings__member-orgs {
@@ -254,8 +283,12 @@ export class TeamSettingsComponent {
   private readonly _workspaces = inject(OrganisationService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _destroyRef = inject(DestroyRef);
+  private readonly _router = inject(Router);
+  private readonly _route = inject(ActivatedRoute);
 
   protected readonly seatPrice = BILLING_PRICES.orgSeatMonthly;
+  protected readonly minSeats = BILLING_PRICES.orgSeatMinimum;
+  protected readonly minimumFloor = BILLING_PRICES.orgSeatMinimumFloor;
 
   protected readonly orgs = signal<OrganisationRecord[]>([]);
   protected readonly loading = signal(true);
@@ -293,6 +326,18 @@ export class TeamSettingsComponent {
 
   constructor() {
     this.load();
+    this._route.queryParamMap
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe((params) => {
+        const raw = params.get('tab');
+        const tab = parseAdminTab(raw);
+        if (tab !== this.tab()) {
+          this.tab.set(tab);
+        }
+        if (raw && raw !== tab) {
+          void this.syncTabQueryParam(tab);
+        }
+      });
   }
 
   protected load(): void {
@@ -325,16 +370,20 @@ export class TeamSettingsComponent {
   }
 
   protected selectTab(value: string): void {
-    if (
-      value === 'members' ||
-      value === 'invites' ||
-      value === 'billing' ||
-      value === 'policies' ||
-      value === 'audit' ||
-      value === 'settings'
-    ) {
-      this.tab.set(value);
+    const tab = parseAdminTab(value);
+    if (tab === this.tab()) {
+      return;
     }
+    this.tab.set(tab);
+    void this.syncTabQueryParam(tab);
+  }
+
+  private syncTabQueryParam(tab: AdminTab): Promise<boolean> {
+    return this._router.navigate([], {
+      relativeTo: this._route,
+      queryParams: { tab: tab === 'members' ? null : tab },
+      queryParamsHandling: 'merge',
+    });
   }
 
   protected selectOrg(orgId: string | null): void {

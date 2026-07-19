@@ -30,7 +30,7 @@ Later commits (same order of work):
   charge, lapse on past_due/cancel/chargeback, refunds.organisation + organisations
   .paddle_customer_id (migration 1760000077), 13 org webhook tests + 3 per-user fallback pins.
 - `ab7a7aaf` backend: org billing endpoints per contract — owner-only checkout
-  (`custom_data.org_id`, active Seat quantity, config `paddle.price_org_seat` /
+  (`custom_data.org_id`, billed Seat quantity `max(members, 3)`, config `paddle.price_org_seat` /
   `COGNOS_PADDLE_PRICE_ORG_SEAT`) and
   portal; owner/admin billing state (floor/pooled/projected overage) and per-member usage metadata;
   CheckoutRequest gains OrgID/Quantity; role-gate + aggregation tests; api-permissions rows.
@@ -89,12 +89,14 @@ subject-discriminated webhook. Key points:
   custom_data.org_id → org, custom_data.user_id → user, then paddle_subscription_id lookup in
   org_billing/user_billing, then paddle_customer_id) — `billing.Subject` already exists from
   commit `224c8131`.
-- Org checkout: `POST /api/v1/orgs/{id}/billing/checkout` (owner only) → Paddle checkout using the
-  active Seat quantity and `custom_data.org_id`; env `COGNOS_PADDLE_PRICE_ORG_SEAT`
-  (CHF 15/Seat/month) — mirror `PaddleWebhookParams.PriceToPlan` wiring.
+- Org checkout: `POST /api/v1/orgs/{id}/billing/checkout` (owner only) → Paddle checkout at
+  **quantity 3 minimum** (`max(active members, 3)`) and `custom_data.org_id`; env
+  `COGNOS_PADDLE_PRICE_ORG_SEAT` (CHF 15/Seat/month) — mirror `PaddleWebhookParams.PriceToPlan`
+  wiring.
 - Seat sync: `subscription.updated` items[0].quantity → `org_billing.seat_quantity`; seat ADD =
-  update Paddle quantity (native proration); seat REMOVE = write `pending_seat_quantity`, applied
-  at cycle rollover (never mid-cycle).
+  update Paddle quantity to `max(members, 3)` (native proration); seat REMOVE = write
+  `pending_seat_quantity = max(remaining members, 3)`, applied at cycle rollover (never mid-cycle,
+  never below three Seats).
 - Pooled cycle close on rollover: sum ledger rows `organisation = org` in cycle window →
   `ComputeOrgCycleSummary` (already implemented in billing/payg.go) → one one-time charge via the
   existing CHF 0.01-unit quantity mechanism → `org_cycle_summaries` row (idempotent by
@@ -114,7 +116,8 @@ Build EXACTLY against the fixed API contract (also mirrored in frontend
   `GET /orgs/{id}/usage` (owner/admin, metadata only: per-member cost/completions/top models).
 - `org_invites` migration: hashed single-use token, role, optional invited_email
   (≤1 pending per (org,email) — reissue replaces), optional project_ids, expiry.
-  `POST /orgs/{id}/invites` (owner/admin) returns the token ONCE; `GET` lists pending (no token);
+  `POST /orgs/{id}/invites` (owner/admin) returns the raw token ONCE in the POST body (UI builds
+  `{origin}/invite?token=…` and shows that full link once); `GET` lists pending (no token);
   `DELETE /orgs/{id}/invites/{inviteId}` revokes. `POST /api/v1/org-invites/accept {token}` (any
   authed account) → active membership + seat (bump Paddle quantity → proration).
 - Offboard `DELETE /orgs/{id}/members/{userId}` (owner/admin; owner cannot offboard self):

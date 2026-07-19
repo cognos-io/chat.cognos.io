@@ -16,6 +16,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
@@ -297,7 +298,7 @@ func OrgInvitesAccept(
 					e.Request.Context(),
 					subscriptionID,
 					priceID,
-					len(members)+1,
+					int(billing.BilledOrgSeatQuantity(int64(len(members)+1))),
 					"prorated_immediately",
 				); err != nil {
 					return apis.NewApiError(http.StatusBadGateway, "Could not add the Organisation Seat. Please try again.", err)
@@ -439,18 +440,27 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 				}
 			}
 
-			billing, err := txApp.FindFirstRecordByFilter(
+			billingRecord, err := txApp.FindFirstRecordByFilter(
 				"org_billing",
 				"organisation = {:org}",
 				dbx.Params{"org": org.ID},
 			)
-			if err == nil && billing != nil {
-				pending := billing.GetInt("pending_seat_quantity")
-				if pending > 1 {
-					billing.Set("pending_seat_quantity", pending-1)
-					if err := txApp.Save(billing); err != nil {
-						return err
-					}
+			if err == nil && billingRecord != nil {
+				remaining, countErr := txApp.FindRecordsByFilter(
+					"org_memberships",
+					"organisation = {:org} && removed_at = ''",
+					"",
+					0,
+					0,
+					dbx.Params{"org": org.ID},
+				)
+				if countErr != nil {
+					return countErr
+				}
+				nextBilled := billing.BilledOrgSeatQuantity(int64(len(remaining)))
+				billingRecord.Set("pending_seat_quantity", int(nextBilled))
+				if err := txApp.Save(billingRecord); err != nil {
+					return err
 				}
 			}
 

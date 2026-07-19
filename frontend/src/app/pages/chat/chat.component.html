@@ -77,14 +77,24 @@
       <section class="chat-shell__section">
         <header class="chat-shell__section-heading chat-shell__section-heading--action">
           <span>{{ t('chat.list.projects') }}</span>
-          <a
-            class="chat-shell__section-action"
-            [routerLink]="['/account/projects']"
-            [title]="t('projects.new')"
-            [attr.aria-label]="t('projects.new')"
-          >
-            <cog-icon name="plus" [size]="16" tone="current" />
-          </a>
+          @if (orgWorkspaceWritesBlocked()) {
+            <span
+              class="chat-shell__section-action chat-shell__section-action--disabled"
+              [title]="t('billing.orgLock.openTeamBilling')"
+              aria-hidden="true"
+            >
+              <cog-icon name="lock" [size]="16" tone="current" />
+            </span>
+          } @else {
+            <a
+              class="chat-shell__section-action"
+              [routerLink]="['/account/projects']"
+              [title]="t('projects.new')"
+              [attr.aria-label]="t('projects.new')"
+            >
+              <cog-icon name="plus" [size]="16" tone="current" />
+            </a>
+          }
         </header>
         <div class="chat-shell__conversation-list">
           @for (project of projects(); track project.record.id) {
@@ -153,14 +163,18 @@
            active org member may create org Projects (backend allows it), so
            the affordance shows for everyone, not only owners/admins. -->
       <div class="chat-shell__workspace-empty">
-        <p class="chat-shell__workspace-empty-text">{{ t('workspace.emptyOrg') }}</p>
-        <a
-          class="chat-shell__workspace-empty-action"
-          [routerLink]="['/account/projects']"
-        >
-          <cog-icon name="plus" [size]="16" tone="current" />
-          <span>{{ t('workspace.emptyOrgCreateProject') }}</span>
-        </a>
+        @if (orgWorkspaceBillingBlock(); as block) {
+          <app-org-billing-banner [block]="block" />
+        } @else {
+          <p class="chat-shell__workspace-empty-text">{{ t('workspace.emptyOrg') }}</p>
+          <a
+            class="chat-shell__workspace-empty-action"
+            [routerLink]="['/account/projects']"
+          >
+            <cog-icon name="plus" [size]="16" tone="current" />
+            <span>{{ t('workspace.emptyOrgCreateProject') }}</span>
+          </a>
+        }
       </div>
     }
   </ng-template>

@@ -1,5 +1,5 @@
 ---
-description: Org-owned Projects bill the Organisation's pooled subscription (CHF 15/seat/month floor + pooled overage); billing gaps fail closed to 402, never fall back to a member's personal balance
+description: Org-owned Projects bill the Organisation's pooled subscription (CHF 15/seat/month, minimum 3 seats / CHF 45 floor + pooled overage); billing gaps fail closed to 402, never fall back to a member's personal balance
 name: org-billing
 ---
 
@@ -24,10 +24,11 @@ flowchart LR
 
 ## Seat floor + pooled overage
 
-- One Paddle subscription per Organisation. Subscription item quantity = N
-  active Seats, each priced at the same **CHF 15.00/seat/month** floor
-  individual PAYG uses (see
-  [usage-cost-calculation](./usage-cost-calculation.md)).
+- One Paddle subscription per Organisation. Subscription item quantity =
+  `N = max(active Seats, 3)`, each priced at the same **CHF 15.00/seat/month**
+  floor individual PAYG uses (see
+  [usage-cost-calculation](./usage-cost-calculation.md)). The minimum pooled
+  floor is **CHF 45.00/month** even when fewer than three people are active.
 - Usage from every member's Completions in org Projects pools into one
   ledger. At cycle close: `overage = max(0, total org usage − N × CHF 15)`,
   billed once via the existing CHF 0.01-unit quantity trick — **not** a
@@ -51,13 +52,14 @@ agreed to.
 
 - **Seat add** (new member accepted): Paddle's native proration bills the
   difference immediately.
-- **Seat remove** (member offboarded): quantity drops at the **next**
-  cycle, no mid-cycle refund. See
+- **Seat remove** (member offboarded): `pending_seat_quantity` is set to
+  `max(remaining members, 3)` at the **next** cycle — no mid-cycle refund.
+  Billing never drops below three Seats. See
   [org-seat-management](./org-seat-management.md) for the full offboarding
   sequence.
-- Org creation runs Paddle checkout at quantity 1 with the Owner as the
-  first seat; the Organisation has no billing — and therefore no working
-  Projects — until that checkout completes.
+- Org creation runs Paddle checkout at **quantity 3** (the minimum) with the
+  Owner occupying one Seat; the Organisation has no billing — and therefore no
+  working Projects — until that checkout completes.
 - A lapsed subscription (`canceled`, or unresolved `past_due`) makes every
   org-owned Project **read-only** for all members until it's reactivated;
   see [org-project-access](./org-project-access.md).

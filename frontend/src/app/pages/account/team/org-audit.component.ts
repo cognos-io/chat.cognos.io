@@ -78,11 +78,6 @@ const KNOWN_ACTIONS = new Set([
         <cog-callout tone="danger" icon="triangle-alert">
           {{ t('team.audit.loadError') }}
         </cog-callout>
-        <div class="org-audit__retry">
-          <cog-button appearance="default" (click)="loadPage(page())">
-            {{ t('team.retry') }}
-          </cog-button>
-        </div>
       } @else if (events().length === 0) {
         <cog-empty-state icon="list" [message]="t('team.audit.empty')" role="status" />
       } @else {
@@ -152,6 +147,14 @@ const KNOWN_ACTIONS = new Set([
           </cog-button>
         </nav>
       }
+
+      @if (error()) {
+        <ng-container card-actions>
+          <cog-button appearance="default" (click)="loadPage(page())">
+            {{ t('team.retry') }}
+          </cog-button>
+        </ng-container>
+      }
     </cog-card>
   `,
   styles: `
@@ -159,10 +162,6 @@ const KNOWN_ACTIONS = new Set([
       margin: var(--cog-space-150) 0 0;
       color: var(--cog-text-muted);
       font-size: var(--cog-fs-body);
-    }
-
-    .org-audit__retry {
-      margin-top: var(--cog-space-100);
     }
 
     .org-audit__scroll {

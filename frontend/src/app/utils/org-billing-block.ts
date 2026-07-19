@@ -37,3 +37,16 @@ export const orgBlockAppliesToConversation = (
   block !== null &&
   block.organisationId !== '' &&
   billedOrganisationId(projectId, projects) === block.organisationId;
+
+/**
+ * orgBlockAppliesToActiveWorkspace - whether an org billing block applies to
+ * the currently active Workspace (org id or personal).
+ */
+export const orgBlockAppliesToActiveWorkspace = (
+  block: { organisationId: string } | null,
+  activeWorkspace: string,
+): boolean =>
+  block !== null &&
+  block.organisationId !== '' &&
+  activeWorkspace !== 'personal' &&
+  activeWorkspace === block.organisationId;

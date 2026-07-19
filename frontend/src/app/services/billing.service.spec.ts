@@ -1,4 +1,5 @@
 import { DOCUMENT } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
@@ -532,6 +533,35 @@ describe('BillingService org billing block', () => {
   it('is a no-op to clear when nothing is blocked', () => {
     const service = build();
     expect(() => service.clearOrgSendingBlocked('org_1')).not.toThrow();
+    expect(service.orgSendBlock()).toBeNull();
+  });
+
+  it('applyOrgBillingRestriction records a recognised org 402', () => {
+    const service = build();
+    const handled = service.applyOrgBillingRestriction(
+      new HttpErrorResponse({
+        status: 402,
+        error: {
+          data: {
+            error: 'ORG_BILLING_INACTIVE',
+            organisation_id: 'org_1',
+            organisation_name: 'Acme',
+          },
+        },
+      }),
+    );
+
+    expect(handled).toBe(true);
+    expect(service.orgSendBlock()?.code).toBe('ORG_BILLING_INACTIVE');
+    expect(service.isSendingLocked()).toBe(false);
+  });
+
+  it('applyOrgBillingRestriction ignores unrelated errors', () => {
+    const service = build();
+
+    expect(
+      service.applyOrgBillingRestriction(new HttpErrorResponse({ status: 500 })),
+    ).toBe(false);
     expect(service.orgSendBlock()).toBeNull();
   });
 });

@@ -112,6 +112,6 @@ export class OrgBillingBannerComponent {
   );
 
   protected goToTeamBilling(): void {
-    void this._router.navigate(['/account/team']);
+    void this._router.navigate(['/account/team'], { queryParams: { tab: 'billing' } });
   }
 }

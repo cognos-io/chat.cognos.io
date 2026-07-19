@@ -389,10 +389,7 @@ func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to calculate Organisation Seats", err)
 		}
-		quantity := len(members)
-		if quantity < 1 {
-			quantity = 1
-		}
+		quantity := int(billing.BilledOrgSeatQuantity(int64(len(members))))
 
 		result, err := params.Client.CreateCheckout(e.Request.Context(), paddle.CheckoutRequest{
 			PriceID:    params.PriceID,

@@ -37,4 +37,5 @@ and Redaction before provider dispatch.
 Team sharing is specified in `docs/specs/organisations.md` and remains
 unmarketable until Teams v1 ships. Until then, avoid marketing Projects as
 collaborative workspaces — use "organise related Conversations" rather than
-"invite your team".
+"invite your team" (when Teams ships, admins copy an invite link from
+**Team → Invites** — see [org-invite-link](../business_processes/org-invite-link.md)).

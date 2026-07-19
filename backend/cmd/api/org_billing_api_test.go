@@ -112,8 +112,36 @@ func TestOrgBillingCheckoutUsesActiveMemberCount(t *testing.T) {
 		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
 			client.mu.Lock()
 			defer client.mu.Unlock()
-			if client.checkoutRequest.Quantity != 2 {
-				t.Errorf("checkout quantity = %d, want 2", client.checkoutRequest.Quantity)
+			if client.checkoutRequest.Quantity != 3 {
+				t.Errorf("checkout quantity = %d, want 3 (minimum seats for 2 members)", client.checkoutRequest.Quantity)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestOrgBillingCheckoutEnforcesMinimumThreeSeats(t *testing.T) {
+	client := &fakeOrgPaddleClient{checkoutURL: "https://checkout.paddle.com/fake"}
+
+	scenario := tests.ApiScenario{
+		Name:            "checkout bills the three-seat minimum for a solo owner",
+		Method:          http.MethodPost,
+		URL:             "/api/v1/orgs/orgbill00000062/billing/checkout",
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"checkout_url":"https://checkout.paddle.com/fake"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithOrgBilling(t, client)
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, "orgbill00000062", "Solo Org", "test1@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			client.mu.Lock()
+			defer client.mu.Unlock()
+			if client.checkoutRequest.Quantity != 3 {
+				t.Errorf("checkout quantity = %d, want 3", client.checkoutRequest.Quantity)
 			}
 		},
 	}

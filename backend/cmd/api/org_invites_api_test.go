@@ -665,8 +665,8 @@ func TestOrgInvitesAcceptUpdatesPaddleSeatQuantity(t *testing.T) {
 			if fake.seatPriceID != "pri_org_seats" {
 				t.Errorf("price id = %q, want pri_org_seats", fake.seatPriceID)
 			}
-			if fake.seatQuantity != 2 {
-				t.Errorf("quantity = %d, want 2", fake.seatQuantity)
+			if fake.seatQuantity != 3 {
+				t.Errorf("quantity = %d, want 3 (minimum seats when adding second member)", fake.seatQuantity)
 			}
 			if fake.seatMode != "prorated_immediately" {
 				t.Errorf("mode = %q, want prorated_immediately", fake.seatMode)
@@ -978,7 +978,7 @@ func TestOrgMembersOffboardHappyPath(t *testing.T) {
 				t.Fatal("projects.rotation_pending = false, want true after offboard")
 			}
 
-			// pending_seat_quantity decremented by one (floor 1)
+			// pending_seat_quantity reflects the minimum billed seats next cycle
 			billing, err := app.FindFirstRecordByFilter(
 				"org_billing",
 				"organisation = {:org}",
@@ -987,8 +987,8 @@ func TestOrgMembersOffboardHappyPath(t *testing.T) {
 			if err != nil {
 				t.Fatalf("FindFirstRecordByFilter(org_billing) error = %v", err)
 			}
-			if billing.GetInt("pending_seat_quantity") != 1 {
-				t.Fatalf("pending_seat_quantity = %d, want 1", billing.GetInt("pending_seat_quantity"))
+			if billing.GetInt("pending_seat_quantity") != 3 {
+				t.Fatalf("pending_seat_quantity = %d, want 3 (one member remains, minimum 3 seats)", billing.GetInt("pending_seat_quantity"))
 			}
 
 			// User personal record untouched

@@ -1,9 +1,9 @@
 # Account-holder profile: Nils Baumann
 
-> **Quick Summary:** Nils is an associate **Account holder** who accepts an invite-token into
-> Sophie's firm **Organisation**, works inside org-owned **Projects** billed to the firm, and won't
-> trust the **Workspace switcher** until he's certain his personal **Conversations** stay his and
-> stay separately billed.
+> **Quick Summary:** Nils is an associate **Account holder** who accepts an Organisation invite link
+> into Sophie's firm **Organisation**, works inside org-owned **Projects** billed to the firm, and
+> won't trust the **Workspace switcher** until he's certain his personal **Conversations** stay his
+> and stay separately billed.
 
 ---
 
@@ -22,7 +22,7 @@
 
 ## 🎯 Core Objectives
 
-- **Primary Goal:** Accept an invite-token email and land already unlocked in the firm's
+- **Primary Goal:** Open the invite link Sophie sent, land already unlocked in the firm's
   **Organisation** workspace — same **Account**, same **Vault**, no second Emergency Kit — then
   start drafting in an org-owned **Project** billed to the firm within minutes.
 - **Secondary Goal:** Keep his own drafting and journaling **Conversations** in his Personal
@@ -41,7 +41,7 @@
 - **Friction 2:** Mid-draft on a client **Answer** when the firm's Paddle subscription lapses to
   `past_due` — the org **Project** goes read-only for every member with no warning before the block,
   and he can't tell whether it's something he did.
-- **Friction 3:** Assumes accepting the invite token creates a second, separate Cognos **Account**
+- **Friction 3:** Assumes opening the invite link creates a second, separate Cognos **Account**
   for "work" — confused when **Unlock** still uses the same **Account Key** and **Vault** he's had
   for months.
 - **Friction 4:** Fears that leaving the firm, or being offboarded, deletes or locks his personal

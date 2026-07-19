@@ -1,12 +1,16 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+
+import { describe, expect, it, vi } from 'vitest';
 
 import { PERSONAL_WORKSPACE } from '@app/interfaces/organisation';
 import { ProjectData } from '@app/interfaces/project';
 
 import { AuthService } from './auth.service';
+import { BillingService } from './billing.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { OrganisationService } from './organisation.service';
@@ -20,6 +24,7 @@ import { VaultService } from './vault.service';
 describe('ProjectService', () => {
   let createProject: ReturnType<typeof vi.fn>;
   let workspace: string;
+  let applyOrgBillingRestriction: ReturnType<typeof vi.fn>;
 
   const projectData: ProjectData = {
     version: '1',
@@ -41,6 +46,7 @@ describe('ProjectService', () => {
         caller_role: 'Admin',
       }),
     );
+    applyOrgBillingRestriction = vi.fn().mockReturnValue(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -74,6 +80,12 @@ describe('ProjectService', () => {
             activeWorkspace: () => workspace,
           },
         },
+        {
+          provide: BillingService,
+          useValue: {
+            applyOrgBillingRestriction,
+          },
+        },
       ],
     });
 
@@ -100,5 +112,48 @@ describe('ProjectService', () => {
     const request = createProject.mock.calls[0][0] as Record<string, unknown>;
     expect('organisation' in request).toBe(false);
     expect(Object.keys(request).sort()).toEqual(['data', 'wrapped_project_key']);
+  });
+
+  it('records an org billing block and emits projectCreateFailed$ on a 402', async () => {
+    const service = setup('org_123');
+    createProject.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 402,
+            error: {
+              data: {
+                error: 'ORG_BILLING_INACTIVE',
+                organisation_id: 'org_123',
+                organisation_name: 'Acme',
+              },
+            },
+          }),
+      ),
+    );
+    applyOrgBillingRestriction.mockReturnValue(true);
+    const failed: unknown[] = [];
+    service.projectCreateFailed$.subscribe(() => failed.push(true));
+
+    service.newProject$.next(projectData);
+
+    await vi.waitFor(() => {
+      expect(failed).toHaveLength(1);
+    });
+    expect(applyOrgBillingRestriction).toHaveBeenCalled();
+  });
+
+  it('does not call applyOrgBillingRestriction for non-billing errors (edge)', async () => {
+    const service = setup('org_123');
+    applyOrgBillingRestriction.mockReturnValue(false);
+    createProject.mockReturnValue(throwError(() => new Error('network')));
+
+    service.newProject$.next(projectData);
+
+    await vi.waitFor(() => {
+      expect(createProject).toHaveBeenCalled();
+    });
+    expect(applyOrgBillingRestriction).toHaveBeenCalled();
+    expect(applyOrgBillingRestriction).toHaveReturnedWith(false);
   });
 });

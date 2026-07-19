@@ -92,7 +92,9 @@ describe('OrgBillingBannerComponent', () => {
       expect(content).not.toContain('Ask an owner or admin');
 
       (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
-      expect(navigate).toHaveBeenCalledWith(['/account/team']);
+      expect(navigate).toHaveBeenCalledWith(['/account/team'], {
+        queryParams: { tab: 'billing' },
+      });
     },
   );
 

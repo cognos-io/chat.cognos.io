@@ -20,6 +20,9 @@
     <h2 id="projects-create-heading" class="projects-page__card-title">
       {{ t('projects.new') }}
     </h2>
+    @if (orgBillingBlock(); as block) {
+      <app-org-billing-banner class="projects-page__billing-block" [block]="block" />
+    }
     @if (hasMemberships()) {
       <p class="projects-page__billing-hint" data-testid="projects-create-billing-hint">
         @if (billedOrgName(); as orgName) {
@@ -30,35 +33,37 @@
       </p>
     }
     <form class="projects-page__form" (submit)="$event.preventDefault(); create()">
-      <label class="projects-page__field">
-        <span class="projects-page__label">{{ t('projects.nameLabel') }}</span>
-        <input
-          type="text"
-          name="project-name"
-          [placeholder]="t('projects.namePlaceholder')"
-          [ngModel]="name()"
-          (ngModelChange)="name.set($event)"
-          autocomplete="off"
-        />
-      </label>
+      <fieldset class="projects-page__fields" [disabled]="orgWritesBlocked()">
+        <label class="projects-page__field">
+          <span class="projects-page__label">{{ t('projects.nameLabel') }}</span>
+          <input
+            type="text"
+            name="project-name"
+            [placeholder]="t('projects.namePlaceholder')"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+            autocomplete="off"
+          />
+        </label>
 
-      <label class="projects-page__field">
-        <span class="projects-page__label">{{ t('projects.descriptionLabel') }}</span>
-        <textarea
-          name="project-description"
-          rows="2"
-          [placeholder]="t('projects.descriptionPlaceholder')"
-          [ngModel]="description()"
-          (ngModelChange)="description.set($event)"
-        ></textarea>
-      </label>
+        <label class="projects-page__field">
+          <span class="projects-page__label">{{ t('projects.descriptionLabel') }}</span>
+          <textarea
+            name="project-description"
+            rows="2"
+            [placeholder]="t('projects.descriptionPlaceholder')"
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+          ></textarea>
+        </label>
+      </fieldset>
 
       <div class="projects-page__actions">
         <cog-button
           appearance="primary"
           icon="plus"
           type="submit"
-          [disabled]="name().trim() === '' || creating()"
+          [disabled]="name().trim() === '' || creating() || orgWritesBlocked()"
         >
           {{ creating() ? t('projects.creating') : t('projects.create') }}
         </cog-button>

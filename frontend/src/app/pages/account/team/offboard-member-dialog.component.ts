@@ -10,6 +10,8 @@ import {
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
 
+import { BILLING_PRICES } from '@app/billing/pricing';
+
 /** Data passed to the offboard confirmation dialog. */
 export interface OffboardMemberDialogData {
   memberName: string;
@@ -47,7 +49,9 @@ export interface OffboardMemberDialogData {
         <cog-callout tone="info" icon="shield-check">
           {{ t('team.offboard.personalUntouched') }}
         </cog-callout>
-        <p class="offboard-dialog__text">{{ t('team.offboard.seat') }}</p>
+        <p class="offboard-dialog__text">
+          {{ t('team.offboard.seat', { minSeats: minSeats }) }}
+        </p>
       </div>
 
       <cog-dialog-actions cogDialogFooter>
@@ -81,6 +85,7 @@ export class OffboardMemberDialogComponent {
   private readonly _dialogRef = inject(DialogRef<boolean>);
 
   readonly data: OffboardMemberDialogData = inject(DIALOG_DATA);
+  protected readonly minSeats = BILLING_PRICES.orgSeatMinimum;
 
   close(): void {
     this._dialogRef.close(false);

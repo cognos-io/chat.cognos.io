@@ -171,8 +171,8 @@ func TestOrgPaddleWebhookActivatesOrgSubscription(t *testing.T) {
 	if got := ob.GetString("plan_type"); got != "payg" {
 		t.Errorf("plan_type = %q, want payg", got)
 	}
-	if got := ob.GetInt("seat_quantity"); got != 1 {
-		t.Errorf("seat_quantity = %d, want 1", got)
+	if got := ob.GetInt("seat_quantity"); got != 3 {
+		t.Errorf("seat_quantity = %d, want 3 (minimum seats)", got)
 	}
 	if got := ob.GetString("paddle_subscription_id"); got != "sub_org_1" {
 		t.Errorf("paddle_subscription_id = %q, want sub_org_1", got)
@@ -329,10 +329,10 @@ func TestOrgPaddleWebhookSeatRemoveNextCycle(t *testing.T) {
 		t.Errorf("overage_charge_rappen = %d, want 500", got)
 	}
 
-	// After rollover, the live seat_quantity drops to pending value.
+	// After rollover, pending below the minimum is clamped to three seats.
 	ob = orgBillingFor(t, app, orgID)
-	if got := ob.GetInt("seat_quantity"); got != 2 {
-		t.Errorf("new seat_quantity = %d, want 2", got)
+	if got := ob.GetInt("seat_quantity"); got != 3 {
+		t.Errorf("new seat_quantity = %d, want 3", got)
 	}
 	if ob.GetInt("pending_seat_quantity") != 0 {
 		t.Error("pending_seat_quantity should be cleared after rollover")
@@ -456,7 +456,7 @@ func TestOrgPaddleWebhookTransactionCompletedReconcilesOrgCycle(t *testing.T) {
 
 	// Roll over to create a summary.
 	seedOrgUsage(t, app, orgID, time.Date(2026, 6, 10, 0, 0, 0, 0, time.UTC), 1500)
-	rollover := orgRolloverFor(orgID, 1)
+	rollover := orgRolloverFor(orgID, 3)
 	postWebhook(mux, rollover, signPaddle(t, webhookSecret, rollover))
 
 	summary := orgCycleSummaryFor(t, app, "sub_org_1")
@@ -466,7 +466,7 @@ func TestOrgPaddleWebhookTransactionCompletedReconcilesOrgCycle(t *testing.T) {
 
 	txnBody := `{"event_id":"evt_org_txn","event_type":"transaction.completed",` +
 		`"data":{"id":"txn_org_cycle_1","subscription_id":"sub_org_1","status":"completed",` +
-		`"details":{"totals":{"grand_total":"1500"}}}}`
+		`"details":{"totals":{"grand_total":"4500"}}}}`
 	if rec := postWebhook(mux, txnBody, signPaddle(t, webhookSecret, txnBody)); rec.Code != http.StatusOK {
 		t.Fatalf("transaction.completed status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
 	}
@@ -475,8 +475,8 @@ func TestOrgPaddleWebhookTransactionCompletedReconcilesOrgCycle(t *testing.T) {
 	if got := summary.GetString("paddle_transaction_id"); got != "txn_org_cycle_1" {
 		t.Errorf("paddle_transaction_id = %q, want txn_org_cycle_1", got)
 	}
-	if got := summary.GetInt("paddle_billed_rappen"); got != 1500 {
-		t.Errorf("paddle_billed_rappen = %d, want 1500", got)
+	if got := summary.GetInt("paddle_billed_rappen"); got != 4500 {
+		t.Errorf("paddle_billed_rappen = %d, want 4500", got)
 	}
 	if !summary.GetBool("reconciled") {
 		t.Error("reconciled should be true")

@@ -49,7 +49,7 @@ import {
   template: `
     <ng-container *transloco="let t">
       <cog-card [heading]="t('team.settings.heading')">
-        <form class="org-general__form" (submit)="save($event)">
+        <form class="team-card__fields" (submit)="save($event)">
           <cog-field [label]="t('team.settings.nameLabel')">
             <cog-text-field
               [value]="name()"
@@ -57,15 +57,15 @@ import {
               [ariaLabel]="t('team.settings.nameLabel')"
             />
           </cog-field>
-          <div>
-            <cog-button
-              appearance="primary"
-              type="submit"
-              [disabled]="savePending() || !canSave()"
-              >{{ t('team.settings.save') }}</cog-button
-            >
-          </div>
         </form>
+        <cog-button
+          card-actions
+          appearance="primary"
+          type="button"
+          [disabled]="savePending() || !canSave()"
+          (click)="save()"
+          >{{ t('team.settings.save') }}</cog-button
+        >
       </cog-card>
 
       @if (org().role === 'owner') {
@@ -85,11 +85,17 @@ import {
     </ng-container>
   `,
   styles: `
-    .org-general__form {
+    :host {
       display: flex;
       flex-direction: column;
-      gap: var(--cog-space-150);
-      max-width: 480px;
+      gap: var(--cog-space-200);
+    }
+
+    .team-card__fields {
+      display: grid;
+      gap: var(--cog-space-200);
+      margin-top: var(--cog-space-100);
+      min-width: 0;
     }
 
     .org-general__danger-body,

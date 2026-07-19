@@ -49,9 +49,10 @@ seats, per-member usage and cost, model mix, and cycle spend — never message c
 (see [Section 9](#9-security--privacy)).
 
 Billing is one Paddle subscription per Organisation at **CHF 15.00 per Seat per month** (the PAYG
-floor), with **pooled** usage: at cycle close the Organisation owes
-`max(0, total org usage − N × CHF 15)` as a single overage charge, reusing the ledger and
-one-time-charge machinery from [`billing.md`](./billing.md).
+floor), billed for **at least three Seats every cycle** (CHF 45.00/month minimum pooled floor) even
+when fewer people are active. Usage is **pooled**: at cycle close the Organisation owes
+`max(0, total org usage − N × CHF 15)` as a single overage charge (where N is the billed Seat
+quantity), reusing the ledger and one-time-charge machinery from [`billing.md`](./billing.md).
 
 ## 2. Target Audience
 
@@ -100,7 +101,7 @@ re-litigate them in implementation reviews.
 | 2   | **Pooled floor**: cycle overage is `max(0, total usage − N × CHF 15)`, not per-seat floors                                                                                   | Teams have mixed usage; pooling makes light users subsidise heavy ones inside one predictable floor and needs only one overage charge per cycle.              |
 | 3   | **Next-cycle seat decrement**: removing a Seat takes effect at the next cycle; no mid-cycle refund                                                                           | The floor is billed in advance per Paddle cycle; decrementing at the boundary avoids refund plumbing and proration disputes.                                  |
 | 4   | **No org trial**                                                                                                                                                             | Individuals keep their personal trial for evaluation; design partners get manual Paddle adjustments, so a second trial system buys nothing but abuse surface. |
-| 5   | **Owner-is-first-seat**: org creation runs Paddle checkout at quantity 1 with the Owner as the first Seat                                                                    | An Organisation never exists without billing, and the Owner always occupies a paid Seat like everyone else.                                                   |
+| 5   | **Three-seat minimum**: checkout and every cycle bill for at least three Seats (`N = max(active members, 3)`); the Owner occupies one Seat like everyone else                | Small teams pay a predictable CHF 45/month pooled floor; usage above it stays pooled across the Organisation.                                                 |
 | 6   | **Participant-must-be-member**: every participant of an org-owned Project must be an active org member (enforced server-side)                                                | Keeps billing attribution and offboarding airtight — revoking a membership provably reaches every org Project.                                                |
 | 7   | **Lapse → read-only**: an unresolved canceled/past-due org subscription makes org Projects read-only for all members                                                         | Fail closed on money without destroying data — nothing is deleted, nothing new is spent.                                                                      |
 | 8   | **Invite-by-token + direct wrap**: product flow is a single-use token; the crypto step seals the project content key to the invitee's Account public key once they are known | Works for invitees without a Cognos Account and avoids email enumeration, while keeping the shipped per-participant wrapping model intact.                    |
@@ -111,14 +112,14 @@ re-litigate them in implementation reviews.
 ### 5.1 Create an Organisation
 
 - **Description**: Any existing Account can create an Organisation. Creation runs a Paddle checkout
-  at quantity 1; the creator becomes Owner and occupies the first Seat. The Organisation has no
-  billing (and grants no org capability) until checkout completes.
+  for the three-Seat minimum; the creator becomes Owner and occupies one Seat. The Organisation has
+  no billing (and grants no org capability) until checkout completes.
 - **User Story**: As an Account holder whose team wants Cognos, I want to create an Organisation
   and pay on one company invoice so that my colleagues don't each need a card.
 - **Priority**: P0
 - **Acceptance Criteria**:
     - An authenticated Account can start org creation; the flow collects an Organisation name and
-      opens a Paddle checkout at quantity 1 carrying `custom_data.org_id`.
+      opens a Paddle checkout at **quantity 3** (the minimum) carrying `custom_data.org_id`.
     - On `subscription.created` for the org subject, `org_billing` is populated and the creator's
       membership becomes an active Owner Seat.
     - Until the webhook lands, the Organisation exposes no org Projects and accepts no invites.
@@ -220,16 +221,19 @@ re-litigate them in implementation reviews.
 
 ### 5.7 Pooled billing and Seat management
 
-- **Description**: One Paddle subscription per Organisation, quantity = N active Seats at CHF 15
-  each, billed in advance. Pooled overage is charged once at cycle close. Seat adds prorate
-  mid-cycle; Seat removals decrement at the next cycle. See [Section 7](#7-billing-flows).
-- **User Story**: As an Owner, I want one invoice of `max(N × 15, actual usage)` so that costs are
-  predictable at the floor and fair above it.
+- **Description**: One Paddle subscription per Organisation. Billed quantity
+  `N = max(active Seats, 3)` at CHF 15 each, billed in advance. Pooled overage is charged once at
+  cycle close. Seat adds prorate mid-cycle; Seat removals update `pending_seat_quantity` to
+  `max(remaining members, 3)` at the next cycle — never below the minimum. See
+  [Section 7](#7-billing-flows).
+- **User Story**: As an Owner, I want one invoice of `max(N × 15, actual usage)` with a sensible
+  team minimum so that costs are predictable at the floor and fair above it.
 - **Priority**: P0
 - **Acceptance Criteria**:
-    - Adding a Seat increases the subscription quantity immediately (Paddle native proration).
-    - Removing a Seat schedules a quantity decrement at the next cycle boundary; no mid-cycle
-      refund is ever issued.
+    - Adding a Seat increases the subscription quantity to `max(members, 3)` immediately (Paddle
+      native proration when the count rises above three).
+    - Removing a Seat schedules `pending_seat_quantity = max(remaining members, 3)` for the next
+      cycle; no mid-cycle refund is ever issued — billing never drops below three Seats.
     - Cycle close posts a single overage charge of `max(0, usage − N × CHF 15)` with a
       deterministic per-cycle idempotency key.
     - There is no org trial (decision #4); design-partner discounts happen as manual Paddle
@@ -305,17 +309,17 @@ replaces the token.
 Parallel to `user_billing`; reuses the micro-rappen ledger machinery (22% margin, ceil charges,
 floor balances — see [`billing.md`](./billing.md)).
 
-| Field                                                               | Type                     | Notes                                                     |
-| ------------------------------------------------------------------- | ------------------------ | --------------------------------------------------------- |
-| `id`                                                                | PK                       |                                                           |
-| `organisation`                                                      | Relation → organisations | Unique.                                                   |
-| `plan_type`                                                         | Text                     | `payg` only in v1.                                        |
-| `balance_microrappen`                                               | Integer                  | Micro-rappen, same precision rules as personal billing.   |
-| `paddle_customer_id` / `paddle_subscription_id` / `paddle_price_id` | Text                     | Paddle identities.                                        |
-| `seat_quantity`                                                     | Integer                  | N active Seats = subscription item quantity.              |
-| `pending_seat_quantity`                                             | Integer, nullable        | Decrement to apply at the next cycle boundary.            |
-| `paddle_cycle_start_at` / `paddle_cycle_end_at`                     | DateTime                 | Current cycle bounds.                                     |
-| `past_due`                                                          | Bool                     | Dunning flag; drives the read-only gate with `plan_type`. |
+| Field                                                               | Type                     | Notes                                                                 |
+| ------------------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------- |
+| `id`                                                                | PK                       |                                                                       |
+| `organisation`                                                      | Relation → organisations | Unique.                                                               |
+| `plan_type`                                                         | Text                     | `payg` only in v1.                                                    |
+| `balance_microrappen`                                               | Integer                  | Micro-rappen, same precision rules as personal billing.               |
+| `paddle_customer_id` / `paddle_subscription_id` / `paddle_price_id` | Text                     | Paddle identities.                                                    |
+| `seat_quantity`                                                     | Integer                  | Billed Seats = subscription item quantity (`max(active members, 3)`). |
+| `pending_seat_quantity`                                             | Integer, nullable        | Seat count to apply at the next cycle boundary (never below 3).       |
+| `paddle_cycle_start_at` / `paddle_cycle_end_at`                     | DateTime                 | Current cycle bounds.                                                 |
+| `past_due`                                                          | Bool                     | Dunning flag; drives the read-only gate with `plan_type`.             |
 
 ### 6.5 Ledger org attribution (`balance_transactions`, extend)
 
@@ -341,7 +345,7 @@ One row per closed org cycle, parallel to `payg_cycle_summaries` in [`billing.md
 | `organisation`                    | Relation → organisations |                                                                 |
 | `paddle_subscription_id`          | Text                     |                                                                 |
 | `cycle_start_at` / `cycle_end_at` | DateTime                 | Closed cycle bounds.                                            |
-| `seat_quantity`                   | Integer                  | N billed Seats for the cycle.                                   |
+| `seat_quantity`                   | Integer                  | N billed Seats for the cycle (`max(active members, 3)`).        |
 | `pooled_usage_microrappen`        | Integer                  | Total org-attributed usage in the cycle.                        |
 | `overage_charge_rappen`           | Integer                  | `max(0, usage − N × CHF 15)`; 0 if none.                        |
 | `reconciled`                      | Bool                     | True when Paddle's billed amount matches the local expectation. |
@@ -358,27 +362,28 @@ metered by our ledger — the same split of roles as personal PAYG in
 ### 7.1 Org creation checkout
 
 1. Creator submits the Organisation name; backend creates the provisional `organisations` row and
-   opens a Paddle checkout: org Seat price, **quantity = 1**, `custom_data.org_id` set.
+   opens a Paddle checkout: org Seat price, **quantity = 3** (the minimum), `custom_data.org_id`
+   set.
 2. Paddle fires `subscription.created`; the webhook subject discriminator routes it to the org
    handler.
-3. Backend populates `org_billing` (subscription, cycle bounds, `seat_quantity = 1`) and activates
-   the creator's Owner membership — the Owner is the first Seat (decision #5).
+3. Backend populates `org_billing` (subscription, cycle bounds, `seat_quantity = 3`) and activates
+   the creator's Owner membership — the Owner occupies one of the three billed Seats (decision #5).
 4. Until step 3 completes the Organisation has no billing and grants no org capability.
 
 ### 7.2 Seat add (mid-cycle)
 
 1. An invite is accepted (Section 8) or an Admin re-activates a membership.
-2. Backend increases the Paddle subscription item quantity by one.
-3. Paddle applies **native proration** for the remainder of the cycle; `seat_quantity` is updated
-   from the `subscription.updated` webhook.
+2. Backend sets the Paddle subscription item quantity to `max(members after add, 3)`.
+3. Paddle applies **native proration** for the remainder of the cycle when quantity rises above the
+   current billed count; `seat_quantity` is updated from the `subscription.updated` webhook.
 
 ### 7.3 Seat remove (next cycle)
 
 1. An Admin revokes a membership (Section 8) or a member leaves.
-2. Backend records the decrement in `pending_seat_quantity` — **no mid-cycle refund**
-   (decision #3).
-3. At the cycle boundary the subscription quantity is lowered; the leaver's Seat was paid to the
-   end of the cycle it was removed in.
+2. Backend sets `pending_seat_quantity = max(remaining active members, 3)` — **no mid-cycle refund**
+   (decision #3). Billing never schedules fewer than three Seats.
+3. At the cycle boundary the subscription quantity is lowered to the pending value; if members were
+   removed but the team is still within the minimum, quantity stays at three.
 
 ### 7.4 Pooled cycle close
 
@@ -414,12 +419,16 @@ revoked together on offboarding. Key mechanics are the shipped per-participant m
 
 ### 8.1 Invitation (token + direct wrap)
 
-1. **Mint** — an Owner/Admin creates an invite (role, optional email for delivery). The server
-   generates a single-use token, stores only its hash with an expiry, and returns the invite link
-   once.
-2. **Deliver** — by email or by the Admin sharing the link. The API responds identically whether or
-   not the address already has an Account: no enumeration signal (decision #8).
-3. **Accept** — the invitee opens the link, signs in or signs up (still exactly one Account per
+1. **Mint** — an Owner/Admin creates an invite (role, optional email for labelling). The server
+   generates a single-use token, stores only its hash with an expiry, and returns the raw token once
+   in the API response. The frontend immediately builds the shareable URL
+   `{origin}/invite?token={token}` and shows that full link once in **Team → Invites** (copy puts
+   the URL on the clipboard). After the Admin dismisses the panel, the link cannot be retrieved.
+2. **Deliver** — v1 sends no email; the Admin copies and shares the link (Slack, work email, etc.).
+   The API responds identically whether or not the optional address already has an Account: no
+   enumeration signal (decision #8).
+3. **Accept** — the invitee opens `/invite?token=…`, signs in or signs up if needed (still exactly
+   one Account per
    person), and accepts. The server validates the token hash and expiry, creates the active
    `org_memberships` row, marks the invite accepted, and increases the Seat quantity (7.2).
 4. **Wrap** — acceptance grants Org membership and a Seat only; access to each org Project is
@@ -620,8 +629,9 @@ Release evidence for Phase 1 and the production-readiness pass.
 - [x] `projects.organisation` relation + personal/org billing attribution
 - [x] Participant-must-be-member validation on org Project participant add + denial test
 - [x] Org Admins auto-Project-Admin enforced in the auth layer + test
-- [x] Paddle org checkout (quantity 1, `custom_data.org_id`) + webhook subject discriminator
-- [x] Seat add with native proration; Seat remove as next-cycle decrement (no mid-cycle refund)
+- [x] Paddle org checkout (quantity 3 minimum, `custom_data.org_id`) + webhook subject discriminator
+- [x] Seat add with native proration above the minimum; Seat remove sets next-cycle quantity to
+  `max(remaining members, 3)` (no mid-cycle refund below three Seats)
 - [x] Pooled cycle close: `max(0, usage − N × 15)` one-time charge, idempotent per cycle
 - [x] `org_cycle_summaries` rows + reconciliation for org subjects
 - [x] `StateForContext` resolver; fail-closed 402 test proving no personal-balance fallback
@@ -635,7 +645,8 @@ Release evidence for Phase 1 and the production-readiness pass.
 - [x] Organisation dissolution: Owner-only, Project-deletion confirmation, subscription cancel,
   membership soft-revoke
 - [x] Workspace switcher (no re-login/re-unlock), six locales, accessible
-- [x] Org creation + member management + invite UI in frontend
+- [x] Org creation + member management + invite UI in frontend (shareable
+  `/invite?token=…` link shown once on **Team → Invites**)
 - [x] Admin metadata dashboard and Activity log — content-free Seats, cost, model mix, cycle spend,
   and administration events
 - [x] Cross-org denial coverage registered in `docs/api-permissions.md`

@@ -32,7 +32,6 @@ import {
   isPlaceholderConversationTitle,
   messageTreeAccessors,
   parseCompletionBillingRestriction,
-  parseOrgCompletionBillingRestriction,
   reasoningDisablingEffort,
   regenerateContextPath,
   removeStreamingAssistantMessage,
@@ -137,98 +136,6 @@ describe('parseCompletionBillingRestriction', () => {
         billing402({ error: 'ORG_BILLING_PAST_DUE', organisation_id: 'org_1' }),
       ),
     ).toBeNull();
-  });
-});
-
-describe('parseOrgCompletionBillingRestriction', () => {
-  const billing402 = (body: unknown): HttpErrorResponse =>
-    new HttpErrorResponse({ status: 402, error: body });
-
-  it.each([['ORG_BILLING_INACTIVE' as const], ['ORG_BILLING_PAST_DUE' as const]])(
-    'parses an %s 402 into a structured org restriction',
-    (code) => {
-      const restriction = parseOrgCompletionBillingRestriction(
-        billing402({
-          error: code,
-          organisation_id: 'org_1',
-          organisation_name: 'Acme',
-          message: 'Acme billing is paused.',
-          admin_message: 'Update the payment method.',
-        }),
-      );
-
-      expect(restriction).toEqual({
-        code,
-        organisationId: 'org_1',
-        organisationName: 'Acme',
-        message: 'Acme billing is paused.',
-        adminMessage: 'Update the payment method.',
-      });
-    },
-  );
-
-  it('defaults missing body fields to empty strings', () => {
-    const restriction = parseOrgCompletionBillingRestriction(
-      billing402({ error: 'ORG_BILLING_INACTIVE' }),
-    );
-
-    expect(restriction).toEqual({
-      code: 'ORG_BILLING_INACTIVE',
-      organisationId: '',
-      organisationName: '',
-      message: '',
-      adminMessage: '',
-    });
-  });
-
-  it('parses the PocketBase API error envelope used by the central org write gate', () => {
-    const restriction = parseOrgCompletionBillingRestriction(
-      billing402({
-        status: 402,
-        message:
-          'New messages in Acme are paused while a payment is retried. Your personal workspace still works.',
-        data: {
-          error: 'ORG_BILLING_PAST_DUE',
-          organisation_id: 'org_1',
-          organisation_name: 'Acme',
-          admin_message: 'Update the payment method.',
-        },
-      }),
-    );
-
-    expect(restriction).toEqual({
-      code: 'ORG_BILLING_PAST_DUE',
-      organisationId: 'org_1',
-      organisationName: 'Acme',
-      message:
-        'New messages in Acme are paused while a payment is retried. Your personal workspace still works.',
-      adminMessage: 'Update the payment method.',
-    });
-  });
-
-  it('returns null for personal billing codes', () => {
-    expect(
-      parseOrgCompletionBillingRestriction(billing402({ error: 'TRIAL_EXHAUSTED' })),
-    ).toBeNull();
-    expect(
-      parseOrgCompletionBillingRestriction(billing402({ error: 'INACTIVE' })),
-    ).toBeNull();
-  });
-
-  it('returns null for non-402s, unknown codes and non-HTTP errors', () => {
-    expect(
-      parseOrgCompletionBillingRestriction(
-        new HttpErrorResponse({
-          status: 500,
-          error: { error: 'ORG_BILLING_INACTIVE' },
-        }),
-      ),
-    ).toBeNull();
-    expect(
-      parseOrgCompletionBillingRestriction(billing402({ error: 'SOMETHING_ELSE' })),
-    ).toBeNull();
-    expect(parseOrgCompletionBillingRestriction(billing402(null))).toBeNull();
-    expect(parseOrgCompletionBillingRestriction(new Error('boom'))).toBeNull();
   });
 });
 

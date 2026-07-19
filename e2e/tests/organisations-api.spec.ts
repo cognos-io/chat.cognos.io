@@ -121,6 +121,20 @@ test.describe('organisations API lifecycle', () => {
 
       await setOrgPastDue(orgId, true);
 
+      const blockedCreateRes = await owner.api.post('/api/v1/projects', {
+        data: {
+          data: randomBase64(48),
+          wrapped_project_key: randomBase64(48),
+          organisation: orgId,
+        },
+      });
+      expect(blockedCreateRes.status()).toBe(402);
+      expect(
+        (await blockedCreateRes.json()) as { data?: { error?: string } },
+      ).toMatchObject({
+        data: { error: 'ORG_BILLING_PAST_DUE', organisation_id: orgId },
+      });
+
       for (const response of [
         await owner.api.patch(`/api/v1/projects/${projectId}`, {
           data: { data: randomBase64(48) },
@@ -325,6 +339,29 @@ test.describe('organisations API lifecycle', () => {
         expect((await afterRes.json()) as OrgInviteListItem[]).toEqual([]);
       });
 
+      await test.step('A creates a link invite (no email) → token returned once', async () => {
+        const res = await userA.api.post(`/api/v1/orgs/${orgId}/invites`, {
+          data: { role: 'member' },
+        });
+        expect(
+          res.ok(),
+          `create link invite: ${res.status()} ${await res.text()}`,
+        ).toBe(true);
+        expect(res.status()).toBe(201);
+
+        const body = (await res.json()) as OrgInviteCreateResponse;
+        expect(body.token).toBeTruthy();
+        expect(body.token).toMatch(/^[0-9a-f]{64}$/);
+        expect(body.invited_email).toBeFalsy();
+
+        const listRes = await userA.api.get(`/api/v1/orgs/${orgId}/invites`);
+        expect(listRes.ok()).toBe(true);
+        const pending = (await listRes.json()) as OrgInviteListItem[];
+        const linkInvite = pending.find((invite) => !invite.invited_email);
+        expect(linkInvite).toBeTruthy();
+        expect((linkInvite as Record<string, unknown>).token).toBeUndefined();
+      });
+
       await test.step('A creates a member invite → token returned once', async () => {
         const res = await userA.api.post(`/api/v1/orgs/${orgId}/invites`, {
           data: { email: userB.account.email, role: 'member' },
@@ -345,12 +382,16 @@ test.describe('organisations API lifecycle', () => {
         expect(res.ok()).toBe(true);
 
         const body = (await res.json()) as OrgInviteListItem[];
-        expect(body.length).toBe(1);
-        expect(body[0].role).toBe('member');
-        expect(body[0].consumed_at).toBeUndefined();
+        expect(body.length).toBeGreaterThanOrEqual(2);
+        const emailInvite = body.find(
+          (invite) => invite.invited_email === userB.account.email,
+        );
+        expect(emailInvite).toBeTruthy();
+        expect(emailInvite!.role).toBe('member');
+        expect(emailInvite!.consumed_at).toBeUndefined();
         // Token must NOT appear in list response
-        expect((body[0] as Record<string, unknown>).token).toBeUndefined();
-        expect((body[0] as Record<string, unknown>).token_hash).toBeUndefined();
+        expect((emailInvite as Record<string, unknown>).token).toBeUndefined();
+        expect((emailInvite as Record<string, unknown>).token_hash).toBeUndefined();
       });
 
       await test.step('B accepts invite → 200 with org + role', async () => {
@@ -446,11 +487,36 @@ test.describe('organisations API lifecycle', () => {
         }
       });
 
+      await test.step('org project create without billing → 402', async () => {
+        const projectRes = await userA.api.post('/api/v1/projects', {
+          data: {
+            data: randomBase64(48),
+            wrapped_project_key: randomBase64(48),
+            organisation: orgId,
+          },
+        });
+        expect(projectRes.status()).toBe(402);
+        const body = (await projectRes.json()) as { data?: { error?: string } };
+        expect(body.data?.error).toBe('ORG_BILLING_INACTIVE');
+      });
+
       await test.step('org project completion without billing → 402', async () => {
         // The security gate also blocks creating new org Projects while
         // billing is inactive, so create this fixture while active and then
         // lapse it before the completion attempt.
-        await upsertOrgBilling(orgId, { planType: 'payg', seats: 1 });
+        await upsertOrgBilling(orgId, { planType: 'payg', seats: 3 });
+
+        await test.step('org billing GET reports three-seat minimum floor', async () => {
+          const res = await userA.api.get(`/api/v1/orgs/${orgId}/billing`);
+          expect(res.ok(), `billing: ${res.status()} ${await res.text()}`).toBe(true);
+          const billing = (await res.json()) as {
+            seat_quantity: number;
+            floor_rappen: number;
+          };
+          expect(billing.seat_quantity).toBe(3);
+          expect(billing.floor_rappen).toBe(4500);
+        });
+
         // Create an org-owned project via the projects API.
         const projectRes = await userA.api.post('/api/v1/projects', {
           data: {

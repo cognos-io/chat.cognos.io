@@ -23,6 +23,7 @@ import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
 import { LanguageService } from '@app/services/language.service';
 import { PaddleService } from '@app/services/paddle.service';
+import { parseOrgBillingRestriction } from '@app/utils/org-billing-restriction';
 
 // How long to wait for the subscription.created webhook before telling the user
 // it's taking longer than usual. ~100s at a cache-warm 2.5s cadence.
@@ -429,6 +430,19 @@ export class BillingService {
   // workspace keeps working (persona PER-006 friction #2).
   markOrgSendingBlocked(restriction: OrgCompletionBillingRestriction): void {
     this._orgSendBlock.set(restriction);
+  }
+
+  /**
+   * applyOrgBillingRestriction parses a write-path 402 and records an org
+   * billing block when recognised. Returns true when the error was handled.
+   */
+  applyOrgBillingRestriction(error: unknown): boolean {
+    const restriction = parseOrgBillingRestriction(error);
+    if (!restriction) {
+      return false;
+    }
+    this.markOrgSendingBlocked(restriction);
+    return true;
   }
 
   // clearOrgSendingBlocked drops the org billing block once a completion for

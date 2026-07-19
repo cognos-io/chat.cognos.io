@@ -65,7 +65,7 @@ let nextMfaToggleId = 0;
           [heading]="t('team.policies.heading')"
           [subtitle]="t('team.policies.subtitle')"
         >
-          <form class="org-policies__form" (submit)="save($event)">
+          <form class="team-card__fields" (submit)="save($event)">
             <cog-field
               [label]="t('team.policies.privacyLabel')"
               [hint]="t('team.policies.privacyHint')"
@@ -111,16 +111,15 @@ let nextMfaToggleId = 0;
                 </cog-callout>
               }
             </div>
-
-            <div>
-              <cog-button
-                appearance="primary"
-                type="submit"
-                [disabled]="savePending() || !canSave()"
-                >{{ t('team.policies.save') }}</cog-button
-              >
-            </div>
           </form>
+          <cog-button
+            card-actions
+            appearance="primary"
+            type="button"
+            [disabled]="savePending() || !canSave()"
+            (click)="save()"
+            >{{ t('team.policies.save') }}</cog-button
+          >
         </cog-card>
       } @else {
         <!-- Read-only view for role 'member': the rules that apply to them. -->
@@ -151,11 +150,11 @@ let nextMfaToggleId = 0;
     </ng-container>
   `,
   styles: `
-    .org-policies__form {
-      display: flex;
-      flex-direction: column;
+    .team-card__fields {
+      display: grid;
       gap: var(--cog-space-200);
-      max-width: 560px;
+      margin-top: var(--cog-space-100);
+      min-width: 0;
     }
 
     .org-policies__mfa {

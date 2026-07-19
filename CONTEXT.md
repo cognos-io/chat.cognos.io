@@ -279,8 +279,9 @@ Projects.
 ### Seat
 
 A billed slot on an Organisation's Subscription — every active Org membership occupies one, at the
-Pay-As-You-Go floor per month. The Organisation's pooled Usage above the combined floor is billed
-as overage at cycle close.
+Pay-As-You-Go floor per month. Organisations are always billed for **at least three Seats**
+(CHF 45/month minimum pooled floor), even when fewer people are active. The Organisation's pooled
+Usage above the combined floor is billed as overage at cycle close.
 
 _Avoid:_ licence, user slot
 

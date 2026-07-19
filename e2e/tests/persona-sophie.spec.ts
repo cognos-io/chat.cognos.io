@@ -84,6 +84,31 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
 
     try {
       // ------------------------------------------------------------------
+      await test.step('org workspace project create is blocked before billing activates', async () => {
+        await page.goto('/');
+        await page.reload();
+        const trigger = page.getByTestId('workspace-switcher-trigger');
+        await expect(trigger).toBeVisible();
+        await trigger.click();
+        await page
+          .getByRole('menuitem', { name: new RegExp(`${ORG_NAME}.*Billed to`, 's') })
+          .click();
+
+        await page.goto('/account/projects');
+        await expect(page.getByText(`${ORG_NAME} billing is paused`)).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(
+          page.getByRole('button', { name: 'Create project' }),
+        ).toBeDisabled();
+        await expect(
+          page.getByRole('button', { name: 'Open team billing' }),
+        ).toBeVisible();
+        await expectNoRawI18nKeys(page, 'projects page (billing inactive)');
+        await shot('org-projects-blocked-before-billing');
+      });
+
+      // ------------------------------------------------------------------
       // GATE: the Owner's admin surface must survive a reload. If it does
       // not (e.g. the caller_role/role wire mismatch), record the blocker
       // and keep walking the role-independent parts of the journey.
@@ -191,7 +216,7 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
 
         // ----------------------------------------------------------------
         const inviteEmail = `nils-${Date.now()}@cognos-e2e.test`;
-        await test.step('create an invite — token shown exactly once, copyable', async () => {
+        await test.step('create an invite — shareable link shown exactly once, copyable', async () => {
           await adminTabs.getByRole('button', { name: 'Invites' }).click();
           await expect(
             page.getByRole('heading', { name: 'Invite a team member' }),
@@ -203,33 +228,40 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
           await expect.soft(roleGroup).toBeVisible();
           await page.getByRole('button', { name: 'Create invite' }).click();
 
-          await expect(page.getByText('Invite token created')).toBeVisible();
+          await expect(page.getByText('Invite link created')).toBeVisible();
           await expect(
             page.getByText(
-              'Copy and share this token now. It will never be shown again.',
+              'Copy and share this link now. It will never be shown again.',
             ),
           ).toBeVisible();
-          const tokenField = page.getByRole('textbox', { name: 'Invite token' });
-          await expect(tokenField).toBeVisible();
-          const token = await tokenField.inputValue();
-          expect(token.length).toBeGreaterThan(10);
-          await shot('invite-token-shown-once');
+          await expect(
+            page.getByText(
+              'Send this link to your colleague. When they sign in (or create an Account) and open it, they join your Organisation.',
+            ),
+          ).toBeVisible();
+          const linkField = page.getByRole('textbox', { name: 'Invite link' });
+          await expect(linkField).toBeVisible();
+          const inviteLink = await linkField.inputValue();
+          expect(inviteLink).toMatch(/\/invite\?token=/);
+          const token = new URL(inviteLink).searchParams.get('token');
+          expect(token?.length).toBeGreaterThan(10);
+          await shot('invite-link-shown-once');
 
           await context.grantPermissions(['clipboard-read', 'clipboard-write']);
           await page.getByRole('button', { name: 'Copy', exact: true }).click();
-          await expect(page.getByText('Token copied to clipboard')).toBeVisible();
+          await expect(page.getByText('Link copied to clipboard')).toBeVisible();
           await expect
             .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-            .toBe(token);
+            .toBe(inviteLink);
 
-          // Dismiss → the token is gone for good; the list never shows it.
+          // Dismiss → the link is gone for good; the list never shows it.
           await page.getByRole('button', { name: 'Done', exact: true }).click();
-          await expect(page.getByText('Invite token created')).toBeHidden();
+          await expect(page.getByText('Invite link created')).toBeHidden();
           await expect(
             page.getByRole('cell', { name: inviteEmail, exact: true }),
           ).toBeVisible();
           const pendingText = await page.locator('table').innerText();
-          expect(pendingText).not.toContain(token);
+          expect(pendingText).not.toContain(token ?? '');
           await expectNoRawI18nKeys(page, 'invites tab');
           await shot('invite-pending-list');
         });

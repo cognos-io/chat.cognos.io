@@ -28,6 +28,10 @@ import { PublicShareService } from '../../services/public-share.service';
 import { RedactionService } from '../../services/redaction.service';
 import { UserPreferencesService } from '../../services/user-preferences.service';
 import { VaultService } from '../../services/vault.service';
+import {
+  buildOrgBillingContextStub,
+  stubOrgBillingContext,
+} from '../../testing/stub-org-billing-context';
 import { ChatComponent } from './chat.component';
 
 describe('ChatComponent', () => {
@@ -144,6 +148,7 @@ describe('ChatComponent', () => {
           useValue: { isDuplicatingSource: () => false, duplicate: vi.fn() },
         },
         { provide: ProjectService, useValue: { orderedProjects: signal([]) } },
+        stubOrgBillingContext,
         {
           // Personal-only account by default (switcher hidden, no workspace
           // scoping); individual tests flip `orgWorkspace` to simulate an
@@ -343,6 +348,177 @@ describe('ChatComponent', () => {
     expect(
       fixture.nativeElement.querySelector('.chat-shell__workspace-empty'),
     ).toBeNull();
+  });
+});
+
+describe('ChatComponent org billing gates', () => {
+  let fixture: ComponentFixture<ChatComponent>;
+
+  async function mountOrgSidebar(
+    orgBillingStub: ReturnType<typeof buildOrgBillingContextStub>,
+  ): Promise<void> {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [ChatComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { email: signal(''), user: signal(null) } },
+        {
+          provide: BillingService,
+          useValue: {
+            planType: signal('trial'),
+            balanceChf: signal(2),
+            trialSeedChf: signal(2),
+            isTrial: signal(true),
+            isSendingLocked: signal(false),
+            isTrialUsedUp: signal(false),
+            isPastDue: signal(false),
+            orgSendBlock: signal(null),
+          },
+        },
+        {
+          provide: ConversationService,
+          useValue: {
+            conversation: signal(undefined),
+            hasPinnedConversations: () => false,
+            pinnedConversations: signal([]),
+            hasNonPinnedConversations: () => false,
+            nonPinnedConversations: signal([]),
+            isTemporaryConversation: signal(false),
+          },
+        },
+        {
+          provide: ConversationSearchService,
+          useValue: {
+            setQuery: vi.fn(),
+            isActive: signal(false),
+            isHydrating: signal(false),
+            showNoResults: signal(false),
+            results: signal([]),
+            query: signal(''),
+          },
+        },
+        { provide: CompactionService, useValue: { compactionsFor: () => [] } },
+        {
+          provide: ConversationDuplicateService,
+          useValue: { isDuplicatingSource: () => false, duplicate: vi.fn() },
+        },
+        {
+          provide: ProjectService,
+          useValue: { orderedProjects: signal([]), projects: signal([]) },
+        },
+        orgBillingStub,
+        {
+          provide: OrganisationService,
+          useValue: {
+            memberships: signal([
+              { id: 'org_1', name: 'Acme', role: 'owner' as const },
+            ]),
+            activeWorkspace: signal('org_1'),
+            hasMemberships: () => true,
+            isOrgWorkspace: () => true,
+            activeOrg: () => ({ id: 'org_1', name: 'Acme', role: 'owner' as const }),
+            orgName: (orgId: string) => (orgId === 'org_1' ? 'Acme' : null),
+            visibleProjects: (projects: unknown[]) => projects,
+          },
+        },
+        {
+          provide: ProjectConversationService,
+          useValue: { byProject: () => new Map() },
+        },
+        { provide: DeviceService, useValue: { isMobile: signal(false) } },
+        {
+          provide: MessageService,
+          useValue: { messages: signal([]), resetState: vi.fn() },
+        },
+        {
+          provide: ModelService,
+          useValue: { getModel: () => undefined, selectedModel: signal(undefined) },
+        },
+        {
+          provide: UserPreferencesService,
+          useValue: {
+            isConversationPinned: () => false,
+            pinConversation: vi.fn(),
+            unpinConversation: vi.fn(),
+          },
+        },
+        {
+          provide: PublicShareService,
+          useValue: {
+            existingShare: vi.fn().mockReturnValue(of(null)),
+            share: vi.fn().mockReturnValue(of('')),
+            revoke: vi.fn().mockReturnValue(of(undefined)),
+          },
+        },
+        {
+          provide: RedactionService,
+          useValue: {
+            revision: signal(0),
+            valuesHidden: signal(false),
+            enabled: signal(true),
+            entriesFor: () => new Map(),
+            detect: () => [],
+            customRedactionValues: () => [],
+            toggleValuesHidden: vi.fn(),
+          },
+        },
+        {
+          provide: Dialog,
+          useValue: { open: vi.fn().mockReturnValue({ close: vi.fn() }) },
+        },
+        { provide: CognosToastService, useValue: { notify: vi.fn() } },
+        { provide: ExportService, useValue: { downloadConversationExport: vi.fn() } },
+        {
+          provide: VaultService,
+          useValue: {
+            keyPair: signal({
+              publicKey: new Uint8Array(),
+              secretKey: new Uint8Array(),
+            }),
+            isRestoring: signal(false),
+            publicKeyFingerprint: signal(''),
+            lock: vi.fn(),
+            notifyUnlockPrompted: vi.fn(),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ChatComponent);
+    fixture.detectChanges();
+  }
+
+  it('shows the billing banner instead of create-project in an empty org workspace (rainy)', async () => {
+    await mountOrgSidebar(
+      buildOrgBillingContextStub({
+        blocked: true,
+        block: {
+          code: 'ORG_BILLING_INACTIVE',
+          organisationId: 'org_1',
+          organisationName: 'Acme',
+          message: '',
+          adminMessage: '',
+        },
+      }),
+    );
+
+    expect(
+      fixture.nativeElement.querySelector('app-org-billing-banner'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Acme billing is paused');
+    expect(
+      fixture.nativeElement.querySelector('a.chat-shell__workspace-empty-action'),
+    ).toBeNull();
+  });
+
+  it('offers create-project in an empty org workspace when billing is healthy (sunny)', async () => {
+    await mountOrgSidebar(buildOrgBillingContextStub({ blocked: false }));
+
+    expect(
+      fixture.nativeElement.querySelector('a.chat-shell__workspace-empty-action'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-org-billing-banner')).toBeNull();
   });
 });
 

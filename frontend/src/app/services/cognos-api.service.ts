@@ -1244,7 +1244,7 @@ export class CognosApiService {
   }
 
   // createOrgCheckout opens Paddle checkout for a fresh Organisation at
-  // quantity 1 — the Owner is the first Seat (Owner only, spec §7.1).
+  // quantity 3 minimum — the Owner occupies one Seat (Owner only, spec §7.1).
   createOrgCheckout(orgId: string): Observable<OrgCheckoutResponse> {
     return this._http.post<OrgCheckoutResponse>(
       `${this._baseUrl}/api/v1/orgs/${orgId}/billing/checkout`,
@@ -1307,6 +1307,7 @@ export class CognosApiService {
 
   // createOrgInvite mints a single-use invite token. The token is returned
   // exactly once in this response; the server keeps only a hash (spec §8.1).
+  // OrgInvitesComponent builds the shareable `{origin}/invite?token=…` link.
   createOrgInvite(
     orgId: string,
     request: { email?: string; role: OrgInviteRole; project_ids?: string[] },

@@ -40,8 +40,8 @@ interface AcceptedMembership {
 }
 
 // InviteAcceptComponent is the /invite landing page (behind the `team` flag).
-// It accepts an Organisation invite token, from the email deep link
-// (?token=…) or pasted by hand, in one sitting with no ceremony (spec §8.1,
+// It accepts an Organisation invite from the shareable link (?token=…) or a
+// token pasted by hand, in one sitting with no ceremony (spec §8.1,
 // persona PER-006 friction #3): the SAME signed-in Account joins — no new
 // account, no re-login, no second Emergency Kit. On success the active
 // Workspace switches to the new Organisation and a welcome state names the

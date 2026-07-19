@@ -1,9 +1,10 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { DatePipe } from '@angular/common';
+import { DOCUMENT, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   effect,
   inject,
   input,
@@ -37,14 +38,15 @@ import {
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+import { buildOrgInviteUrl } from '@app/utils/org-invite-link';
 
-// OrgInvitesComponent mints and manages invite tokens (spec §5.5, §8.1).
+// OrgInvitesComponent mints and manages Organisation invite links (spec §5.5, §8.1).
 // Invites work in one sitting for any work email — no Cognos account needed
-// yet, no IT or SSO step. The single-use invite code is shown exactly ONCE
+// yet, no IT or SSO step. The single-use invite link is shown exactly ONCE
 // (the server keeps only a hash): after dismissing the panel it can never be
 // retrieved again, only revoked and re-issued. v1 sends no email — the admin
-// shares the code themselves. Project access is granted per Project after
-// acceptance (least privilege), which the form says out loud.
+// copies and shares the full /invite?token=… URL themselves. Project access is
+// granted per Project after acceptance (least privilege), which the form says out loud.
 @Component({
   selector: 'app-org-invites',
   standalone: true,
@@ -67,9 +69,19 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         [heading]="t('team.invites.heading')"
         [subtitle]="t('team.invites.subtitle')"
       >
+        @if (!createdInvite()) {
+          <cog-choice-chip-group
+            card-heading-actions
+            [options]="roleOptions(t)"
+            [value]="role()"
+            [ariaLabel]="t('team.invites.roleLabel')"
+            (valueChange)="setRole($event)"
+          />
+        }
+
         @if (createdInvite(); as invite) {
           <div
-            class="org-invites__token"
+            class="team-card__fields org-invites__token"
             role="group"
             [attr.aria-label]="t('team.invites.tokenHeading')"
           >
@@ -77,24 +89,17 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               <strong>{{ t('team.invites.tokenHeading') }}</strong>
               {{ t('team.invites.tokenBody') }}
             </cog-callout>
+            <p class="team-card__note">{{ t('team.invites.linkInstructions') }}</p>
             <cog-field [label]="t('team.invites.tokenLabel')">
               <cog-text-field
-                [value]="invite.token"
+                [value]="inviteLink()"
                 [readonly]="true"
                 [ariaLabel]="t('team.invites.tokenLabel')"
               />
             </cog-field>
-            <div class="org-invites__token-actions">
-              <cog-button appearance="primary" icon="copy" (click)="copyToken()">{{
-                t('team.invites.copy')
-              }}</cog-button>
-              <cog-button appearance="subtle" (click)="dismissToken()">{{
-                t('team.invites.done')
-              }}</cog-button>
-            </div>
           </div>
         } @else {
-          <form class="org-invites__form" (submit)="create($event)">
+          <form class="team-card__fields" (submit)="create($event)">
             <cog-field
               [label]="t('team.invites.emailLabel')"
               [hint]="t('team.invites.emailHint')"
@@ -108,28 +113,31 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 [ariaLabel]="t('team.invites.emailLabel')"
               />
             </cog-field>
-            <cog-field
-              [label]="t('team.invites.roleLabel')"
-              [hint]="t('team.invites.roleHint')"
-            >
-              <cog-choice-chip-group
-                [options]="roleOptions(t)"
-                [value]="role()"
-                [ariaLabel]="t('team.invites.roleLabel')"
-                (valueChange)="setRole($event)"
-              />
-            </cog-field>
-            <p class="org-invites__hint">{{ t('team.invites.projectsHint') }}</p>
-            <div>
-              <cog-button
-                appearance="primary"
-                type="submit"
-                icon="user-plus"
-                [disabled]="createPending()"
-                >{{ t('team.invites.submit') }}</cog-button
-              >
-            </div>
+            <p class="team-card__note">{{ t('team.invites.roleHint') }}</p>
+            <p class="team-card__note">{{ t('team.invites.projectsHint') }}</p>
           </form>
+        }
+
+        @if (createdInvite()) {
+          <ng-container card-actions>
+            <cog-button appearance="primary" icon="copy" (click)="copyLink()">{{
+              t('team.invites.copy')
+            }}</cog-button>
+            <cog-button appearance="subtle" (click)="dismissToken()">{{
+              t('team.invites.done')
+            }}</cog-button>
+          </ng-container>
+        } @else {
+          <ng-container card-actions>
+            <cog-button
+              appearance="primary"
+              type="button"
+              icon="user-plus"
+              [disabled]="createPending()"
+              (click)="create()"
+              >{{ t('team.invites.submit') }}</cog-button
+            >
+          </ng-container>
         }
       </cog-card>
 
@@ -140,11 +148,6 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
           <cog-callout tone="danger" icon="triangle-alert">
             {{ t('team.invites.loadError') }}
           </cog-callout>
-          <div class="org-invites__retry">
-            <cog-button appearance="default" (click)="reload()">{{
-              t('team.retry')
-            }}</cog-button>
-          </div>
         } @else if (invites().length === 0) {
           <cog-empty-state
             icon="mail"
@@ -202,37 +205,47 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
             </table>
           </div>
         }
+
+        @if (error()) {
+          <ng-container card-actions>
+            <cog-button appearance="default" (click)="reload()">{{
+              t('team.retry')
+            }}</cog-button>
+          </ng-container>
+        }
       </cog-card>
     </ng-container>
   `,
   styles: `
-    .org-invites__form,
-    .org-invites__token {
+    :host {
       display: flex;
       flex-direction: column;
-      gap: var(--cog-space-150);
-      max-width: 480px;
+      gap: var(--cog-space-200);
     }
 
-    .org-invites__token-actions {
-      display: flex;
-      gap: var(--cog-space-100);
+    .team-card__fields {
+      display: grid;
+      gap: var(--cog-space-200);
+      margin-top: var(--cog-space-100);
+      min-width: 0;
     }
 
-    .org-invites__hint {
+    .team-card__note {
       margin: 0;
       color: var(--cog-text-muted);
       font-size: var(--cog-fs-small);
+      line-height: var(--cog-lh-body-sm);
+      text-wrap: pretty;
+    }
+
+    .org-invites__token {
+      gap: var(--cog-space-150);
     }
 
     .org-invites__state {
       margin: 0;
       color: var(--cog-text-muted);
       font-size: var(--cog-fs-body);
-    }
-
-    .org-invites__retry {
-      margin-top: var(--cog-space-100);
     }
 
     .org-invites__scroll {
@@ -286,6 +299,7 @@ export class OrgInvitesComponent {
   private readonly _errors = inject(ErrorService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _destroyRef = inject(DestroyRef);
+  private readonly _document = inject(DOCUMENT);
 
   /** The Organisation being managed (caller is Owner/Admin). */
   readonly org = input.required<OrganisationRecord>();
@@ -301,6 +315,13 @@ export class OrgInvitesComponent {
   // The freshly minted invite. This is the ONLY place the token ever exists
   // client-side; dismissing clears it for good (shown-once contract).
   protected readonly createdInvite = signal<OrgInviteCreatedRecord | null>(null);
+  protected readonly inviteLink = computed(() => {
+    const token = this.createdInvite()?.token;
+    if (!token) {
+      return '';
+    }
+    return buildOrgInviteUrl(token, this._document.location.origin);
+  });
 
   protected readonly revokePending = signal(false);
 
@@ -378,9 +399,9 @@ export class OrgInvitesComponent {
       });
   }
 
-  protected async copyToken(): Promise<void> {
-    const token = this.createdInvite()?.token;
-    if (!token) {
+  protected async copyLink(): Promise<void> {
+    const link = this.inviteLink();
+    if (!link) {
       return;
     }
     if (typeof navigator === 'undefined' || !navigator.clipboard) {
@@ -388,7 +409,7 @@ export class OrgInvitesComponent {
       return;
     }
     try {
-      await navigator.clipboard.writeText(token);
+      await navigator.clipboard.writeText(link);
       this._toast.notify({
         title: this._transloco.translate('team.invites.copiedToast'),
         tone: 'success',

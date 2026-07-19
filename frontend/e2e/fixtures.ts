@@ -701,3 +701,93 @@ export const seedAuthenticatedUnlockState = async (
     );
   }, fixture);
 };
+
+export type OrgWorkspaceFixture = {
+  orgId: string;
+  orgName: string;
+  orgRecord: {
+    id: string;
+    name: string;
+    caller_role: 'owner' | 'admin' | 'member';
+    created: string;
+    policy_privacy_tier: '';
+    policy_retention_days: number;
+    policy_mfa_required: boolean;
+  };
+  inactiveBilling: {
+    plan_type: 'inactive';
+    past_due: false;
+    seat_quantity: number;
+    pending_seat_quantity: number;
+    cycle_start_at: string;
+    cycle_end_at: string;
+    floor_rappen: number;
+    pooled_usage_rappen: number;
+    projected_overage_rappen: number;
+  };
+  pastDueBilling: {
+    plan_type: 'payg';
+    past_due: true;
+    seat_quantity: number;
+    pending_seat_quantity: number;
+    cycle_start_at: string;
+    cycle_end_at: string;
+    floor_rappen: number;
+    pooled_usage_rappen: number;
+    projected_overage_rappen: number;
+  };
+};
+
+export const buildOrgWorkspaceFixture = (
+  orgId: string,
+  orgName: string,
+  _userId: string,
+  role: 'owner' | 'admin' | 'member',
+): OrgWorkspaceFixture => ({
+  orgId,
+  orgName,
+  orgRecord: {
+    id: orgId,
+    name: orgName,
+    caller_role: role,
+    created: '2026-01-01T00:00:00.000Z',
+    policy_privacy_tier: '',
+    policy_retention_days: 0,
+    policy_mfa_required: false,
+  },
+  inactiveBilling: {
+    plan_type: 'inactive',
+    past_due: false,
+    seat_quantity: 0,
+    pending_seat_quantity: 0,
+    cycle_start_at: '',
+    cycle_end_at: '',
+    floor_rappen: 0,
+    pooled_usage_rappen: 0,
+    projected_overage_rappen: 0,
+  },
+  pastDueBilling: {
+    plan_type: 'payg',
+    past_due: true,
+    seat_quantity: 1,
+    pending_seat_quantity: 1,
+    cycle_start_at: '2026-01-01T00:00:00.000Z',
+    cycle_end_at: '2026-02-01T00:00:00.000Z',
+    floor_rappen: 1500,
+    pooled_usage_rappen: 0,
+    projected_overage_rappen: 0,
+  },
+});
+
+export const seedOrgWorkspace = async (
+  page: { addInitScript: (...args: unknown[]) => Promise<void> },
+  userId: string,
+  orgId: string,
+) => {
+  await page.addInitScript(
+    ({ uid, workspace }) => {
+      localStorage.setItem(`cognos:workspace:${uid}`, workspace);
+    },
+    { uid: userId, workspace: orgId },
+  );
+};
