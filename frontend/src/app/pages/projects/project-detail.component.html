@@ -21,6 +21,9 @@
         <h1 class="project-detail__title" data-testid="project-name">
           {{ project.decryptedData.name }}
         </h1>
+        @if (billedOrgName(); as orgName) {
+          <app-workspace-context-badge [orgName]="orgName" />
+        }
       </div>
       <div class="project-detail__header-actions">
         <cog-button appearance="default" icon="settings" (click)="openSettings()">
@@ -185,6 +188,15 @@
         </ul>
       }
     </section>
+
+    <!-- Members: org-owned Projects only (sharing is org-only in v1).
+         Personal Projects render nothing here, so individual accounts see
+         zero change. -->
+    @if (project.record.organisation) {
+      <div class="project-detail__card">
+        <app-project-members [project]="project" />
+      </div>
+    }
 
     <section
       class="project-detail__card project-detail__danger"

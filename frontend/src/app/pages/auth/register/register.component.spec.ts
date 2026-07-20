@@ -117,8 +117,13 @@ describe('RegisterComponent', () => {
   });
 
   it('navigates home after a user is emitted', () => {
+    // Deliberate pin update: post-auth navigation now goes through
+    // navigateByUrl so a guard-provided ?next=… deep link survives the
+    // sign-up detour; with no next present it still lands on home.
+    const navigateByUrl = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
     user$.next({ id: 'user-1', email: 'person@example.com' });
 
-    expect(router.navigate).toHaveBeenCalledWith(['/']);
+    expect(navigateByUrl).toHaveBeenCalledWith('/');
   });
 });

@@ -14,6 +14,7 @@ The production Paddle catalogue and every customer-facing surface must use these
 | Pay as you go     | CHF 15 monthly minimum, plus overage  |
 | Unlimited monthly | CHF 150 per month                     |
 | Unlimited annual  | CHF 1'500 per year (two months free)  |
+| Organisation Seat | CHF 15 per Seat per month             |
 
 Prices exclude applicable tax/VAT, which Paddle calculates at checkout. Subscriptions renew for
 the same billing period until cancelled. Cancellation stops the next renewal; access continues to
@@ -28,13 +29,16 @@ usage is CHF 8.00, there is no overage and the charge remains CHF 15, plus appli
 
 ### 1.1 Paddle dashboard (live account)
 
-- Create the four prices (CHF, excl. tax) and copy their `pri_…` ids:
+- Create the five prices (CHF, excl. tax) and copy their `pri_…` ids:
     - `cognos-payg` — recurring monthly, **CHF 15.00** (the minimum commit).
     - `cognos-payg-overage` — **one-time**, **CHF 0.01** unit (overage is billed
       as `quantity = overage in Rappen` of this price).
     - `cognos-unlimited-m` — recurring monthly, **CHF 150.00**.
     - `cognos-unlimited-y` — recurring annual, **CHF 1500.00** (two months free compared with
       monthly billing).
+    - `cognos-org-seat` — recurring monthly, **CHF 15.00 per Seat**. Allow the quantity range
+      required by the product (at least 1–100); Cognos sends the active Membership count as the
+      checkout quantity.
 - Create a **notification destination** → `https://<prod-host>/webhooks/paddle`,
   and subscribe exactly these events:
     - `subscription.created`, `subscription.activated`, `subscription.updated`,
@@ -49,22 +53,29 @@ usage is CHF 8.00, there is no overage and the charge remains CHF 15, plus appli
 Config is koanf — set via `configs/api.production.yaml` or `COGNOS_*` env vars.
 Secrets should come from files/secret-store, never committed.
 
-| Setting                                   | Env var                                                | Notes                               |
-| ----------------------------------------- | ------------------------------------------------------ | ----------------------------------- |
-| `paddle.api_base`                         | `COGNOS_PADDLE_API_BASE`                               | `https://api.paddle.com` (live)     |
-| `paddle.api_key`                          | `COGNOS_PADDLE_API_KEY` / `COGNOS_PADDLE_API_KEY_FILE` | server key; never client            |
-| `paddle.webhook_secret`                   | `COGNOS_PADDLE_WEBHOOK_SECRET` / `…_FILE`              | notification-destination secret     |
-| `paddle.price_payg`                       | `COGNOS_PADDLE_PRICE_PAYG`                             | `pri_…`                             |
-| `paddle.price_payg_overage`               | `COGNOS_PADDLE_PRICE_PAYG_OVERAGE`                     | `pri_…` (required for PAYG overage) |
-| `paddle.price_unlimited_monthly`          | `COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY`                | `pri_…`                             |
-| `paddle.price_unlimited_annual`           | `COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL`                 | `pri_…`                             |
-| `billing.payg_min_commit_rappen`          | `COGNOS_BILLING_PAYG_MIN_COMMIT_RAPPEN`                | default `1500` (CHF 15)             |
-| `billing.unlimited_fair_use_alert_rappen` | `COGNOS_BILLING_UNLIMITED_FAIR_USE_ALERT_RAPPEN`       | default `20000` (CHF 200)           |
-| `billing.trial_seed_rappen`               | `COGNOS_BILLING_TRIAL_SEED_RAPPEN`                     | default `200` (CHF 2)               |
+| Setting                                   | Env var                                                | Notes                                |
+| ----------------------------------------- | ------------------------------------------------------ | ------------------------------------ |
+| `paddle.api_base`                         | `COGNOS_PADDLE_API_BASE`                               | `https://api.paddle.com` (live)      |
+| `paddle.api_key`                          | `COGNOS_PADDLE_API_KEY` / `COGNOS_PADDLE_API_KEY_FILE` | server key; never client             |
+| `paddle.webhook_secret`                   | `COGNOS_PADDLE_WEBHOOK_SECRET` / `…_FILE`              | notification-destination secret      |
+| `paddle.price_payg`                       | `COGNOS_PADDLE_PRICE_PAYG`                             | `pri_…`                              |
+| `paddle.price_payg_overage`               | `COGNOS_PADDLE_PRICE_PAYG_OVERAGE`                     | `pri_…` (required for PAYG overage)  |
+| `paddle.price_unlimited_monthly`          | `COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY`                | `pri_…`                              |
+| `paddle.price_unlimited_annual`           | `COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL`                 | `pri_…`                              |
+| `paddle.price_org_seat`                   | `COGNOS_PADDLE_PRICE_ORG_SEAT`                         | `pri_…` (required for Organisations) |
+| `billing.payg_min_commit_rappen`          | `COGNOS_BILLING_PAYG_MIN_COMMIT_RAPPEN`                | default `1500` (CHF 15)              |
+| `billing.unlimited_fair_use_alert_rappen` | `COGNOS_BILLING_UNLIMITED_FAIR_USE_ALERT_RAPPEN`       | default `20000` (CHF 200)            |
+| `billing.trial_seed_rappen`               | `COGNOS_BILLING_TRIAL_SEED_RAPPEN`                     | default `200` (CHF 2)                |
 
 Without `paddle.api_key` the checkout/portal/cancel/change-plan routes return
 `503`. Without `price_payg_overage` the PAYG overage is **not** posted (logged
-instead) — set it.
+instead) — set it. Organisation checkout also returns `503 Billing is not configured` when either
+the API key or `price_org_seat` is empty. If personal checkout works but Organisation checkout does
+not, `price_org_seat` is the missing setting.
+
+The API base, API key, prices, frontend client token, and webhook destination must all belong to
+the same Paddle environment. Sandbox price IDs do not exist in live Paddle, and live price IDs do
+not exist in the sandbox.
 
 ### 1.3 Frontend
 
@@ -79,6 +90,9 @@ instead) — set it.
 2. Buy each plan with a sandbox/live test card → `subscription.created` flips the
    user's plan; `/account/billing` shows it.
 3. Switch plans → exactly one subscription on the Paddle customer (no duplicate).
+4. Create an Organisation, add its payment method, and confirm that checkout contains the active
+   Seat quantity. Complete it and verify `org_billing` has the Organisation id, Paddle customer and
+   subscription ids, `plan_type=payg`, and the expected Seat quantity.
 
 ## 2. How billing behaves (operator view)
 
@@ -119,6 +133,10 @@ instead) — set it.
   modifies the one subscription — if a customer has duplicate active
   subscriptions, they pre-date the change-plan flow and should be cancelled in
   Paddle.
+- **Organisation checkout says “Billing is not configured”**: check that the backend has both a
+  Paddle API key and `paddle.price_org_seat` / `COGNOS_PADDLE_PRICE_ORG_SEAT`. Create the recurring
+  CHF 15 monthly per-Seat price in the matching sandbox or live catalogue, copy its `pri_…` id,
+  restart the API, then retry. A client-side token does not replace the server API key or price id.
 - **Reconciliation**: `payg_cycle_summaries.reconciled` is set when
   `transaction.completed` records a billed amount ≥ the local expected. See the
   open item below before treating a `reconciled=false` as drift.
@@ -149,7 +167,38 @@ with overage in production, confirm which transaction the overage lands on and
 tighten the `reconciled` check + add a drift alert (`billing-launch-plan.md`
 Phase 4 open item).
 
-## 6. Model gross margin and cost percentiles
+## 6. Organisation dissolution reconciliation
+
+The current dissolution request first schedules the Paddle subscription to cancel at the next
+billing period, then deletes Organisation Projects and revokes Memberships in one PocketBase
+transaction. A Paddle failure leaves Cognos unchanged and retryable. The inverse window remains:
+Paddle may accept the cancellation, then the local transaction may fail.
+
+Do not try to make a remote API call and a database transaction atomic. Replace the synchronous
+sequence with a persisted, retryable state machine:
+
+1. In one local transaction, create a unique dissolution operation for the Organisation with
+   status `requested`, record the subscription id and explicit Project-deletion confirmation, and
+   make Organisation content read-only.
+2. A worker reads `requested` operations and asks Paddle to schedule cancellation. Paddle does not
+   support arbitrary idempotency keys, so after timeouts or errors it must fetch the subscription
+   and treat either `status=canceled` or `scheduled_change.action=cancel` as success before
+   retrying.
+3. Persist `paddle_confirmed`, then run the existing Project deletion, Membership revocation,
+   `dissolved_at`, and audit writes in one PocketBase transaction.
+4. Mark the operation `completed`. Retry `requested`, `paddle_confirmed`, and `local_failed`
+   operations with bounded backoff; alert when an operation is not complete after 15 minutes.
+5. Let `subscription.updated` (scheduled cancellation) and `subscription.canceled` webhooks wake
+   the reconciler. They must not delete an Organisation unless a matching local dissolution intent
+   exists.
+
+Until that state machine lands, an operator investigating a failed dissolution must compare the
+local Organisation state with Paddle's subscription `status` and `scheduled_change`. Never create a
+second subscription. If Paddle shows a scheduled cancellation while Cognos is still active, retain
+the Organisation data and escalate for a controlled local completion rather than deleting records
+manually.
+
+## 7. Model gross margin and cost percentiles
 
 The nightly `cost-risk` logs are an early warning, not the final accounts. They report:
 
@@ -189,7 +238,7 @@ Initial beta alerts:
 These are initial beta kill switches, not public Plan limits. Re-baseline them after four weeks of
 real cost data; never raise a threshold merely to silence an alert.
 
-## 7. Fair-use response procedure
+## 8. Fair-use response procedure
 
 1. Confirm the ledger rows are real, idempotent and use current Provider prices and FX. Do not read
    Message content.
@@ -207,7 +256,7 @@ real cost data; never raise a threshold merely to silence an alert.
 Only an operator may suspend access for fair use. Automated alerts do not make contractual or fraud
 decisions.
 
-## 8. Refund-abuse controls
+## 9. Refund-abuse controls
 
 Before issuing a discretionary guarantee refund:
 
@@ -226,7 +275,7 @@ Before issuing a discretionary guarantee refund:
 Pause refund processing—not customer data access—if adjustment webhooks, transaction identity or
 Paddle totals cannot be reconciled. Resume only after the billing owner signs off.
 
-## 9. System shutdown thresholds
+## 10. System shutdown thresholds
 
 Pause new paid Completions globally and open an incident when any of these is true:
 
@@ -238,10 +287,10 @@ Pause new paid Completions globally and open an incident when any of these is tr
 - daily Provider COGS exceeds CHF 300 without matching paid activity; or
 - a Provider price/routing change would make a currently promoted Model loss-making.
 
-Model-only failures disable that Model first. Account-only fair-use signals follow §7. Preserve
+Model-only failures disable that Model first. Account-only fair-use signals follow §8. Preserve
 read/export access and use the incident runbook for communication and recovery.
 
-## 10. First real PAYG overage-cycle gate
+## 11. First real PAYG overage-cycle gate
 
 Broad paid promotion remains blocked until one real, low-value PAYG cycle with usage above CHF 15
 passes the record in

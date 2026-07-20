@@ -11,12 +11,24 @@
     />
     <h1 class="projects-page__title">{{ t('projects.title') }}</h1>
     <p class="projects-page__subtitle">{{ t('projects.subtitle') }}</p>
+    @if (hasMemberships()) {
+      <app-workspace-context-badge [orgName]="billedOrgName()" />
+    }
   </header>
 
   <section class="projects-page__card" aria-labelledby="projects-create-heading">
     <h2 id="projects-create-heading" class="projects-page__card-title">
       {{ t('projects.new') }}
     </h2>
+    @if (hasMemberships()) {
+      <p class="projects-page__billing-hint" data-testid="projects-create-billing-hint">
+        @if (billedOrgName(); as orgName) {
+          {{ t('projects.createBilledToOrg', { org: orgName }) }}
+        } @else {
+          {{ t('projects.createBilledToYou') }}
+        }
+      </p>
+    }
     <form class="projects-page__form" (submit)="$event.preventDefault(); create()">
       <label class="projects-page__field">
         <span class="projects-page__label">{{ t('projects.nameLabel') }}</span>

@@ -15,6 +15,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/mfa"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -129,6 +130,7 @@ func addPocketBaseRoutes(
 	attachmentMaxFileBytes int64,
 	attachmentStorageCapBytes int64,
 	mfaCipher *mfa.SeedCipher,
+	paddlePriceOrgSeat string,
 ) {
 	// Shared MFA dependencies for the auth-completion and management endpoints.
 	mfaStore := mfa.NewStore(app)
@@ -451,6 +453,239 @@ func addPocketBaseRoutes(
 	e.Router.DELETE(
 		"/api/v1/projects/{projectID}",
 		handler.ProjectsDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Organisations (B2B workspaces): membership/role metadata only — the
+	// handlers never touch message content. Reads require an active org
+	// membership; updates require the owner/admin role. See
+	// docs/api-permissions.md.
+	e.Router.GET(
+		"/api/v1/orgs",
+		handler.OrganisationsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/orgs",
+		handler.OrganisationsCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}",
+		handler.OrganisationsGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/orgs/{orgID}",
+		handler.OrganisationsUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/orgs/{orgID}/policies",
+		handler.OrganisationPoliciesUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/members",
+		handler.OrganisationMembersList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Organisation billing: checkout, status, portal, usage.
+	// All gated by active membership; checkout and portal are owner-only,
+	// billing and usage are owner/admin.
+	e.Router.POST(
+		"/api/v1/orgs/{orgID}/billing/checkout",
+		handler.OrganisationBillingCheckout(handler.OrganisationBillingCheckoutParams{
+			Logger:  logger,
+			Client:  paddleClient,
+			PriceID: paddlePriceOrgSeat,
+			App:     app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/billing",
+		handler.OrganisationBillingGet(handler.OrganisationBillingGetParams{
+			Logger:          logger,
+			MinCommitRappen: paddleMinCommitRappen,
+			App:             app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/billing/portal",
+		handler.OrganisationBillingPortal(handler.OrganisationBillingPortalParams{
+			Logger: logger,
+			Client: paddleClient,
+			App:    app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/usage",
+		handler.OrganisationUsage(handler.OrganisationUsageParams{
+			Logger: logger,
+			App:    app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Organisation dissolution — owner only; existing Projects require an
+	// explicit delete confirmation in the request body.
+	e.Router.DELETE(
+		"/api/v1/orgs/{orgID}",
+		handler.OrganisationDissolve(handler.OrganisationDissolveParams{
+			Logger: logger,
+			Client: paddleClient,
+			App:    app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Organisation invites — owner/admin only.
+	e.Router.POST(
+		"/api/v1/orgs/{orgID}/invites",
+		handler.OrgInvitesCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/invites",
+		handler.OrgInvitesList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/orgs/{orgID}/invites/{inviteID}",
+		handler.OrgInvitesRevoke(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Invite acceptance (any authenticated user with the token).
+	var orgSeatUpdater paddle.SeatQuantityUpdater
+	if updater, ok := paddleClient.(paddle.SeatQuantityUpdater); ok {
+		orgSeatUpdater = updater
+	}
+	e.Router.POST(
+		"/api/v1/org-invites/accept",
+		handler.OrgInvitesAccept(app, organisations.NewPocketBaseRepo(app), orgSeatUpdater),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Offboard member — owner/admin only.
+	e.Router.DELETE(
+		"/api/v1/orgs/{orgID}/members/{userID}",
+		handler.OrgMembersOffboard(app, organisations.NewPocketBaseRepo(app)),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Revoke a member's sessions (token-key rotation) — owner/admin only.
+	e.Router.POST(
+		"/api/v1/orgs/{orgID}/members/{userID}/revoke-sessions",
+		handler.OrgMemberSessionsRevoke(app, organisations.NewPocketBaseRepo(app)),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Content-free audit log — owner/admin only.
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/audit",
+		handler.OrgAuditList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/audit/export",
+		handler.OrgAuditExport(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Public key resolution (relationship-gated).
+	e.Router.GET(
+		"/api/v1/users/{userID}/public-key",
+		handler.UserPublicKey(app, auth.NewPocketBaseKeyPairRepo(app), organisations.NewPocketBaseRepo(app)),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Project participants and key rotation (org-owned projects only;
+	// personal-project sharing is rejected in v1).
+	e.Router.GET(
+		"/api/v1/projects/{projectID}/participants",
+		handler.ProjectParticipantsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/projects/{projectID}/participants",
+		handler.ProjectParticipantsAdd(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/projects/{projectID}/participants/{userID}",
+		handler.ProjectParticipantsRevoke(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/projects/{projectID}/rotate",
+		handler.ProjectKeyRotate(app),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

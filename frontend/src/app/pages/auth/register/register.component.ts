@@ -19,6 +19,7 @@ import { CognosAuthPageComponent, CognosButtonComponent } from '@cognos/ui-angul
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
+import { safeInternalUrl } from '@app/utils/safe-redirect';
 
 import { Analytics, signupSource } from '@services/analytics/analytics';
 import { AuthService } from '@services/auth.service';
@@ -157,7 +158,10 @@ import { authRequestErrorKind } from '../auth-request-error';
 
         <p class="auth-page__switch">
           {{ t('auth.register.haveAccount') }}
-          <a routerLink="/auth/login">{{ t('auth.register.login') }}</a>
+          <!-- Keep the ?next deep-link target when switching back to login. -->
+          <a routerLink="/auth/login" queryParamsHandling="preserve">{{
+            t('auth.register.login')
+          }}</a>
         </p>
       </ng-container>
     </cog-auth-page>
@@ -186,6 +190,7 @@ export class RegisterComponent {
   readonly authService = inject(AuthService);
   private readonly _fb = inject(FormBuilder);
   private readonly _router = inject(Router);
+  private readonly _route = inject(ActivatedRoute);
   private readonly _analytics = inject(Analytics);
   private readonly _transloco = inject(TranslocoService);
   private readonly _submitError = viewChild<ElementRef<HTMLElement>>('submitError');
@@ -195,7 +200,7 @@ export class RegisterComponent {
   // never stored — and mapped onto the closed source enum ('direct'/'other'
   // for absent/unknown), so it can never carry a free-form string.
   private readonly _signupSource = signupSource(
-    inject(ActivatedRoute).snapshot.queryParamMap.get('ref'),
+    this._route.snapshot.queryParamMap.get('ref'),
   );
 
   readonly loading = signal(false);
@@ -219,7 +224,12 @@ export class RegisterComponent {
   constructor() {
     this.authService.user$.pipe(takeUntilDestroyed(), filterNil()).subscribe((user) => {
       if (user) {
-        this._router.navigate(['/']);
+        // Registration signs the account straight in, so a guarded deep link
+        // (?next=…, e.g. an org invite) survives the sign-up detour too.
+        // Only app-internal targets are honoured — no open redirect.
+        this._router.navigateByUrl(
+          safeInternalUrl(this._route.snapshot.queryParamMap.get('next')) ?? '/',
+        );
       }
     });
   }

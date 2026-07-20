@@ -43,7 +43,10 @@ import { AttachmentUploadService } from '@app/attachments/attachment-upload.serv
 import { AttachmentManifestV1 } from '@app/attachments/attachment.types';
 import { MessageAttachmentChip } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
 import { COG_DOC_INSTRUCTION } from '@app/documents/cog-doc/cog-doc-instruction';
-import { CompletionBillingRestriction } from '@app/interfaces/billing';
+import {
+  CompletionBillingRestriction,
+  OrgCompletionBillingRestriction,
+} from '@app/interfaces/billing';
 import { Conversation } from '@app/interfaces/conversation';
 import {
   Message,
@@ -855,6 +858,69 @@ export const parseCompletionBillingRestriction = (
   };
 };
 
+// parseOrgCompletionBillingRestriction recognises the structured 402 for a
+// completion blocked by the owning Organisation's billing (fail closed —
+// docs/specs/organisations.md §5.8). Kept separate from the personal parser:
+// an org pause must never be treated as (or mutate) the member's own plan
+// state, and never suggests the member's personal balance could cover it.
+export const parseOrgCompletionBillingRestriction = (
+  error: unknown,
+): OrgCompletionBillingRestriction | null => {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 402) {
+    return null;
+  }
+  type OrgRestrictionBody = {
+    error?: string;
+    organisation_id?: string;
+    organisation_name?: string;
+    message?: string;
+    admin_message?: string;
+  };
+  const response = error.error as
+    | (OrgRestrictionBody & { data?: OrgRestrictionBody })
+    | null;
+  // Completion billing can be rejected by either the completion handler
+  // (direct JSON) or the central content-write gate (PocketBase ApiError,
+  // whose structured fields live under `data`). Both are the same public 402
+  // contract and must drive the same calm, draft-preserving banner.
+  const body = response?.data ?? response;
+  const code = body?.error;
+  if (code !== 'ORG_BILLING_INACTIVE' && code !== 'ORG_BILLING_PAST_DUE') {
+    return null;
+  }
+  return {
+    code,
+    organisationId: body?.organisation_id ?? '',
+    organisationName: body?.organisation_name ?? '',
+    message: body?.message ?? response?.message ?? '',
+    adminMessage: body?.admin_message ?? '',
+  };
+};
+
+// classifyCompletionFailure decides which surface owns a failed completion:
+// - 'locked': a personal billing 402 or unverified email. The locked-composer
+//   UI carries the recovery path, so the optimistic turn is removed entirely.
+// - 'org_blocked': an ORG_BILLING_* 402. The org billing banner is the single
+//   explanation and next step; the draft stays in the composer, while the
+//   optimistic transcript turn is removed so it never looks delivered. The
+//   generic retry card must not stack on top of the banner — a retry is
+//   guaranteed to fail until the Organisation's billing is fixed.
+// - 'retryable': everything else. Keep the user's message and show the inline
+//   retry card.
+export type CompletionFailureHandling = 'locked' | 'org_blocked' | 'retryable';
+
+export const classifyCompletionFailure = (
+  error: unknown,
+): CompletionFailureHandling => {
+  if (parseOrgCompletionBillingRestriction(error)) {
+    return 'org_blocked';
+  }
+  if (parseCompletionBillingRestriction(error) || isEmailNotVerifiedError(error)) {
+    return 'locked';
+  }
+  return 'retryable';
+};
+
 export const resolveCompletionFailureMessage = (
   error: unknown,
 ): CompletionErrorCopy => {
@@ -875,7 +941,10 @@ export const resolveCompletionFailureMessage = (
 export const completionFailureReason = (
   error: unknown,
 ): 'rate_limited' | 'provider_error' | 'balance' | 'other' => {
-  if (parseCompletionBillingRestriction(error)) {
+  if (
+    parseCompletionBillingRestriction(error) ||
+    parseOrgCompletionBillingRestriction(error)
+  ) {
     return 'balance';
   }
   if (error instanceof HttpErrorResponse) {
@@ -1763,6 +1832,7 @@ export class MessageService {
             };
           case 'complete':
             completed = true;
+            this.clearOrgBillingBlockOnSuccess(conversation);
             // Fire-and-forget: model mix / attachments / reasoning demand.
             // Enum + boolean props only — never message content.
             this._analytics.track('message_sent', {
@@ -1789,7 +1859,7 @@ export class MessageService {
         }
 
         console.error('Error sending message');
-        const handled = this.reportCompletionError(err);
+        const handling = this.reportCompletionError(err);
         // Reason is a closed enum; the error payload never leaves the app.
         this._analytics.track('message_failed', {
           reason: completionFailureReason(err),
@@ -1799,9 +1869,26 @@ export class MessageService {
           return EMPTY;
         }
 
-        if (handled) {
+        if (handling === 'locked') {
           // Billing lock / email-not-verified: the locked-composer surface
           // carries the recovery path, so clear the optimistic turn entirely.
+          return of({
+            status: MessageStatus.ErrorSending,
+            messages: removeStreamingCompletionMessages(
+              this.state().messages,
+              messageRequest.requestId,
+            ),
+          });
+        }
+
+        if (handling === 'org_blocked') {
+          // Org billing pause: the org banner is the single explanation and
+          // owns the next step, so suppress (and clear any stale) generic
+          // retry card — a retry is guaranteed to fail until the Organisation
+          // restores billing. The composer restores the draft, so remove the
+          // optimistic transcript turn to avoid implying it was delivered.
+          this._failedRequest = null;
+          this._sendFailed.set(false);
           return of({
             status: MessageStatus.ErrorSending,
             messages: removeStreamingCompletionMessages(
@@ -2397,6 +2484,7 @@ export class MessageService {
             };
           case 'complete': {
             completed = true;
+            this.clearOrgBillingBlockOnSuccess(conversation);
             const newAssistantId =
               event.response.assistantMessage.id ??
               streamingAssistantMessageId(requestId);
@@ -2522,25 +2610,58 @@ export class MessageService {
   }
 
   // reportCompletionError routes a failed completion to the right surface and
-  // reports whether it "handled" the error with a locked-composer state.
-  // Returns true for a billing 402 (opens the plan gate + syncs plan state) or
-  // an EMAIL_NOT_VERIFIED 403 (the verify-email composer state carries the
-  // recovery path) — both suppress the toast. Returns false for a retryable
-  // failure so the caller keeps the user's message and shows an inline retry.
-  private reportCompletionError(err: unknown): boolean {
-    const restriction = parseCompletionBillingRestriction(err);
-    if (restriction) {
-      // Lock the composer + surface the in-chat billing banners. No toast — the
-      // locked-chat UI and the pricing page carry the recovery path.
-      this._billingService.markSendingBlocked(restriction);
-      return true;
+  // returns how the caller should handle it (see classifyCompletionFailure):
+  // 'locked' removes the optimistic turn (the locked-composer UI carries the
+  // recovery path), 'org_blocked' restores the composer draft and leaves the
+  // billing banner as the single explanation (no generic retry card), and
+  // 'retryable' keeps the message and shows the inline retry.
+  // clearOrgBillingBlockOnSuccess drops the org billing banner once a
+  // completion in one of that Organisation's Projects succeeds again — the
+  // authoritative signal that billing was restored. Scoped to the owning org
+  // so a successful personal (or other-org) send never hides an active block.
+  private clearOrgBillingBlockOnSuccess(
+    conversation: Conversation | null | undefined,
+  ): void {
+    const projectId = conversation?.record.project;
+    if (!projectId) {
+      return;
     }
-    if (isEmailNotVerifiedError(err)) {
-      // The verify-email composer state (driven by the user's verified flag)
-      // already tells the user what to do — no toast, and no retry affordance.
-      return true;
+    const organisationId = this._projectService
+      .projects()
+      .find((project) => project.record.id === projectId)?.record.organisation;
+    if (organisationId) {
+      this._billingService.clearOrgSendingBlocked(organisationId);
     }
-    return false;
+  }
+
+  private reportCompletionError(err: unknown): CompletionFailureHandling {
+    const handling = classifyCompletionFailure(err);
+    switch (handling) {
+      case 'org_blocked': {
+        // Org billing pause (fail closed): surface the org banner and preserve
+        // the member's composer draft (persona PER-006). The banner owns the
+        // explanation and next step, so the caller must NOT show the generic
+        // retry card alongside it. The personal plan state stays untouched.
+        const orgRestriction = parseOrgCompletionBillingRestriction(err);
+        if (orgRestriction) {
+          this._billingService.markOrgSendingBlocked(orgRestriction);
+        }
+        break;
+      }
+      case 'locked': {
+        // Personal billing 402: lock the composer + surface the in-chat
+        // billing banners. No toast — the locked-chat UI and the pricing page
+        // carry the recovery path. An EMAIL_NOT_VERIFIED 403 classifies as
+        // 'locked' too: the verify-email composer state (driven by the user's
+        // verified flag) already tells the user what to do.
+        const restriction = parseCompletionBillingRestriction(err);
+        if (restriction) {
+          this._billingService.markSendingBlocked(restriction);
+        }
+        break;
+      }
+    }
+    return handling;
   }
 
   // translateCompletionError resolves a CompletionErrorCopy into a display

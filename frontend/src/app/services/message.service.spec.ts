@@ -24,12 +24,15 @@ import {
   buildCompletionMessages,
   buildDeletedMessageData,
   buildTitleGenerationUserMessage,
+  classifyCompletionFailure,
+  completionFailureReason,
   composeSystemPromptSections,
   isCompletionAbortError,
   isEmailNotVerifiedError,
   isPlaceholderConversationTitle,
   messageTreeAccessors,
   parseCompletionBillingRestriction,
+  parseOrgCompletionBillingRestriction,
   reasoningDisablingEffort,
   regenerateContextPath,
   removeStreamingAssistantMessage,
@@ -118,6 +121,188 @@ describe('parseCompletionBillingRestriction', () => {
   it('ignores errors that are not HTTP responses', () => {
     expect(parseCompletionBillingRestriction(new Error('boom'))).toBeNull();
     expect(parseCompletionBillingRestriction(undefined)).toBeNull();
+  });
+
+  // Pin: org billing 402s must NEVER parse as a personal restriction — the
+  // personal path mutates the member's own plan state and locks the personal
+  // composer, both of which are wrong for an org pause (spec §5.8).
+  it('returns null for org billing codes so they never touch personal state', () => {
+    expect(
+      parseCompletionBillingRestriction(
+        billing402({ error: 'ORG_BILLING_INACTIVE', organisation_id: 'org_1' }),
+      ),
+    ).toBeNull();
+    expect(
+      parseCompletionBillingRestriction(
+        billing402({ error: 'ORG_BILLING_PAST_DUE', organisation_id: 'org_1' }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('parseOrgCompletionBillingRestriction', () => {
+  const billing402 = (body: unknown): HttpErrorResponse =>
+    new HttpErrorResponse({ status: 402, error: body });
+
+  it.each([['ORG_BILLING_INACTIVE' as const], ['ORG_BILLING_PAST_DUE' as const]])(
+    'parses an %s 402 into a structured org restriction',
+    (code) => {
+      const restriction = parseOrgCompletionBillingRestriction(
+        billing402({
+          error: code,
+          organisation_id: 'org_1',
+          organisation_name: 'Acme',
+          message: 'Acme billing is paused.',
+          admin_message: 'Update the payment method.',
+        }),
+      );
+
+      expect(restriction).toEqual({
+        code,
+        organisationId: 'org_1',
+        organisationName: 'Acme',
+        message: 'Acme billing is paused.',
+        adminMessage: 'Update the payment method.',
+      });
+    },
+  );
+
+  it('defaults missing body fields to empty strings', () => {
+    const restriction = parseOrgCompletionBillingRestriction(
+      billing402({ error: 'ORG_BILLING_INACTIVE' }),
+    );
+
+    expect(restriction).toEqual({
+      code: 'ORG_BILLING_INACTIVE',
+      organisationId: '',
+      organisationName: '',
+      message: '',
+      adminMessage: '',
+    });
+  });
+
+  it('parses the PocketBase API error envelope used by the central org write gate', () => {
+    const restriction = parseOrgCompletionBillingRestriction(
+      billing402({
+        status: 402,
+        message:
+          'New messages in Acme are paused while a payment is retried. Your personal workspace still works.',
+        data: {
+          error: 'ORG_BILLING_PAST_DUE',
+          organisation_id: 'org_1',
+          organisation_name: 'Acme',
+          admin_message: 'Update the payment method.',
+        },
+      }),
+    );
+
+    expect(restriction).toEqual({
+      code: 'ORG_BILLING_PAST_DUE',
+      organisationId: 'org_1',
+      organisationName: 'Acme',
+      message:
+        'New messages in Acme are paused while a payment is retried. Your personal workspace still works.',
+      adminMessage: 'Update the payment method.',
+    });
+  });
+
+  it('returns null for personal billing codes', () => {
+    expect(
+      parseOrgCompletionBillingRestriction(billing402({ error: 'TRIAL_EXHAUSTED' })),
+    ).toBeNull();
+    expect(
+      parseOrgCompletionBillingRestriction(billing402({ error: 'INACTIVE' })),
+    ).toBeNull();
+  });
+
+  it('returns null for non-402s, unknown codes and non-HTTP errors', () => {
+    expect(
+      parseOrgCompletionBillingRestriction(
+        new HttpErrorResponse({
+          status: 500,
+          error: { error: 'ORG_BILLING_INACTIVE' },
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      parseOrgCompletionBillingRestriction(billing402({ error: 'SOMETHING_ELSE' })),
+    ).toBeNull();
+    expect(parseOrgCompletionBillingRestriction(billing402(null))).toBeNull();
+    expect(parseOrgCompletionBillingRestriction(new Error('boom'))).toBeNull();
+  });
+});
+
+describe('classifyCompletionFailure', () => {
+  const billing402 = (body: unknown): HttpErrorResponse =>
+    new HttpErrorResponse({ status: 402, error: body });
+
+  // Pin: an org billing 402 must be the org banner's alone — the send path
+  // restores the member's composer draft but must NOT raise the generic retry
+  // card on top of the banner (a retry is guaranteed to fail until the org's
+  // billing is fixed), and must never lock the personal composer.
+  it.each([['ORG_BILLING_INACTIVE'], ['ORG_BILLING_PAST_DUE']])(
+    'classifies an %s 402 as org_blocked (banner owns it, no retry card)',
+    (code) => {
+      expect(
+        classifyCompletionFailure(billing402({ error: code, organisation_id: 'o1' })),
+      ).toBe('org_blocked');
+    },
+  );
+
+  it('classifies personal billing 402s and unverified email as locked', () => {
+    expect(classifyCompletionFailure(billing402({ error: 'TRIAL_EXHAUSTED' }))).toBe(
+      'locked',
+    );
+    expect(classifyCompletionFailure(billing402({ error: 'INACTIVE' }))).toBe('locked');
+    expect(
+      classifyCompletionFailure(
+        new HttpErrorResponse({
+          status: 403,
+          error: { error: 'EMAIL_NOT_VERIFIED' },
+        }),
+      ),
+    ).toBe('locked');
+  });
+
+  // Pin: any other failure stays retryable so the inline retry card still
+  // shows for genuine transient errors (org suppression must not eat these).
+  it('classifies everything else as retryable (generic retry card shows)', () => {
+    expect(classifyCompletionFailure(new HttpErrorResponse({ status: 500 }))).toBe(
+      'retryable',
+    );
+    expect(classifyCompletionFailure(new HttpErrorResponse({ status: 429 }))).toBe(
+      'retryable',
+    );
+    expect(classifyCompletionFailure(billing402({ error: 'SOMETHING_ELSE' }))).toBe(
+      'retryable',
+    );
+    expect(classifyCompletionFailure(new Error('boom'))).toBe('retryable');
+  });
+});
+
+describe('completionFailureReason', () => {
+  const billing402 = (body: unknown): HttpErrorResponse =>
+    new HttpErrorResponse({ status: 402, error: body });
+
+  it('maps personal and org billing 402s to the balance reason', () => {
+    expect(completionFailureReason(billing402({ error: 'TRIAL_EXHAUSTED' }))).toBe(
+      'balance',
+    );
+    expect(
+      completionFailureReason(
+        billing402({ error: 'ORG_BILLING_PAST_DUE', organisation_id: 'org_1' }),
+      ),
+    ).toBe('balance');
+  });
+
+  it('maps rate limiting, server errors and the rest as before', () => {
+    expect(completionFailureReason(new HttpErrorResponse({ status: 429 }))).toBe(
+      'rate_limited',
+    );
+    expect(completionFailureReason(new HttpErrorResponse({ status: 502 }))).toBe(
+      'provider_error',
+    );
+    expect(completionFailureReason(new Error('boom'))).toBe('other');
   });
 });
 

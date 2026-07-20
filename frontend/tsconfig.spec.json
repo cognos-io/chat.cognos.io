@@ -10,6 +10,7 @@
     "src/**/*.spec.ts",
     "src/**/*.d.ts",
     "src/test-providers.ts",
+    "src/test-setup.ts",
     "../packages/ui-angular/src/**/*.ts"
   ]
 }

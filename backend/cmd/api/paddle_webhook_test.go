@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -46,12 +47,33 @@ func paddleWebhookConfig() *config.APIConfig {
 
 func signPaddle(t testing.TB, secret, body string) string {
 	t.Helper()
-	const ts = "1700000000"
+	return signPaddleAt(t, secret, body, time.Now().Unix())
+}
+
+func signPaddleAt(t testing.TB, secret, body string, timestamp int64) string {
+	t.Helper()
+	ts := strconv.FormatInt(timestamp, 10)
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(ts))
 	mac.Write([]byte(":"))
 	mac.Write([]byte(body))
 	return "ts=" + ts + ";h1=" + hex.EncodeToString(mac.Sum(nil))
+}
+
+func TestPaddleWebhookRejectsStaleSignedEventBeforeWriting(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+	signature := signPaddleAt(
+		t, webhookSecret, subscriptionCreatedBody,
+		time.Now().Add(-paddle.DefaultWebhookTimestampTolerance-time.Second).Unix(),
+	)
+
+	rec := postWebhook(mux, subscriptionCreatedBody, signature)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want 401 — body: %s", rec.Code, rec.Body.String())
+	}
+	if n := countEvents(t, app); n != 0 {
+		t.Errorf("paddle_events count = %d, want 0 (no write on stale signature)", n)
+	}
 }
 
 // bootWebhookMux boots a test app with Paddle configured and returns its HTTP
@@ -630,5 +652,111 @@ func TestPaddleWebhookIgnoresUnmappableUser(t *testing.T) {
 	}
 	if plan := planFor(t, app, testUserID); plan != "trial" {
 		t.Errorf("unrelated user plan = %q, want trial (unchanged)", plan)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Per-user fallback pin tests (§3 PIN-TEST Plan)
+// ---------------------------------------------------------------------------
+
+func TestPaddleWebhookActivateFallbackToCustomerID(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+
+	// Pre-seed the test user with a paddle_customer_id but no custom_data in webhook.
+	user, _ := app.FindRecordById("users", testUserID)
+	user.Set("paddle_customer_id", "ctm_fallback_1")
+	if err := app.Save(user); err != nil {
+		t.Fatalf("seed user paddle_customer_id: %v", err)
+	}
+
+	body := `{"event_id":"evt_fb_create","event_type":"subscription.created",` +
+		`"data":{"id":"sub_fb_1","customer_id":"ctm_fallback_1","status":"active",` +
+		`"items":[{"price":{"id":"pri_unl_monthly"}}],` +
+		`"current_billing_period":{"starts_at":"2026-06-01T00:00:00Z","ends_at":"2026-07-01T00:00:00Z"}}}`
+
+	rec := postWebhook(mux, body, signPaddle(t, webhookSecret, body))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	record, err := app.FindFirstRecordByData("user_billing", "user_id", testUserID)
+	if err != nil {
+		t.Fatalf("find user_billing: %v", err)
+	}
+	if got := record.GetString("plan_type"); got != "unlimited" {
+		t.Errorf("plan_type = %q, want unlimited", got)
+	}
+	if got := record.GetString("paddle_subscription_id"); got != "sub_fb_1" {
+		t.Errorf("paddle_subscription_id = %q, want sub_fb_1", got)
+	}
+}
+
+func TestPaddleWebhookUpdateFallsBackToSubscriptionID(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+
+	// Activate with custom_data.user_id.
+	activateBody := `{"event_id":"evt_fb_act","event_type":"subscription.created",` +
+		`"data":{"id":"sub_fb_2","customer_id":"ctm_fb_2","status":"active",` +
+		`"custom_data":{"user_id":"uvi8zmr78j9y5hz"},` +
+		`"items":[{"price":{"id":"pri_payg"}}],` +
+		`"current_billing_period":{"starts_at":"2026-06-01T00:00:00Z","ends_at":"2026-07-01T00:00:00Z"}}}`
+	postWebhook(mux, activateBody, signPaddle(t, webhookSecret, activateBody))
+	if plan := planFor(t, app, testUserID); plan != "payg" {
+		t.Fatalf("setup: plan = %q, want payg", plan)
+	}
+
+	// Now post an update with a DIFFERENT custom_data.user_id but SAME subscription_id.
+	updateBody := `{"event_id":"evt_fb_upd","event_type":"subscription.updated",` +
+		`"data":{"id":"sub_fb_2","customer_id":"ctm_fb_2","status":"active",` +
+		`"custom_data":{"user_id":"unknown_user_id_xyz"},` +
+		`"items":[{"price":{"id":"pri_payg"}}],` +
+		`"current_billing_period":{"starts_at":"2026-07-01T00:00:00Z","ends_at":"2026-08-01T00:00:00Z"}}}`
+
+	rec := postWebhook(mux, updateBody, signPaddle(t, webhookSecret, updateBody))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("update status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	// The cycle should have advanced for the original user (subscription_id matched).
+	billingRec, err := app.FindFirstRecordByData("user_billing", "user_id", testUserID)
+	if err != nil {
+		t.Fatalf("find user_billing: %v", err)
+	}
+	if got := billingRec.GetDateTime("paddle_cycle_start_at").Time().UTC(); !got.Equal(time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)) {
+		t.Errorf("paddle_cycle_start_at = %s, want 2026-07-01", got)
+	}
+}
+
+func TestPaddleWebhookAdjustmentFallsBackToCustomerID(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+
+	// Activate user with a known paddle_customer_id.
+	activateBody := `{"event_id":"evt_fb_adj_act","event_type":"subscription.created",` +
+		`"data":{"id":"sub_fb_3","customer_id":"ctm_fb_3","status":"active",` +
+		`"custom_data":{"user_id":"uvi8zmr78j9y5hz"},` +
+		`"items":[{"price":{"id":"pri_unl_monthly"}}],` +
+		`"current_billing_period":{"starts_at":"2026-06-01T00:00:00Z","ends_at":"2026-07-01T00:00:00Z"}}}`
+	postWebhook(mux, activateBody, signPaddle(t, webhookSecret, activateBody))
+
+	// Post adjustment with a DIFFERENT subscription_id but SAME customer_id.
+	adjBody := `{"event_id":"evt_fb_adj","event_type":"adjustment.created",` +
+		`"data":{"id":"adj_fb_1","action":"refund","transaction_id":"txn_fb_1",` +
+		`"subscription_id":"sub_unknown_xyz","customer_id":"ctm_fb_3","reason":"changed mind",` +
+		`"totals":{"total":"5000","currency_code":"CHF"}}}`
+
+	rec := postWebhook(mux, adjBody, signPaddle(t, webhookSecret, adjBody))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("adjustment status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	refunds, err := app.FindRecordsByFilter("refunds", "user_id = {:u}", "", 10, 0, map[string]any{"u": testUserID})
+	if err != nil {
+		t.Fatalf("find refunds: %v", err)
+	}
+	if len(refunds) != 1 {
+		t.Fatalf("refunds count = %d, want 1", len(refunds))
+	}
+	if got := refunds[0].GetInt("gross_refund_rappen"); got != 5000 {
+		t.Errorf("gross_refund_rappen = %d, want 5000", got)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"testing"
+	"time"
 )
 
 // sign produces a valid Paddle-Signature header for a body + secret + ts.
@@ -19,19 +20,37 @@ func sign(secret, ts string, body []byte) string {
 
 func TestVerifySignature_Valid(t *testing.T) {
 	body := []byte(`{"event_id":"evt_1"}`)
+	now := time.Unix(1_700_000_000, 0)
 	header := sign("pdl_secret", "1700000000", body)
 
-	if err := VerifySignature("pdl_secret", header, body); err != nil {
+	if err := verifySignatureAt("pdl_secret", header, body, now); err != nil {
 		t.Fatalf("expected valid signature, got %v", err)
+	}
+}
+
+func TestVerifySignature_RejectsTimestampOutsideTolerance(t *testing.T) {
+	body := []byte(`{"event_id":"evt_1"}`)
+	now := time.Unix(1_700_000_000, 0)
+
+	for _, timestamp := range []string{
+		"1699999699", // older than five minutes
+		"1700000301", // more than five minutes in the future
+		"not-a-time",
+	} {
+		header := sign("pdl_secret", timestamp, body)
+		if err := verifySignatureAt("pdl_secret", header, body, now); !errors.Is(err, ErrInvalidSignature) {
+			t.Errorf("timestamp %q: expected ErrInvalidSignature, got %v", timestamp, err)
+		}
 	}
 }
 
 func TestVerifySignature_Tampered(t *testing.T) {
 	body := []byte(`{"event_id":"evt_1"}`)
 	header := sign("pdl_secret", "1700000000", body)
+	now := time.Unix(1_700_000_000, 0)
 
 	// A changed body must no longer match the signature.
-	if err := VerifySignature("pdl_secret", header, []byte(`{"event_id":"evt_2"}`)); !errors.Is(err, ErrInvalidSignature) {
+	if err := verifySignatureAt("pdl_secret", header, []byte(`{"event_id":"evt_2"}`), now); !errors.Is(err, ErrInvalidSignature) {
 		t.Fatalf("expected ErrInvalidSignature for tampered body, got %v", err)
 	}
 }
@@ -39,8 +58,9 @@ func TestVerifySignature_Tampered(t *testing.T) {
 func TestVerifySignature_WrongSecret(t *testing.T) {
 	body := []byte(`{}`)
 	header := sign("real_secret", "1700000000", body)
+	now := time.Unix(1_700_000_000, 0)
 
-	if err := VerifySignature("other_secret", header, body); !errors.Is(err, ErrInvalidSignature) {
+	if err := verifySignatureAt("other_secret", header, body, now); !errors.Is(err, ErrInvalidSignature) {
 		t.Fatalf("expected ErrInvalidSignature for wrong secret, got %v", err)
 	}
 }

@@ -1,0 +1,74 @@
+// Workspace switcher — sits directly under the sidebar brand. All visual
+// values come from @cognos/ui design tokens.
+.workspace-switcher {
+  position: relative;
+}
+
+.workspace-switcher__trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--cog-space-100);
+  border: var(--cog-border-width) solid var(--cog-border);
+  border-radius: var(--cog-radius-md);
+  background: var(--cog-surface);
+  color: var(--cog-text);
+  padding: var(--cog-space-075) var(--cog-space-100);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
+
+  &:hover {
+    background: var(--cog-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: var(--cog-border-width-strong) solid var(--cog-brand);
+    outline-offset: var(--cog-border-width);
+  }
+}
+
+.workspace-switcher__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--cog-text-subtle);
+}
+
+.workspace-switcher__copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.workspace-switcher__overline {
+  color: var(--cog-text-subtlest);
+  font-size: var(--cog-fs-overline);
+  font-weight: var(--cog-fw-overline);
+  line-height: var(--cog-lh-overline);
+  letter-spacing: var(--cog-ls-overline);
+  text-transform: var(--cog-tt-overline);
+}
+
+.workspace-switcher__name {
+  overflow: hidden;
+  color: var(--cog-text);
+  font-size: var(--cog-fs-body-sm);
+  font-weight: var(--cog-fw-semibold);
+  line-height: var(--cog-lh-body-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-switcher__chevron {
+  flex: none;
+}
+
+.workspace-switcher__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + var(--cog-space-050));
+  left: 0;
+  right: 0;
+}

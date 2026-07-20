@@ -136,6 +136,38 @@ func parseResponsesStream(t *testing.T, rec *httptest.ResponseRecorder) []respon
 	return events
 }
 
+func TestPaddleOrganisationBillingFixtures(t *testing.T) {
+	t.Parallel()
+
+	handler := routes(slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+	t.Run("checkout", func(t *testing.T) {
+		body := `{"items":[{"price_id":"pri_org_seat","quantity":3}],"custom_data":{"org_id":"org_1"}}`
+		req := httptest.NewRequest(http.MethodPost, "/transactions", strings.NewReader(body))
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200: %s", rec.Code, rec.Body.String())
+		}
+		if !strings.Contains(rec.Body.String(), `"customer_id":"ctm_e2e_org_owner"`) ||
+			!strings.Contains(rec.Body.String(), `"url":"https://checkout.paddle.test/e2e-organisation"`) {
+			t.Fatalf("unexpected response: %s", rec.Body.String())
+		}
+	})
+
+	t.Run("portal", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/customers/ctm_e2e_org_owner/portal-sessions", strings.NewReader(`{}`))
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200: %s", rec.Code, rec.Body.String())
+		}
+		if !strings.Contains(rec.Body.String(), `"overview":"https://customer-portal.paddle.test/e2e-organisation"`) {
+			t.Fatalf("unexpected response: %s", rec.Body.String())
+		}
+	})
+}
+
 func TestResponsesContentText(t *testing.T) {
 	t.Parallel()
 
@@ -456,6 +488,34 @@ func TestRoutesHealthAndCompletionsContract(t *testing.T) {
 		}
 		if !body["ok"] {
 			t.Fatalf("body = %v, want {ok:true}", body)
+		}
+	})
+
+	t.Run("PATCH subscription accepts a prorated Seat quantity", func(t *testing.T) {
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/subscriptions/sub_e2e_org",
+			strings.NewReader(`{"items":[{"price_id":"pri_e2e_org_seat","quantity":2}],"proration_billing_mode":"prorated_immediately"}`),
+		)
+		rec := httptest.NewRecorder()
+		routes(slog.New(slog.NewTextHandler(io.Discard, nil))).ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("POST subscription cancel schedules the next billing period", func(t *testing.T) {
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/subscriptions/sub_e2e_org/cancel",
+			strings.NewReader(`{"effective_from":"next_billing_period"}`),
+		)
+		rec := httptest.NewRecorder()
+		routes(slog.New(slog.NewTextHandler(io.Discard, nil))).ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
 		}
 	})
 

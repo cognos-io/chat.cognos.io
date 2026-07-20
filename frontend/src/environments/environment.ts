@@ -29,7 +29,7 @@ export const environment = {
     // Security & keys: real page (Emergency Kit re-download, password change,
     // two-factor management). Shipped on.
     security: true,
-    team: false,
+    team: true,
     notifications: false,
     // Encrypted projects (standalone workspaces, no sharing). Shipped on for
     // launch; sharing (phase 2) is a later follow-up.

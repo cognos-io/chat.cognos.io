@@ -246,8 +246,8 @@
       ],
       "cta": "Unbegrenzt wählen"
     },
-    "roadmap": "Für ein Team? Einmal-Anmeldung und Admin-Kontrollen sind bald da — ",
-    "roadmapLink": "melde dich",
+    "roadmap": "Für Teams: CHF 15 pro Person und Monat plus Verbrauch, eine Rechnung — bald verfügbar. ",
+    "roadmapLink": "Melde dich",
     "roadmapAfter": "."
   },
   "security": {
@@ -739,7 +739,20 @@
       },
       "pricing": {
         "title": "Einfacher Preis pro Person",
-        "body": "Unbegrenzt kostet CHF 150 pro Person / Monat, zzgl. MwSt. beim Checkout — unbegrenzte Chats über alle KI-Modelle, die wir anbieten. Oder zahl nach Verbrauch ab CHF 15/Monat. Einmal-Anmeldung fürs Team und Admin-Kontrollen sind bald da."
+        "body": "Unbegrenzt kostet CHF 150 pro Person / Monat, zzgl. MwSt. beim Checkout — unbegrenzte Chats über alle KI-Modelle, die wir anbieten. Oder zahl nach Verbrauch ab CHF 15/Monat."
+      },
+      "team": {
+        "eyebrow": "Für Teams",
+        "title": "Eine Organisation, eine Rechnung — bald verfügbar",
+        "lead": "Wir bauen ein unkompliziertes Team-Angebot. Das ist geplant:",
+        "points": [
+          "<b>Eine Organisation, eine Rechnung</b> — CHF 15 pro Person und Monat mindestens, plus das, was dein Team wirklich nutzt, gemeinsam abgerechnet",
+          "<b>Lade Leute selbst ein oder entferne sie</b> — ganz ohne IT-Projekt",
+          "<b>Admins sehen Nutzung und Kosten</b> — nie die Chats von irgendjemandem",
+          "<b>Die Arbeit bleibt bei der Firma</b> — Projekte gehören der Organisation, private Chats bleiben privat",
+          "<b>Sauberer Austritt</b> — der Zugriff endet sofort, das eigene Konto bleibt unangetastet"
+        ],
+        "footnote": "Einmal-Anmeldung und Admin-Richtlinien folgen danach. Das ist ein früher Zugang — erzähl uns unten von deinem Team, und wir holen dich an Bord, sobald es so weit ist."
       },
       "form": {
         "heading": "Frag uns alles",

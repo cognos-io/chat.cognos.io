@@ -1,5 +1,28 @@
 # Todos
 
+## Organisations v1 production-readiness pass (2026-07-18)
+
+- [x] Clarify member identity, roles, billing context, and invite clipboard failure states
+- [x] Preserve blocked organisation messages as drafts and keep Personal usable during a lapse
+- [x] Parse both flat completion and central write-gate 402 envelopes into the same member-facing
+      billing explanation
+- [x] Make offboarding recoverable with blocking key rotation and a last-Project-Admin guard
+- [x] Enforce lapse read-only behaviour across direct Project, Conversation, memory, redaction,
+      completion, image, and compaction content writes
+- [x] Add content-free Activity log UI, pagination, CSV export, privacy copy, and persona screenshot
+- [x] Add Owner-only Organisation dissolution with explicit Project-deletion confirmation,
+      accessible dialog, subscription cancellation, retained audit/billing records, and Personal
+      safety checks
+- [x] Attribute provider-backed org compaction usage to the Organisation while retaining the acting
+      Account and leaving personal balance untouched
+- [x] Cover Owner and Member journeys in Playwright browser tests plus organisation, authorisation,
+      lapse, dissolution, and compaction accounting in Playwright API tests
+- [x] Complete six-locale, accessibility, design-token, lint, build, and screenshot review gates
+- [ ] Replace synchronous Organisation dissolution with the persisted reconciliation state machine
+      in `docs/billing-ops-runbook.md` §6
+
+## General
+
 - [x] Marketing pages
 - [x] Dockerfile
 - [x] Creating documents (e.g. docx or pdf) - basic

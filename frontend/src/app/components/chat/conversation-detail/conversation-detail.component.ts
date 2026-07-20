@@ -19,13 +19,18 @@ import {
   CognosIconComponent,
 } from '@cognos/ui-angular';
 
+import { WorkspaceContextBadgeComponent } from '@app/components/chat/workspace-context-badge/workspace-context-badge.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { EarlyHabit } from '@app/components/onboarding/early-habit/early-habit';
+import { BillingService } from '@app/services/billing.service';
 import { BookmarkService } from '@app/services/bookmark.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { FirstValueJourney } from '@app/services/first-value-journey';
 import { MessageService, MessageStatus } from '@app/services/message.service';
+import { OrganisationService } from '@app/services/organisation.service';
+import { ProjectService } from '@app/services/project.service';
 import { VaultService } from '@app/services/vault.service';
+import { orgBlockAppliesToConversation } from '@app/utils/org-billing-block';
 
 import { ConversationMinimapComponent } from '../conversation-minimap/conversation-minimap.component';
 import { MessageFormComponent } from '../message-form/message-form.component';
@@ -44,6 +49,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
+    WorkspaceContextBadgeComponent,
     TranslocoModule,
   ],
   template: `
@@ -77,7 +83,10 @@ import { MessageListComponent } from '../message-list/message-list.component';
           }
         </div>
 
-        @if (firstValueJourney.habitVisible()) {
+        <!-- The first-week habit card yields while a send-block banner is
+             active: banner + habit card + composer would push the user's own
+             words out of view, and the banner is the one thing to read. -->
+        @if (firstValueJourney.habitVisible() && !sendBlocked()) {
           <app-early-habit class="conversation-detail__habit" />
         }
 
@@ -101,6 +110,11 @@ import { MessageListComponent } from '../message-list/message-list.component';
         }
 
         <div class="conversation-detail__composer">
+          @if (showWorkspaceCue()) {
+            <div class="conversation-detail__workspace-cue">
+              <app-workspace-context-badge [orgName]="billedOrgName()" />
+            </div>
+          }
           <app-message-form></app-message-form>
           <p class="conversation-detail__disclaimer">
             {{ t('chat.accuracyDisclaimer') }}
@@ -190,6 +204,14 @@ import { MessageListComponent } from '../message-list/message-list.component';
       padding-inline: var(--cog-space-200);
     }
 
+    /* Billing-context cue above the composer — persistent while the account
+       holds Org memberships, so the billed context is never ambiguous. */
+    .conversation-detail__workspace-cue {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: var(--cog-space-075);
+    }
+
     /* Persistent, unobtrusive accuracy disclaimer under the composer — the
        standard "AI can make mistakes" affordance. */
     .conversation-detail__disclaimer {
@@ -216,6 +238,9 @@ export class ConversationDetailComponent {
   private readonly _vault = inject(VaultService);
   private readonly _route = inject(ActivatedRoute);
   private readonly _router = inject(Router);
+  private readonly _workspaces = inject(OrganisationService);
+  private readonly _projectService = inject(ProjectService);
+  private readonly _billing = inject(BillingService);
 
   // Guards repeated loads: bookmarks are (re)loaded once per active conversation.
   private _bookmarksLoadedFor?: string;
@@ -236,6 +261,45 @@ export class ConversationDetailComponent {
 
   readonly messagesAtBottom = signal(false);
 
+  // The Organisation this conversation bills to, or null when personal.
+  // Attribution follows Project scope (an org-owned Project bills the org),
+  // NEVER the last-viewed Workspace (spec §5.2).
+  readonly billedOrgName = computed(() => {
+    const projectId = this._conversationService.conversation()?.record.project;
+    if (!projectId) {
+      return null;
+    }
+    const project = this._projectService
+      .projects()
+      .find((candidate) => candidate.record.id === projectId);
+    return this._workspaces.orgName(project?.record.organisation);
+  });
+
+  // The cue only earns its place once it disambiguates something: the account
+  // holds Org memberships AND either this chat bills an org, or the user is
+  // sitting in an org Workspace while composing a personally-billed chat
+  // (Nils's friction #1 — a client memo drafted on his own plan by mistake).
+  readonly showWorkspaceCue = computed(
+    () =>
+      this._workspaces.hasMemberships() &&
+      (this.billedOrgName() !== null || this._workspaces.isOrgWorkspace()),
+  );
+
+  // A send-block banner is active for THIS conversation: either the personal
+  // sending lock, or an org billing pause scoped to the Organisation this
+  // conversation bills to (never another org's, never personal chats). Used to
+  // collapse the onboarding habit card and keep the last turn in view while
+  // the banner explains the block.
+  readonly sendBlocked = computed(
+    () =>
+      this._billing.isSendingLocked() ||
+      orgBlockAppliesToConversation(
+        this._billing.orgSendBlock(),
+        this._conversationService.conversation()?.record.project,
+        this._projectService.projects(),
+      ),
+  );
+
   @Input()
   set conversationId(conversationId: string) {
     this._conversationService.selectConversation$.next(conversationId ?? '');
@@ -248,6 +312,16 @@ export class ConversationDetailComponent {
   constructor() {
     this.messageService.messages$.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.messagesAtBottom()) {
+        setTimeout(() => this.messageListEl()?.scrollToBottom(), 0);
+      }
+    });
+
+    // When a send-block banner appears it squeezes the thread from the top;
+    // keep the user's last turn (their kept, unsent words) scrolled into view
+    // instead of letting the banner push it off-screen. setTimeout lets the
+    // layout settle (banner in, habit card out) before measuring.
+    effect(() => {
+      if (this.sendBlocked()) {
         setTimeout(() => this.messageListEl()?.scrollToBottom(), 0);
       }
     });

@@ -261,7 +261,18 @@ export class ConversationService {
       updateConversationRecord: (state, $: Observable<ConversationRecord>) => {
         return $.pipe(
           concatMap((data) => {
-            return this.fetchConversation(data).pipe(
+            // Prefer the key pair already in the store. A PATCH response
+            // carries no embedded key material, and the per-conversation key
+            // endpoints only exist for standalone conversations (participant
+            // rows) — a PROJECT conversation's secret key is wrapped under the
+            // project key instead, so re-fetching would fail and silently drop
+            // the update, leaving e.g. a freshly auto-generated title stale
+            // ("New chat") in the header and sidebar until a full reload.
+            const existing = state().conversations.find((c) => c.record.id === data.id);
+            const refreshed$ = existing
+              ? this.decryptWithKnownKeyPair(data, existing.keyPair)
+              : this.fetchConversation(data);
+            return refreshed$.pipe(
               take(1),
               map((conversation) => {
                 const conversations = state().conversations;
@@ -756,6 +767,27 @@ export class ConversationService {
         return EMPTY;
       }),
     );
+  }
+
+  /**
+   * decryptWithKnownKeyPair - rebuilds a Conversation from an updated record
+   * using a key pair we already hold (no key-endpoint round trip). Falls back
+   * to the full fetch path when the new data doesn't decrypt with it (e.g. a
+   * rotated key), mirroring fetchConversation's error handling.
+   */
+  private decryptWithKnownKeyPair(
+    record: ConversationRecord,
+    keyPair: KeyPair,
+  ): Observable<Conversation> {
+    try {
+      return of({
+        record,
+        decryptedData: this.decryptConversationData(record, keyPair),
+        keyPair,
+      });
+    } catch {
+      return this.fetchConversation(record);
+    }
   }
 
   /**

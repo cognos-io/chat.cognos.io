@@ -19,7 +19,29 @@ import {
 import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
-import { ProjectConversationRecord, ProjectRecord } from '@app/interfaces/project';
+import {
+  OrgAuditResponse,
+  OrgBillingRecord,
+  OrgCheckoutResponse,
+  OrgInviteAcceptResponse,
+  OrgInviteCreatedRecord,
+  OrgInviteRecord,
+  OrgInviteRole,
+  OrgMemberOffboardResponse,
+  OrgMemberRecord,
+  OrgPolicyUpdateRequest,
+  OrgPortalResponse,
+  OrgRole,
+  OrgUsageRecord,
+  OrganisationRecord,
+  UserPublicKeyResponse,
+} from '@app/interfaces/organisation';
+import {
+  ProjectConversationRecord,
+  ProjectParticipantRecord,
+  ProjectRecord,
+  ProjectRole,
+} from '@app/interfaces/project';
 import {
   ConversationPublicKeysResponse,
   ConversationSecretKeysResponse,
@@ -433,11 +455,54 @@ interface ApiConversationRequest {
 interface ApiProjectCreateRequest {
   data: string;
   wrapped_project_key: string;
+  /**
+   * Owning Organisation id — set when the project is created in an org
+   * Workspace so it's billed to (and scoped under) that Organisation.
+   * Omitted for personal projects.
+   */
+  organisation?: string;
 }
 
 interface ApiProjectUpdateRequest {
   data: string;
   archived_at?: string;
+}
+
+interface ApiProjectParticipantCreateRequest {
+  user_id: string;
+  role: ProjectRole;
+  /** The project content key sealed to the target user's public key (base64). */
+  wrapped_project_key: string;
+}
+
+interface ApiProjectParticipantsListResponse {
+  participants: ProjectParticipantRecord[];
+}
+
+export interface ApiRotateProjectKeyEntry {
+  user_id: string;
+  wrapped_project_key: string;
+}
+
+export interface ApiRotateProjectConversationKeyEntry {
+  conversation_id: string;
+  wrapped_secret_key: string;
+}
+
+export interface ApiRotateProjectKeyRequest {
+  /** Must be exactly the project's current key_version + 1. */
+  new_key_version: number;
+  /** One fresh wrapping for EVERY remaining active participant. */
+  wrapped_project_keys: ApiRotateProjectKeyEntry[];
+  /** The secret key of EVERY project conversation, rewrapped under the new key. */
+  rewrapped_conversation_keys: ApiRotateProjectConversationKeyEntry[];
+}
+
+export interface ApiRotateProjectKeyResponse {
+  project_id: string;
+  key_version: number;
+  wrapped_project_keys: ApiRotateProjectKeyEntry[];
+  rewrapped_conversation_keys: ApiRotateProjectConversationKeyEntry[];
 }
 
 interface ApiProjectConversationCreateRequest {
@@ -723,6 +788,32 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
     file_mime_type: context.fileMimeType,
   })),
 });
+
+/**
+ * Wire shape of an Organisation record. The backend embeds the caller's own
+ * role as `caller_role` (backend/internal/handler/organisations.go, pinned by
+ * e2e/tests/organisations-api.spec.ts) on every org-record response: create,
+ * list, get, rename and the policies PATCH. The app-side OrganisationRecord
+ * exposes it as `role`, so every org-record-returning method must map through
+ * mapOrganisationRecord — consumers only ever read `.role`.
+ */
+export interface OrganisationRecordWire extends Omit<OrganisationRecord, 'role'> {
+  caller_role?: OrgRole;
+}
+
+// Exported as a pure helper so the caller_role → role contract can be pinned
+// by unit tests: without it, a wire rename would silently leave `role`
+// undefined and every Owner/Admin surface would degrade to the member view.
+export const mapOrganisationRecord = (
+  wire: OrganisationRecordWire,
+): OrganisationRecord => {
+  const { caller_role, ...record } = wire;
+  // caller_role is present on every current response (json omitempty only
+  // elides an empty role, which the backend never sends). If a future
+  // response ever omits it, fail towards least privilege — 'member' — so a
+  // mapping gap can never grant an admin surface by accident.
+  return { ...record, role: caller_role ?? 'member' };
+};
 
 export const mapGenerateImageRequest = (
   request: GenerateImageRequest,
@@ -1058,6 +1149,267 @@ export class CognosApiService {
   deleteConversation(conversationId: string): Observable<void> {
     return this._http.delete<void>(
       `${this._baseUrl}/api/v1/conversations/${conversationId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // --- Organisations (docs/specs/organisations.md) -------------------------
+  // The caller only ever sees Organisations they hold an active Membership in.
+
+  listOrgs(): Observable<OrganisationRecord[]> {
+    return this._http
+      .get<OrganisationRecordWire[]>(`${this._baseUrl}/api/v1/orgs`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map((orgs) => orgs.map(mapOrganisationRecord)));
+  }
+
+  getOrg(orgId: string): Observable<OrganisationRecord> {
+    return this._http
+      .get<OrganisationRecordWire>(`${this._baseUrl}/api/v1/orgs/${orgId}`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map(mapOrganisationRecord));
+  }
+
+  createOrg(request: { name: string }): Observable<OrganisationRecord> {
+    return this._http
+      .post<OrganisationRecordWire>(`${this._baseUrl}/api/v1/orgs`, request, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map(mapOrganisationRecord));
+  }
+
+  updateOrg(orgId: string, request: { name: string }): Observable<OrganisationRecord> {
+    return this._http
+      .patch<OrganisationRecordWire>(`${this._baseUrl}/api/v1/orgs/${orgId}`, request, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map(mapOrganisationRecord));
+  }
+
+  // dissolveOrg permanently removes every Organisation Project, revokes all
+  // memberships and schedules the subscription to end. The explicit deletion
+  // acknowledgement is fixed at this boundary: the UI cannot accidentally
+  // invoke the destructive endpoint without confirming Project deletion.
+  dissolveOrg(orgId: string): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/orgs/${orgId}`, {
+      headers: this.authHeaders(),
+      body: { delete_projects: true },
+    });
+  }
+
+  // updateOrgPolicies changes the Organisation's enforced policies (privacy
+  // tier ceiling, retention default, MFA requirement) — partial PATCH, only
+  // the fields present change (Owner/Admin only, spec §6 Phase 2).
+  updateOrgPolicies(
+    orgId: string,
+    request: OrgPolicyUpdateRequest,
+  ): Observable<OrganisationRecord> {
+    return this._http
+      .patch<OrganisationRecordWire>(
+        `${this._baseUrl}/api/v1/orgs/${orgId}/policies`,
+        request,
+        {
+          headers: this.authHeaders(),
+        },
+      )
+      .pipe(map(mapOrganisationRecord));
+  }
+
+  listOrgMembers(orgId: string): Observable<OrgMemberRecord[]> {
+    return this._http.get<OrgMemberRecord[]>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/members`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // removeOrgMember offboards a member (Owner/Admin). Server-side this revokes
+  // the membership + org Project participation and queues a next-cycle seat
+  // decrement; the person's personal Account is untouched (spec §8.2).
+  removeOrgMember(
+    orgId: string,
+    userId: string,
+  ): Observable<OrgMemberOffboardResponse> {
+    return this._http.delete<OrgMemberOffboardResponse>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/members/${userId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // createOrgCheckout opens Paddle checkout for a fresh Organisation at
+  // quantity 1 — the Owner is the first Seat (Owner only, spec §7.1).
+  createOrgCheckout(orgId: string): Observable<OrgCheckoutResponse> {
+    return this._http.post<OrgCheckoutResponse>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/billing/checkout`,
+      {},
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getOrgBilling(orgId: string): Observable<OrgBillingRecord> {
+    return this._http.get<OrgBillingRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/billing`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getOrgBillingPortal(orgId: string): Observable<OrgPortalResponse> {
+    return this._http.get<OrgPortalResponse>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/billing/portal`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // getOrgUsage returns per-member cost/completions/model-mix metadata for the
+  // current cycle. Metadata only — never conversation content (spec §5.6).
+  getOrgUsage(orgId: string): Observable<OrgUsageRecord> {
+    return this._http.get<OrgUsageRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/usage`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // listOrgAudit returns content-free administrative metadata only. The
+  // backend role-gates this to Organisation Owners/Admins.
+  listOrgAudit(
+    orgId: string,
+    page: number,
+    pageSize: number,
+  ): Observable<OrgAuditResponse> {
+    return this._http.get<OrgAuditResponse>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/audit?page=${page}&page_size=${pageSize}`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  /** Download the complete content-free Organisation audit log as CSV. */
+  exportOrgAudit(orgId: string): Observable<Blob> {
+    return this._http.get(`${this._baseUrl}/api/v1/orgs/${orgId}/audit/export`, {
+      headers: this.authHeaders(),
+      responseType: 'blob',
+    });
+  }
+
+  // createOrgInvite mints a single-use invite token. The token is returned
+  // exactly once in this response; the server keeps only a hash (spec §8.1).
+  createOrgInvite(
+    orgId: string,
+    request: { email?: string; role: OrgInviteRole; project_ids?: string[] },
+  ): Observable<OrgInviteCreatedRecord> {
+    return this._http.post<OrgInviteCreatedRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/invites`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  listOrgInvites(orgId: string): Observable<OrgInviteRecord[]> {
+    return this._http.get<OrgInviteRecord[]>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/invites`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  revokeOrgInvite(orgId: string, inviteId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/invites/${inviteId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // acceptOrgInvite redeems a single-use invite token for the signed-in
+  // Account — the SAME Account, no new identity, no second Emergency Kit
+  // (spec §8.1). Idempotent for an already-active member; unknown, expired
+  // and consumed tokens all return the same neutral 404.
+  acceptOrgInvite(request: { token: string }): Observable<OrgInviteAcceptResponse> {
+    return this._http.post<OrgInviteAcceptResponse>(
+      `${this._baseUrl}/api/v1/org-invites/accept`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // getUserPublicKey resolves another Account's public key for the sharing
+  // wrap step. Relationship-gated server-side (self, or Owner/Admin of an
+  // Organisation the target belongs to); misses return a neutral 404.
+  getUserPublicKey(userId: string): Observable<UserPublicKeyResponse> {
+    return this._http.get<UserPublicKeyResponse>(
+      `${this._baseUrl}/api/v1/users/${userId}/public-key`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // --- Project participants & key rotation (org-owned Projects only) -------
+
+  listProjectParticipants(projectId: string): Observable<ProjectParticipantRecord[]> {
+    return this._http
+      .get<ApiProjectParticipantsListResponse>(
+        `${this._baseUrl}/api/v1/projects/${projectId}/participants`,
+        {
+          headers: this.authHeaders(),
+        },
+      )
+      .pipe(map((response) => response.participants));
+  }
+
+  addProjectParticipant(
+    projectId: string,
+    request: ApiProjectParticipantCreateRequest,
+  ): Observable<ProjectParticipantRecord> {
+    return this._http.post<ProjectParticipantRecord>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/participants`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  removeProjectParticipant(projectId: string, userId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/participants/${userId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // rotateProjectKey applies a client-computed forward-only key rotation. The
+  // server rejects any payload that does not cover EVERY remaining active
+  // participant and EVERY project conversation, so a rotation can never leave
+  // data inaccessible (all-or-nothing, single transaction server-side).
+  rotateProjectKey(
+    projectId: string,
+    request: ApiRotateProjectKeyRequest,
+  ): Observable<ApiRotateProjectKeyResponse> {
+    return this._http.post<ApiRotateProjectKeyResponse>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/rotate`,
+      request,
       {
         headers: this.authHeaders(),
       },

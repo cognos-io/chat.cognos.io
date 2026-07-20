@@ -453,3 +453,85 @@ describe('BillingService PAYG usage vs minimum', () => {
     expect(service.paygOverageChf()).toBe(0);
   });
 });
+
+describe('BillingService org billing block', () => {
+  const build = (): BillingService => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        BillingService,
+        {
+          provide: CognosApiService,
+          useValue: {
+            getBilling: vi
+              .fn()
+              .mockReturnValue(
+                of({ plan_type: 'trial', balance_chf: 2, trial_seed_chf: 2 }),
+              ),
+          },
+        },
+        { provide: ErrorService, useValue: { alert: vi.fn() } },
+        {
+          provide: PaddleService,
+          useValue: { enabled: false, checkoutCompleted$: new Subject() },
+        },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: AuthService, useValue: { email: () => '' } },
+        {
+          provide: DOCUMENT,
+          useValue: { location: { href: '' }, defaultView: { open: vi.fn() } },
+        },
+      ],
+    });
+    return TestBed.inject(BillingService);
+  };
+
+  const orgRestriction = (organisationId = 'org_1') =>
+    ({
+      code: 'ORG_BILLING_PAST_DUE',
+      organisationId,
+      organisationName: 'Acme',
+      message: 'Acme billing is paused.',
+      adminMessage: 'Update the payment method.',
+    }) as const;
+
+  // The hard line (persona PER-006): an org billing block never locks the
+  // member's personal workspace or mutates their own plan state.
+  it('records the org block without touching personal plan state or the send lock', () => {
+    const service = build();
+
+    service.markOrgSendingBlocked(orgRestriction());
+
+    expect(service.orgSendBlock()).toEqual(orgRestriction());
+    expect(service.isSendingLocked()).toBe(false);
+    expect(service.planType()).toBe('trial');
+    expect(service.balanceChf()).toBe(2);
+  });
+
+  it('clears the block only for the matching organisation', () => {
+    const service = build();
+    service.markOrgSendingBlocked(orgRestriction('org_1'));
+
+    // A successful send in another org (or personal) context never hides it.
+    service.clearOrgSendingBlocked('org_other');
+    expect(service.orgSendBlock()).not.toBeNull();
+
+    service.clearOrgSendingBlocked('org_1');
+    expect(service.orgSendBlock()).toBeNull();
+  });
+
+  it('clears unconditionally when no organisation id is given', () => {
+    const service = build();
+    service.markOrgSendingBlocked(orgRestriction());
+
+    service.clearOrgSendingBlocked();
+
+    expect(service.orgSendBlock()).toBeNull();
+  });
+
+  it('is a no-op to clear when nothing is blocked', () => {
+    const service = build();
+    expect(() => service.clearOrgSendingBlocked('org_1')).not.toThrow();
+    expect(service.orgSendBlock()).toBeNull();
+  });
+});

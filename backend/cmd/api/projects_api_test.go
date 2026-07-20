@@ -243,6 +243,37 @@ func TestProjectUpdate(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestProjectUpdateBlockedWhileKeyRotationPending(t *testing.T) {
+	t.Parallel()
+
+	projectID := "projpend0000001"
+	updatedData := base64.StdEncoding.EncodeToString([]byte(`{"version":"1","name":"Unsafe write"}`))
+
+	scenario := tests.ApiScenario{
+		Name:            "project ciphertext writes fail closed while key rotation is pending",
+		Method:          http.MethodPatch,
+		URL:             "/api/v1/projects/" + projectID,
+		Body:            strings.NewReader(`{"data":"` + updatedData + `"}`),
+		ExpectedStatus:  http.StatusLocked,
+		ExpectedContent: []string{`"message":"Project key rotation must finish before new content can be written."`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedProject(t, app, projectID, "test1@example.com")
+			project, err := app.FindRecordById("projects", projectID)
+			if err != nil {
+				t.Fatalf("FindRecordById(projects) error = %v", err)
+			}
+			project.Set("rotation_pending", true)
+			if err := app.Save(project); err != nil {
+				t.Fatalf("Save(project) error = %v", err)
+			}
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestProjectUpdateOtherUserReturnsNotFound(t *testing.T) {
 	t.Parallel()
 

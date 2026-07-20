@@ -17,11 +17,13 @@ import {
 
 import { BillingLockBannerComponent } from '@app/components/billing/billing-lock-banner/billing-lock-banner.component';
 import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
+import { OrgBillingBannerComponent } from '@app/components/billing/org-billing-banner/org-billing-banner.component';
 import { ChatHeaderComponent } from '@app/components/chat/chat-header/chat-header.component';
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
 import { PaygUsageCardComponent } from '@app/components/chat/payg-usage-card/payg-usage-card.component';
 import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/sidebar-profile.component';
 import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card/trial-credit-card.component';
+import { WorkspaceSwitcherComponent } from '@app/components/chat/workspace-switcher/workspace-switcher.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
@@ -33,9 +35,11 @@ import { BillingService } from '@app/services/billing.service';
 import { ConversationSearchService } from '@app/services/conversation-search.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { OrganisationService } from '@app/services/organisation.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
 import { VaultService } from '@app/services/vault.service';
+import { orgBlockAppliesToConversation } from '@app/utils/org-billing-block';
 
 import { environment } from '@environments/environment';
 
@@ -62,8 +66,10 @@ import { ConversationService } from '../../services/conversation.service';
     PaygUsageCardComponent,
     BillingLockBannerComponent,
     BillingPastDueBannerComponent,
+    OrgBillingBannerComponent,
     SidebarAccountActionsComponent,
     SidebarBrandComponent,
+    WorkspaceSwitcherComponent,
     TranslocoModule,
   ],
   templateUrl: './chat.component.html',
@@ -87,7 +93,33 @@ export class ChatComponent {
   // user's project conversations into the sidebar list (all chats, recent-first).
   private readonly _projectConversationService = inject(ProjectConversationService);
   readonly projectsEnabled = environment.featureFlags.projects;
-  readonly projects = this._projectService.orderedProjects;
+  // Workspace switcher (Personal ⇄ each Organisation, spec §5.2). The sidebar
+  // scopes to the active Workspace: projects filter to it, and the personal
+  // conversation sections hide inside an org Workspace. Accounts without Org
+  // memberships see zero change (the switcher renders nothing).
+  readonly workspaces = inject(OrganisationService);
+  readonly projects = computed(() =>
+    this.workspaces.visibleProjects(this._projectService.orderedProjects()),
+  );
+  // The org billing block for the conversation on screen: shown only when the
+  // active conversation lives in a Project owned by the blocked Organisation,
+  // so personal chats (and other orgs' Projects) never carry the banner.
+  // Shares its scoping with ConversationDetailComponent.sendBlocked (which
+  // collapses the onboarding card) so the two surfaces always agree.
+  readonly orgBillingBlock = computed(() => {
+    const block = this.billing.orgSendBlock();
+    return block !== null &&
+      orgBlockAppliesToConversation(
+        block,
+        this.conversationService.conversation()?.record.project,
+        this._projectService.projects(),
+      )
+      ? block
+      : null;
+  });
+  readonly showPersonalConversations = computed(
+    () => !this.workspaces.isOrgWorkspace(),
+  );
 
   // Projects whose chats are expanded inline in the sidebar. Clicking a
   // project's name still opens its detail page; the chevron toggles this set.

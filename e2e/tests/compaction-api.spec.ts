@@ -2,7 +2,12 @@ import { expect, test } from '@playwright/test';
 import type { APIResponse } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
 
-import { newAnonymousApi, provisionApiUser } from './api-helpers';
+import {
+  newAnonymousApi,
+  provisionApiUser,
+  readOrgCompactionAccounting,
+} from './api-helpers';
+import { upsertOrgBilling } from './persona-helpers';
 
 const APPROVED_MODEL_ID = 'llama-3-3-infomaniak';
 const DEFAULT_PERSONA_ID = 'cognos:simple-assistant';
@@ -116,6 +121,68 @@ function compactionBody(anchorID: string, messageID: string) {
 }
 
 test.describe('conversation compaction API', () => {
+  test('org Project compaction accrues to the Organisation, not the acting member', async () => {
+    const actor = await provisionApiUser();
+    try {
+      const orgRes = await actor.api.post('/api/v1/orgs', {
+        data: { name: 'Compaction Accounting AG' },
+      });
+      expect(orgRes.status()).toBe(201);
+      const { id: organisationId } = (await orgRes.json()) as { id: string };
+      await upsertOrgBilling(organisationId, { planType: 'payg', seats: 1 });
+
+      const projectRes = await actor.api.post('/api/v1/projects', {
+        data: {
+          data: randomBytes(48).toString('base64'),
+          wrapped_project_key: randomBytes(48).toString('base64'),
+          organisation: organisationId,
+        },
+      });
+      expect(projectRes.status()).toBe(201);
+      const { id: projectId } = (await projectRes.json()) as { id: string };
+
+      const conversationRes = await actor.api.post(
+        `/api/v1/projects/${projectId}/conversations`,
+        {
+          data: {
+            data: CONVERSATION_DATA,
+            public_key: randomBytes(32).toString('base64'),
+            wrapped_conversation_secret_key: randomBytes(48).toString('base64'),
+          },
+        },
+      );
+      expect(
+        conversationRes.status(),
+        `create org conversation: ${conversationRes.status()} ${await conversationRes.text()}`,
+      ).toBe(201);
+      const { id: conversationId } = (await conversationRes.json()) as { id: string };
+
+      const [anchorId] = await seedMessages(actor, conversationId);
+      const before = await readOrgCompactionAccounting(organisationId, actor.userId);
+
+      const compacted = await actor.api.post(
+        `/api/v1/conversations/${conversationId}/compactions`,
+        { data: compactionBody(anchorId, anchorId) },
+      );
+      expect(
+        compacted.ok(),
+        `compact org conversation: ${compacted.status()} ${await compacted.text()}`,
+      ).toBe(true);
+
+      const after = await readOrgCompactionAccounting(organisationId, actor.userId);
+      expect(after.personalBalanceMicroRappen).toBe(before.personalBalanceMicroRappen);
+      const priorIds = new Set(before.ledgerRows.map((row) => row.id));
+      const newRows = after.ledgerRows.filter((row) => !priorIds.has(row.id));
+      expect(newRows).toHaveLength(1);
+      expect(newRows[0]).toMatchObject({
+        organisation: organisationId,
+        user_id: actor.userId,
+      });
+    } finally {
+      await actor.api.dispose();
+    }
+  });
+
   test('participant can create, list and delete a compaction', async () => {
     const user = await provisionApiUser();
     try {

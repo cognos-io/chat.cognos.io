@@ -179,6 +179,7 @@ is not mounted; pointing at a missing file intentionally fails startup.
 | `COGNOS_PADDLE_PRICE_PAYG_OVERAGE`               | Required when PAYG overage is offered                | No     | Canonical overage price ID                               |
 | `COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY`          | Required when monthly Unlimited is offered           | No     | Canonical price ID                                       |
 | `COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL`           | Required when annual Unlimited is offered            | No     | Canonical price ID                                       |
+| `COGNOS_PADDLE_PRICE_ORG_SEAT`                   | Required when Organisation billing is offered        | No     | Monthly per-Seat Paddle price ID                         |
 | `COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE`            | Required when TOTP is enabled                        | Yes    | Base64-encoded 32-byte seed-encryption key               |
 | `COGNOS_BACKEND_HTTP_ADDR`                       | Optional; defaults to `0.0.0.0:8090`                 | No     | Container TCP listen address when no Unix socket is set  |
 | `COGNOS_BACKEND_UNIX_SOCKET`                     | Optional                                             | No     | Direct API listener and shared reverse-proxy socket path |

@@ -96,8 +96,15 @@ export interface ProjectRecord {
   // can decrypt `data` without a second request.
   wrapped_project_key?: string;
   key_version: number;
+  /** True while an Admin must rotate keys after Participant revocation. */
+  rotation_pending?: boolean;
   archived_at?: string;
   caller_role?: ProjectRole;
+  // Optional Organisation relation (docs/specs/organisations.md §5.4): set on
+  // org-owned Projects (billed to org_billing, visible in that Organisation's
+  // Workspace); absent/empty on personal Projects. Plaintext metadata — never
+  // part of the encrypted blob, so billing attribution works server-side.
+  organisation?: string;
 }
 
 export type ProjectRole = 'Admin' | 'Editor' | 'Viewer';
@@ -125,6 +132,20 @@ export interface Project {
   // contentKey is the symmetric project content key (32 bytes), held only in
   // memory for the duration of the session.
   contentKey: Uint8Array;
+}
+
+/**
+ * ProjectParticipantRecord is one row of
+ * GET /api/v1/projects/{id}/participants — an active participant and their
+ * project role. Sharing is org-only in v1: every participant of an org-owned
+ * Project must be an active member of the owning Organisation.
+ */
+export interface ProjectParticipantRecord {
+  id: string;
+  project?: string;
+  user_id: string;
+  role: ProjectRole;
+  added_at?: string;
 }
 
 // ProjectConversationRecord is the API shape for a conversation inside a

@@ -28,6 +28,8 @@ type Business struct {
 type CheckoutRequest struct {
 	PriceID    string
 	UserID     string // Cognos user id → custom_data.user_id (webhook ↔ user map)
+	OrgID      string // Organisation id → custom_data.org_id; set INSTEAD of UserID for org subscriptions
+	Quantity   int    // subscription item quantity (Seats); 0 means 1
 	CustomerID string // existing Paddle customer id, if known
 	Business   *Business
 	ReturnURL  string // where Paddle returns the buyer after payment
@@ -101,6 +103,19 @@ type Client interface {
 	CreateOneTimeCharge(ctx context.Context, subscriptionID, priceID string, quantity int64, idempotencyKey string) (string, error)
 }
 
+// SeatQuantityUpdater is the narrower Paddle capability used by Organisation
+// invite acceptance. Keeping it separate from Client lets handlers and tests
+// depend only on the one mutating operation needed for immediate Seat
+// proration.
+type SeatQuantityUpdater interface {
+	UpdateSubscriptionQuantity(
+		ctx context.Context,
+		subscriptionID, priceID string,
+		quantity int,
+		prorationBillingMode string,
+	) error
+}
+
 // HTTPClient talks to the real Paddle Billing API.
 type HTTPClient struct {
 	BaseURL string
@@ -139,7 +154,14 @@ func (c *HTTPClient) CreateCheckout(
 	ctx context.Context,
 	req CheckoutRequest,
 ) (CheckoutResult, error) {
-	customData := map[string]any{"user_id": req.UserID}
+	// An org checkout carries org_id ONLY — the subscription must resolve to
+	// the Organisation, never to the acting owner's personal billing.
+	customData := map[string]any{}
+	if req.OrgID != "" {
+		customData["org_id"] = req.OrgID
+	} else {
+		customData["user_id"] = req.UserID
+	}
 	if req.Business != nil {
 		// Mirror the business details onto the transaction so they reach the
 		// invoice even before a Paddle business entity exists for the customer.
@@ -148,8 +170,12 @@ func (c *HTTPClient) CreateCheckout(
 		customData["business_country"] = req.Business.CountryCode
 	}
 
+	quantity := req.Quantity
+	if quantity <= 0 {
+		quantity = 1
+	}
 	payload := map[string]any{
-		"items":       []map[string]any{{"price_id": req.PriceID, "quantity": 1}},
+		"items":       []map[string]any{{"price_id": req.PriceID, "quantity": quantity}},
 		"custom_data": customData,
 	}
 	if req.CustomerID != "" {
@@ -604,6 +630,27 @@ func (c *HTTPClient) ChangeSubscriptionPrice(
 		c.BaseURL+"/subscriptions/"+subscriptionID,
 		map[string]any{
 			"items":                  []map[string]any{{"price_id": newPriceID, "quantity": 1}},
+			"proration_billing_mode": prorationBillingMode,
+		},
+	)
+}
+
+// UpdateSubscriptionQuantity replaces the Organisation subscription's single
+// Seat item quantity. Paddle applies additions immediately using its native
+// proration when prorationBillingMode is "prorated_immediately".
+func (c *HTTPClient) UpdateSubscriptionQuantity(
+	ctx context.Context,
+	subscriptionID, priceID string,
+	quantity int,
+	prorationBillingMode string,
+) error {
+	if quantity < 1 {
+		return fmt.Errorf("subscription quantity must be at least 1")
+	}
+	return c.patchJSON(ctx,
+		c.BaseURL+"/subscriptions/"+subscriptionID,
+		map[string]any{
+			"items":                  []map[string]any{{"price_id": priceID, "quantity": quantity}},
 			"proration_billing_mode": prorationBillingMode,
 		},
 	)

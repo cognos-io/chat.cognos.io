@@ -246,8 +246,8 @@
       ],
       "cta": "Escolher Ilimitado"
     },
-    "roadmap": "Precisas disto para uma equipa? Início de sessão único e controlos de administração estão a caminho — ",
-    "roadmapLink": "entra em contacto",
+    "roadmap": "Equipas: CHF 15 por pessoa e por mês + uso, uma fatura — brevemente. ",
+    "roadmapLink": "Entra em contacto",
     "roadmapAfter": "."
   },
   "security": {
@@ -745,7 +745,20 @@
       },
       "pricing": {
         "title": "Preço simples por pessoa",
-        "body": "O plano Ilimitado custa CHF 150 por pessoa / mês, IVA acrescentado no pagamento — conversas ilimitadas em todos os modelos de IA que oferecemos. Ou paga conforme usas, a partir de CHF 15/mês. O início de sessão único e os controlos de administração estão a caminho."
+        "body": "O plano Ilimitado custa CHF 150 por pessoa / mês, IVA acrescentado no pagamento — conversas ilimitadas em todos os modelos de IA que oferecemos. Ou paga conforme usas, a partir de CHF 15/mês."
+      },
+      "team": {
+        "eyebrow": "Para equipas",
+        "title": "Uma organização, uma fatura — brevemente",
+        "lead": "Estamos a preparar uma oferta simples para equipas. Eis o que vai incluir:",
+        "points": [
+          "<b>Uma organização, uma fatura</b> — CHF 15 por pessoa e por mês no mínimo, mais o que a tua equipa realmente usar, tudo junto",
+          "<b>Convida e remove pessoas quando quiseres</b> — sem precisares de um projeto de TI",
+          "<b>Os administradores veem o uso e os custos</b> — nunca as conversas de ninguém",
+          "<b>O trabalho fica na empresa</b> — os projetos pertencem à organização, as conversas pessoais continuam pessoais",
+          "<b>Uma saída limpa</b> — o acesso termina de imediato, e a conta pessoal dessa pessoa fica intacta"
+        ],
+        "footnote": "O início de sessão único e as políticas de administração chegam a seguir. Isto está em acesso antecipado — conta-nos sobre a tua equipa abaixo e trazemos-te a bordo à medida que avançamos."
       },
       "form": {
         "heading": "Pergunta-nos o que quiseres",

@@ -246,8 +246,8 @@
       ],
       "cta": "Pásate a Ilimitado"
     },
-    "roadmap": "¿Lo necesitas para un equipo? El inicio de sesión único y los controles de administración están en camino: ",
-    "roadmapLink": "escríbenos",
+    "roadmap": "Equipos: CHF 15 por persona al mes + uso, una factura — próximamente. ",
+    "roadmapLink": "Escríbenos",
     "roadmapAfter": "."
   },
   "security": {
@@ -745,7 +745,20 @@
       },
       "pricing": {
         "title": "Precio sencillo por persona",
-        "body": "El plan Ilimitado cuesta CHF 150 por persona / mes, IVA añadido al pagar: chats ilimitados con todos los modelos de IA que ofrecemos. O paga según lo que uses desde CHF 15/mes. El inicio de sesión único y los controles de administración están en camino."
+        "body": "El plan Ilimitado cuesta CHF 150 por persona / mes, IVA añadido al pagar: chats ilimitados con todos los modelos de IA que ofrecemos. O paga según lo que uses desde CHF 15/mes."
+      },
+      "team": {
+        "eyebrow": "Para equipos",
+        "title": "Una organización, una factura — próximamente",
+        "lead": "Estamos preparando una oferta sencilla para equipos. Esto es lo que incluirá:",
+        "points": [
+          "<b>Una organización, una factura</b> — CHF 15 por persona al mes como mínimo, más lo que tu equipo realmente use, todo junto",
+          "<b>Invita y elimina personas cuando quieras</b> — sin necesidad de un proyecto de IT",
+          "<b>Los administradores ven el uso y el coste</b> — nunca las conversaciones de nadie",
+          "<b>El trabajo se queda en la empresa</b> — los proyectos pertenecen a la organización, los chats personales siguen siendo personales",
+          "<b>Una salida limpia</b> — el acceso termina al instante, y la cuenta personal de esa persona queda intacta"
+        ],
+        "footnote": "El inicio de sesión único y las políticas de administración llegarán después. Esto está en fase de acceso anticipado — cuéntanos sobre tu equipo abajo y te incorporaremos según lo vayamos lanzando."
       },
       "form": {
         "heading": "Pregúntanos lo que quieras",

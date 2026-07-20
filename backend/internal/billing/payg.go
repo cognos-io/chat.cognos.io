@@ -18,6 +18,48 @@ type CycleSummary struct {
 	OverageChargeRappen int64
 }
 
+// OrgCycleSummary is the locally-computed view of a closed pooled org cycle
+// (spec docs/specs/organisations.md §7.4): total org-attributed usage, the
+// billed seat count, what we expect Paddle to invoice, and the one-time
+// overage above the pooled floor.
+type OrgCycleSummary struct {
+	// PooledUsageRappen is the org-attributed cost of all usage in the cycle.
+	PooledUsageRappen int64
+	// SeatQuantity is the number of billed Seats for the cycle (the N of the
+	// pooled floor N x commit).
+	SeatQuantity int64
+	// LocalExpectedBillRappen is max(usage, seats x commit) — what Paddle
+	// should bill in total across the recurring seat charge and the overage.
+	LocalExpectedBillRappen int64
+	// OverageChargeRappen is max(0, usage - seats x commit) — the one-time
+	// charge. The pooled floor is prepaid by the seat subscription, so
+	// overage + floor always reconstructs the expected bill exactly.
+	OverageChargeRappen int64
+}
+
+// ComputeOrgCycleSummary derives the pooled org cycle bill: the floor is
+// seatQuantity x commitPerSeatRappen (one CHF 15 commit per Seat, pooled —
+// NOT per-seat floors), the invoice is max(usage, floor) and only the part
+// above the floor is posted as a one-time charge. Negative inputs are clamped
+// to zero so a malformed ledger or seat count can never produce a credit.
+func ComputeOrgCycleSummary(pooledUsageRappen, seatQuantity, commitPerSeatRappen int64) OrgCycleSummary {
+	if seatQuantity < 0 {
+		seatQuantity = 0
+	}
+	if commitPerSeatRappen < 0 {
+		commitPerSeatRappen = 0
+	}
+
+	pooled := ComputeCycleSummary(pooledUsageRappen, seatQuantity*commitPerSeatRappen)
+
+	return OrgCycleSummary{
+		PooledUsageRappen:       pooled.LocalUsageRappen,
+		SeatQuantity:            seatQuantity,
+		LocalExpectedBillRappen: pooled.LocalExpectedBillRappen,
+		OverageChargeRappen:     pooled.OverageChargeRappen,
+	}
+}
+
 // ComputeCycleSummary derives the cycle bill from local usage and the minimum
 // commit. The commit is pre-paid by the recurring price, so we only ever post
 // the overage above it; the net invoice is max(usage, commit). Negative inputs

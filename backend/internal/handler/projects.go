@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
@@ -24,6 +26,9 @@ type projectRecordResponse struct {
 	Updated string `json:"updated"`
 	Data    string `json:"data"`
 	Creator string `json:"creator,omitempty"`
+	// Organisation is plaintext operational metadata: set when the Project is
+	// org-owned, empty for personal Projects. The client scopes Workspaces on it.
+	Organisation string `json:"organisation,omitempty"`
 	// WrappedProjectKey is the symmetric project content key sealed to the
 	// requesting caller's public key, at the project's current key_version.
 	// It is embedded in the response so the client can decrypt `data` in a
@@ -31,6 +36,7 @@ type projectRecordResponse struct {
 	// returning it to that same authenticated caller leaks nothing.
 	WrappedProjectKey string `json:"wrapped_project_key,omitempty"`
 	KeyVersion        int    `json:"key_version"`
+	RotationPending   bool   `json:"rotation_pending"`
 	ArchivedAt        string `json:"archived_at,omitempty"`
 	CallerRole        string `json:"caller_role,omitempty"`
 }
@@ -40,6 +46,10 @@ type createProjectRequest struct {
 	// (name/description/settings) is encrypted client-side under the project
 	// content key and never reaches the server.
 	Data string `json:"data"`
+	// Organisation optionally makes the Project org-owned: it bills the
+	// Organisation and its participants must be active org members. The
+	// caller must be an active member of that Organisation.
+	Organisation string `json:"organisation"`
 	// WrappedProjectKey is the symmetric project content key sealed to the
 	// creator's own public key (base64). Without it the creator could not
 	// decrypt their own project on a fresh session, so it is mandatory and
@@ -119,6 +129,23 @@ func ProjectsCreate(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewBadRequestError("wrapped_project_key is required", nil)
 		}
 
+		req.Organisation = strings.TrimSpace(req.Organisation)
+		if req.Organisation != "" {
+			// Only active org members may create org-owned Projects; misses get
+			// the same neutral 404 as a nonexistent organisation.
+			orgRepo := organisations.NewPocketBaseRepo(app)
+			active, err := orgRepo.IsActiveMember(req.Organisation, user.ID)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to verify organisation access", err)
+			}
+			if !active {
+				return apis.NewNotFoundError("Organisation not found", nil)
+			}
+			if err := requireOrgBillingWritable(app, req.Organisation); err != nil {
+				return err
+			}
+		}
+
 		projectsCollection, err := app.FindCollectionByNameOrId("projects")
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load projects collection", err)
@@ -135,6 +162,9 @@ func ProjectsCreate(app core.App) func(e *core.RequestEvent) error {
 		record := core.NewRecord(projectsCollection)
 		record.Set("creator", user.ID)
 		record.Set("data", req.Data)
+		if req.Organisation != "" {
+			record.Set("organisation", req.Organisation)
+		}
 		record.Set("key_version", 1)
 
 		// All three rows land together or none do: a stranded project with no
@@ -257,7 +287,90 @@ func accessibleProjectRecord(app core.App, e *core.RequestEvent, projectID strin
 	if !active {
 		return nil, apis.NewNotFoundError("Project not found", nil)
 	}
+	if orgID := record.GetString("organisation"); orgID != "" {
+		if err := requireOrgMFA(app, orgID, user.ID); err != nil {
+			return nil, err
+		}
+	}
+	if e.Request.Method != http.MethodGet && e.Request.Method != http.MethodDelete {
+		if err := requireProjectContentWritable(app, record); err != nil {
+			return nil, err
+		}
+	}
 	return record, nil
+}
+
+func requireProjectWritable(project *core.Record) error {
+	if project != nil && project.GetBool("rotation_pending") {
+		return apis.NewApiError(
+			http.StatusLocked,
+			"Project key rotation must finish before new content can be written",
+			nil,
+		)
+	}
+	return nil
+}
+
+// requireProjectContentWritable composes the security key-rotation lock with
+// the Organisation billing lock. Personal Projects never enter the org gate.
+func requireProjectContentWritable(app core.App, project *core.Record) error {
+	if err := requireProjectWritable(project); err != nil {
+		return err
+	}
+	if project == nil {
+		return nil
+	}
+	return requireOrgBillingWritable(app, project.GetString("organisation"))
+}
+
+func requireOrgBillingWritable(app core.App, orgID string) error {
+	if orgID == "" {
+		return nil
+	}
+	state, err := billing.NewPocketBaseRepo(app).StateForOrg(orgID)
+	if err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to verify organisation billing", err)
+	}
+	resolved := billing.ResolvedState{Subject: billing.OrgSubject(orgID), State: state}
+	if organisation, err := app.FindRecordById("organisations", orgID); err == nil {
+		resolved.OrganisationName = organisation.GetString("name")
+	}
+	restriction := billing.NewService().EvaluateOrgAccess(resolved)
+	if restriction == nil {
+		return nil
+	}
+	apiErr := apis.NewApiError(http.StatusPaymentRequired, restriction.Message, nil)
+	apiErr.Data = map[string]any{
+		"error":             restriction.Error,
+		"next_step":         restriction.NextStep,
+		"organisation_id":   restriction.OrganisationID,
+		"organisation_name": restriction.OrganisationName,
+		"admin_message":     restriction.AdminMessage,
+	}
+	return apiErr
+}
+
+func requireConversationWritable(app core.App, conversation *core.Record) error {
+	if conversation == nil {
+		return nil
+	}
+	projectID := conversation.GetString("project")
+	if projectID == "" {
+		return nil
+	}
+	project, err := app.FindRecordById("projects", projectID)
+	if err != nil {
+		return apis.NewNotFoundError("Project not found", err)
+	}
+	return requireProjectContentWritable(app, project)
+}
+
+func requireConversationWritableByID(app core.App, conversationID string) error {
+	conversation, err := app.FindRecordById("conversations", conversationID)
+	if err != nil {
+		return apis.NewNotFoundError("Conversation not found", err)
+	}
+	return requireConversationWritable(app, conversation)
 }
 
 // activeParticipantProjectIDs returns the project IDs the user can currently
@@ -311,12 +424,14 @@ func projectRecordToResponse(record *core.Record) projectRecordResponse {
 		version = 1
 	}
 	return projectRecordResponse{
-		ID:         record.Id,
-		Created:    record.GetString("created"),
-		Updated:    record.GetString("updated"),
-		Data:       record.GetString("data"),
-		Creator:    record.GetString("creator"),
-		KeyVersion: version,
-		ArchivedAt: record.GetString("archived_at"),
+		ID:              record.Id,
+		Created:         record.GetString("created"),
+		Updated:         record.GetString("updated"),
+		Data:            record.GetString("data"),
+		Creator:         record.GetString("creator"),
+		Organisation:    record.GetString("organisation"),
+		KeyVersion:      version,
+		RotationPending: record.GetBool("rotation_pending"),
+		ArchivedAt:      record.GetString("archived_at"),
 	}
 }

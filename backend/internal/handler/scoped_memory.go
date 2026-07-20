@@ -165,6 +165,15 @@ func projectMemberOr404(app core.App, e *core.RequestEvent, projectID string) (s
 		// Same shape a missing project returns, so ids can't be probed.
 		return "", apis.NewNotFoundError("Project not found", nil)
 	}
+	if e.Request.Method != http.MethodGet && e.Request.Method != http.MethodDelete {
+		project, err := app.FindRecordById("projects", projectID)
+		if err != nil {
+			return "", apis.NewNotFoundError("Project not found", nil)
+		}
+		if err := requireProjectContentWritable(app, project); err != nil {
+			return "", err
+		}
+	}
 	return user.ID, nil
 }
 

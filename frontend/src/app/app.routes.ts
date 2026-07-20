@@ -36,6 +36,18 @@ export const routes: Routes = [
     ],
   },
   {
+    // Organisation invite landing page (?token=… deep link or manual paste).
+    // Auth first: accepting binds the invite to the signed-in Account — the
+    // SAME account, no new identity (docs/specs/organisations.md §8.1).
+    path: 'invite',
+    canActivate: [authGuard, featureFlagGuard],
+    data: { featureFlag: 'team' },
+    loadComponent: () =>
+      import('./pages/invite/invite-accept.component').then(
+        (m) => m.InviteAcceptComponent,
+      ),
+  },
+  {
     path: 'import',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -143,12 +155,15 @@ export const routes: Routes = [
           ),
       },
       {
+        // Organisation admin: create org, members, invites, billing & usage
+        // (docs/specs/organisations.md). Gated behind the `team` flag until
+        // Teams v1 ships end-to-end.
         path: 'team',
         canActivate: [featureFlagGuard],
-        data: { title: 'Team & sharing', featureFlag: 'team' },
+        data: { title: 'Team', featureFlag: 'team' },
         loadComponent: () =>
-          import('./pages/account/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
+          import('./pages/account/team/team-settings.component').then(
+            (m) => m.TeamSettingsComponent,
           ),
       },
       {

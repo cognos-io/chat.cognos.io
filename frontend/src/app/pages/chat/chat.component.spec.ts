@@ -21,6 +21,7 @@ import { DeviceService } from '../../services/device.service';
 import { ExportService } from '../../services/export.service';
 import { MessageService } from '../../services/message.service';
 import { ModelService } from '../../services/model.service';
+import { OrganisationService } from '../../services/organisation.service';
 import { ProjectConversationService } from '../../services/project-conversation.service';
 import { ProjectService } from '../../services/project.service';
 import { PublicShareService } from '../../services/public-share.service';
@@ -40,6 +41,9 @@ describe('ChatComponent', () => {
   };
 
   const temporaryConversation = signal(false);
+  // Flips the stubbed OrganisationService between the personal workspace
+  // (false) and an org workspace (true).
+  const orgWorkspace = signal(false);
   const selectedConversation = signal<Conversation | undefined>(undefined);
   const pinnedConversations = signal<Conversation[]>([]);
   const recentConversations = signal<Conversation[]>([]);
@@ -103,6 +107,7 @@ describe('ChatComponent', () => {
 
   beforeEach(async () => {
     temporaryConversation.set(false);
+    orgWorkspace.set(false);
     selectedConversation.set(undefined);
     pinnedConversations.set([]);
     recentConversations.set([]);
@@ -128,6 +133,7 @@ describe('ChatComponent', () => {
             isSendingLocked: signal(false),
             isTrialUsedUp: signal(false),
             isPastDue: signal(false),
+            orgSendBlock: signal(null),
           },
         },
         { provide: ConversationService, useValue: conversationService },
@@ -138,6 +144,20 @@ describe('ChatComponent', () => {
           useValue: { isDuplicatingSource: () => false, duplicate: vi.fn() },
         },
         { provide: ProjectService, useValue: { orderedProjects: signal([]) } },
+        {
+          // Personal-only account by default (switcher hidden, no workspace
+          // scoping); individual tests flip `orgWorkspace` to simulate an
+          // active org Workspace.
+          provide: OrganisationService,
+          useValue: {
+            memberships: signal([]),
+            activeWorkspace: signal('personal'),
+            hasMemberships: () => false,
+            isOrgWorkspace: () => orgWorkspace(),
+            activeOrg: () => null,
+            visibleProjects: (projects: unknown[]) => projects,
+          },
+        },
         { provide: ProjectConversationService, useValue: {} },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
@@ -283,6 +303,46 @@ describe('ChatComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).not.toContain('Pinned');
+  });
+
+  it('shows the personal trial card in the personal workspace', () => {
+    expect(fixture.nativeElement.querySelector('app-trial-credit-card')).not.toBeNull();
+  });
+
+  // Pin: inside an org Workspace the org pays, so the sidebar must never
+  // nudge a member towards a personal purchase (trial upsell / PAYG usage)
+  // for firm work. The card returns as soon as the personal workspace does.
+  it('hides the personal trial card inside an org workspace', () => {
+    orgWorkspace.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-trial-credit-card')).toBeNull();
+
+    orgWorkspace.set(false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-trial-credit-card')).not.toBeNull();
+  });
+
+  // The empty org Workspace must not be a dead end: alongside the "no
+  // projects yet" note it links to the projects page where any active member
+  // can create an org Project.
+  it('offers a create-project link in the empty org workspace state', () => {
+    orgWorkspace.set(true);
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      'a.chat-shell__workspace-empty-action',
+    ) as HTMLAnchorElement | null;
+
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('/account/projects');
+  });
+
+  it('does not show the empty-org state in the personal workspace', () => {
+    expect(
+      fixture.nativeElement.querySelector('.chat-shell__workspace-empty'),
+    ).toBeNull();
   });
 });
 

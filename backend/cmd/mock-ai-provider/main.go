@@ -81,11 +81,107 @@ func routes(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("POST /v1/responses", responsesHandler(logger))
 	mux.HandleFunc("GET /grounding-redirect/{token}", groundingRedirectHandler(logger))
 	mux.HandleFunc("POST /v1/images/generations", imagesGenerationHandler(logger))
+	mux.HandleFunc("POST /transactions", paddleTransactionHandler(logger))
+	mux.HandleFunc("POST /customers/{customerID}/portal-sessions", paddlePortalSessionHandler(logger))
+	mux.HandleFunc("PATCH /subscriptions/{subscriptionID}", paddleSubscriptionHandler(logger))
+	mux.HandleFunc("POST /subscriptions/{subscriptionID}/cancel", paddleSubscriptionCancelHandler(logger))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("not found", "method", r.Method, "path", r.URL.Path)
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	return mux
+}
+
+func paddleSubscriptionCancelHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			EffectiveFrom string `json:"effective_from"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.EffectiveFrom != "next_billing_period" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid subscription cancellation"})
+			return
+		}
+		logger.Info("mock paddle subscription cancelled", "subscription_id", r.PathValue("subscriptionID"))
+		writeJSON(w, http.StatusOK, map[string]any{
+			"data": map[string]string{"id": r.PathValue("subscriptionID")},
+		})
+	}
+}
+
+type paddleTransactionCreate struct {
+	Items []struct {
+		PriceID  string `json:"price_id"`
+		Quantity int    `json:"quantity"`
+	} `json:"items"`
+	CustomData map[string]any `json:"custom_data"`
+}
+
+func paddleTransactionHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req paddleTransactionCreate
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.Items) != 1 || req.Items[0].PriceID == "" || req.Items[0].Quantity < 1 {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid transaction"})
+			return
+		}
+		logger.Info("mock paddle transaction created", "quantity", req.Items[0].Quantity)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"data": map[string]any{
+				"id":          "txn_e2e_org_checkout",
+				"customer_id": "ctm_e2e_org_owner",
+				"checkout": map[string]string{
+					"url": "https://checkout.paddle.test/e2e-organisation",
+				},
+			},
+		})
+	}
+}
+
+func paddlePortalSessionHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		customerID := r.PathValue("customerID")
+		if customerID == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing customer"})
+			return
+		}
+		logger.Info("mock paddle portal session created", "customer_id", customerID)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"data": map[string]any{
+				"urls": map[string]any{
+					"general": map[string]string{
+						"overview": "https://customer-portal.paddle.test/e2e-organisation",
+					},
+					"subscriptions": []any{},
+				},
+			},
+		})
+	}
+}
+
+type paddleSubscriptionUpdate struct {
+	Items []struct {
+		PriceID  string `json:"price_id"`
+		Quantity int    `json:"quantity"`
+	} `json:"items"`
+	ProrationBillingMode string `json:"proration_billing_mode"`
+}
+
+func paddleSubscriptionHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req paddleSubscriptionUpdate
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.Items) != 1 || req.Items[0].PriceID == "" || req.Items[0].Quantity < 1 {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid subscription update"})
+			return
+		}
+		logger.Info(
+			"mock paddle subscription updated",
+			"subscription_id", r.PathValue("subscriptionID"),
+			"quantity", req.Items[0].Quantity,
+			"proration_billing_mode", req.ProrationBillingMode,
+		)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"data": map[string]string{"id": r.PathValue("subscriptionID")},
+		})
+	}
 }
 
 type chatCompletionRequest struct {

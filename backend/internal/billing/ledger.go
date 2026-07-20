@@ -15,11 +15,17 @@ const (
 )
 
 type UsageRecord struct {
-	UserID   string
-	EventID  string
-	ModelID  string
-	PlanType PlanType
-	Type     string
+	UserID string
+	// OrganisationID attributes the usage to an Organisation's pooled PAYG
+	// cycle (org-owned Project scope). Empty for personal usage. UserID is
+	// always kept alongside it — the acting Account, for audit and per-member
+	// metadata. Org usage never touches any balance: orgs have no trial or
+	// prepaid credit, so the row only accrues toward the pooled cycle.
+	OrganisationID string
+	EventID        string
+	ModelID        string
+	PlanType       PlanType
+	Type           string
 	// OperationType flags whether this usage came from a text completion or an
 	// image generation. Defaults to OperationTypeText.
 	OperationType OperationType
@@ -46,13 +52,16 @@ type UsageRecord struct {
 }
 
 type BuildUsageRecordInput struct {
-	UserID       string
-	EventID      string
-	ModelID      string
-	Cost         CostBreakdown
-	FXRateUSDCHF float64
-	InputTokens  int64
-	OutputTokens int64
+	UserID string
+	// OrganisationID marks the usage as org-attributed (see
+	// UsageRecord.OrganisationID). Empty for personal usage.
+	OrganisationID string
+	EventID        string
+	ModelID        string
+	Cost           CostBreakdown
+	FXRateUSDCHF   float64
+	InputTokens    int64
+	OutputTokens   int64
 	// OperationType defaults to OperationTypeText when empty.
 	OperationType OperationType
 	// GeneratedImageCount is the number of images produced (0 for text).
@@ -79,6 +88,7 @@ func (s *Service) BuildUsageRecord(state State, input BuildUsageRecordInput) Usa
 
 	record := UsageRecord{
 		UserID:                  input.UserID,
+		OrganisationID:          input.OrganisationID,
 		EventID:                 input.EventID,
 		ModelID:                 input.ModelID,
 		PlanType:                state.PlanType,
@@ -102,7 +112,10 @@ func (s *Service) BuildUsageRecord(state State, input BuildUsageRecordInput) Usa
 	case PlanTypeTrial, PlanTypePayG:
 		record.AmountRappen = -userCostRappen
 		record.AmountMicroRappen = -userCostMicroRappen
-		if state.PlanType == PlanTypeTrial {
+		// Org-attributed usage never projects a balance: orgs have no trial
+		// or prepaid credit, only the pooled PAYG cycle (fail-closed gate
+		// upstream guarantees the plan is payg, this is belt and braces).
+		if state.PlanType == PlanTypeTrial && record.OrganisationID == "" {
 			balanceAfterMicro := state.BalanceMicroRappen - userCostMicroRappen
 			balanceAfter := FloorRappenFromMicro(balanceAfterMicro)
 			record.BalanceAfterMicroRappen = &balanceAfterMicro

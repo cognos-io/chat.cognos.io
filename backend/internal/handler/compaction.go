@@ -121,6 +121,9 @@ func CompactionCreate(params CompactionHandlerParams) func(e *core.RequestEvent)
 		if !active {
 			return apis.NewNotFoundError("Conversation not found", nil)
 		}
+		if err := requireConversationWritableByID(params.App, conversationID); err != nil {
+			return err
+		}
 
 		var req createCompactionRequest
 		if err := e.BindBody(&req); err != nil {
@@ -237,7 +240,7 @@ func CompactionCreate(params CompactionHandlerParams) func(e *core.RequestEvent)
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to save compaction", err)
 		}
 
-		recordCompactionUsage(params, owner.ID, userTier, model, usage)
+		recordCompactionUsage(params, owner.ID, conversationID, userTier, model, usage)
 
 		return e.JSON(http.StatusOK, createCompactionResponse{
 			compactionRecordResponse: toRecordResponse(record),
@@ -320,6 +323,7 @@ func addUsage(a, b gateway.Usage) gateway.Usage {
 func recordCompactionUsage(
 	params CompactionHandlerParams,
 	userID string,
+	conversationID string,
 	userTier catalogue.PrivacyTier,
 	model catalogue.Model,
 	usage gateway.Usage,
@@ -327,13 +331,14 @@ func recordCompactionUsage(
 	if params.BillingService == nil || params.BillingStateRepo == nil {
 		return
 	}
-	state, err := params.BillingStateRepo.StateForUser(userID)
+	resolved, err := billing.ResolveState(params.BillingStateRepo, userID, conversationID)
 	if err != nil {
 		if !errors.Is(err, billing.ErrStateNotFound) {
 			params.Logger.Error("compaction billing state lookup failed", "err", err)
 		}
 		return
 	}
+	state := resolved.State
 
 	usdToCHFRate := float64(1)
 	if params.FXRateProvider != nil {
@@ -351,13 +356,14 @@ func recordCompactionUsage(
 	eventID := uuid.NewString()
 	if params.BillingLedgerRepo != nil {
 		usageRecord := params.BillingService.BuildUsageRecord(state, billing.BuildUsageRecordInput{
-			UserID:       userID,
-			EventID:      eventID,
-			ModelID:      model.ID,
-			Cost:         cost,
-			FXRateUSDCHF: usdToCHFRate,
-			InputTokens:  usage.InputTokens,
-			OutputTokens: usage.OutputTokens,
+			UserID:         userID,
+			OrganisationID: resolved.Subject.OrganisationID(),
+			EventID:        eventID,
+			ModelID:        model.ID,
+			Cost:           cost,
+			FXRateUSDCHF:   usdToCHFRate,
+			InputTokens:    usage.InputTokens,
+			OutputTokens:   usage.OutputTokens,
 		})
 		if err := params.BillingLedgerRepo.RecordUsage(usageRecord); err != nil {
 			params.Logger.Error("failed to record compaction billing usage", "err", err)
@@ -402,7 +408,6 @@ func CompactionList(params CompactionHandlerParams) func(e *core.RequestEvent) e
 		if !active {
 			return apis.NewNotFoundError("Conversation not found", nil)
 		}
-
 		records, err := params.CompactionRepo.ListByConversation(conversationID)
 		if err != nil {
 			params.Logger.Error("failed to list compactions", "err", err)
@@ -441,6 +446,9 @@ func CompactionCreateManual(params CompactionHandlerParams) func(e *core.Request
 		}
 		if !active {
 			return apis.NewNotFoundError("Conversation not found", nil)
+		}
+		if err := requireConversationWritableByID(params.App, conversationID); err != nil {
+			return err
 		}
 
 		var req updateCompactionRequest
@@ -484,6 +492,9 @@ func CompactionUpdate(params CompactionHandlerParams) func(e *core.RequestEvent)
 		}
 		if !active {
 			return apis.NewNotFoundError("Compaction not found", nil)
+		}
+		if err := requireConversationWritableByID(params.App, record.GetString("conversation")); err != nil {
+			return err
 		}
 
 		var req updateCompactionRequest

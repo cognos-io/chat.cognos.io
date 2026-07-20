@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -6,8 +12,10 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import { CognosBreadcrumbsComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
+import { WorkspaceContextBadgeComponent } from '@app/components/chat/workspace-context-badge/workspace-context-badge.component';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { defaultProjectColor, defaultProjectIcon } from '@app/interfaces/project';
+import { OrganisationService } from '@app/services/organisation.service';
 import { ProjectService } from '@app/services/project.service';
 
 @Component({
@@ -20,6 +28,7 @@ import { ProjectService } from '@app/services/project.service';
     CognosBreadcrumbsComponent,
     CognosButtonComponent,
     PersonaAvatarComponent,
+    WorkspaceContextBadgeComponent,
   ],
   templateUrl: './projects-page.component.html',
   styleUrl: './projects-page.component.css',
@@ -28,8 +37,22 @@ import { ProjectService } from '@app/services/project.service';
 export class ProjectsPageComponent {
   private readonly _projects = inject(ProjectService);
   private readonly _router = inject(Router);
+  private readonly _workspaces = inject(OrganisationService);
 
-  protected readonly projects = this._projects.orderedProjects;
+  // Scoped to the active Workspace (personal Projects, or the active
+  // Organisation's) — same filter as the sidebar (spec §5.2).
+  protected readonly projects = computed(() =>
+    this._workspaces.visibleProjects(this._projects.orderedProjects()),
+  );
+
+  // Workspace/billing context (spec §5.2): shown only once the account holds
+  // org memberships — individual accounts see zero change. The badge and the
+  // create-card hint both follow the ACTIVE Workspace, because that's where a
+  // new project will land.
+  protected readonly hasMemberships = this._workspaces.hasMemberships;
+  protected readonly billedOrgName = computed(
+    () => this._workspaces.activeOrg()?.name ?? null,
+  );
 
   // Routes for the breadcrumb crumbs, in order. The last crumb (Projects) is
   // the current page and has no route.

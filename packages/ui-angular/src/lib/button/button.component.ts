@@ -26,6 +26,7 @@ export type CognosButtonType = 'button' | 'submit' | 'reset';
     <button
       [class]="buttonClass()"
       [disabled]="disabled()"
+      [attr.aria-label]="ariaLabel() || null"
       [attr.title]="title() || null"
       [attr.type]="type()"
     >
@@ -168,6 +169,7 @@ export class CognosButtonComponent {
   readonly appearance = input<CognosButtonAppearance>('default');
   readonly size = input<CognosButtonSize>('md');
   readonly disabled = input(false);
+  readonly ariaLabel = input('');
   readonly fullWidth = input(false);
   readonly icon = input<CognosIconName | null>(null);
   readonly iconAfter = input<CognosIconName | null>(null);

@@ -75,7 +75,7 @@ billing:
 # price_* are Paddle price IDs (pri_...). Env overrides: COGNOS_PADDLE_API_BASE,
 # COGNOS_PADDLE_API_KEY, COGNOS_PADDLE_WEBHOOK_SECRET, COGNOS_PADDLE_PRICE_PAYG,
 # COGNOS_PADDLE_PRICE_PAYG_OVERAGE, COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY,
-# COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL.
+# COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL, COGNOS_PADDLE_PRICE_ORG_SEAT.
 # Secret-file overrides: COGNOS_PADDLE_API_KEY_FILE, COGNOS_PADDLE_WEBHOOK_SECRET_FILE.
 paddle:
   api_base: "https://api.paddle.com"
@@ -85,6 +85,8 @@ paddle:
   price_payg_overage: ""
   price_unlimited_monthly: ""
   price_unlimited_annual: ""
+  # Recurring CHF 15/month per Organisation Seat; checkout supplies quantity.
+  price_org_seat: ""
 
 # --- MFA (two-factor authentication) ------------------------------------------
 # Server-held key that encrypts authenticator-app (TOTP) seeds at rest. Base64

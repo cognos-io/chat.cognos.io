@@ -171,7 +171,13 @@ import {
       display: grid;
       min-height: 100%;
       flex: 1;
-      grid-template-rows: minmax(0, 1fr) auto;
+      /* 1fr (whose implicit minimum is the row's content) — NOT minmax(0, 1fr).
+         With a min of 0 the content row compresses below its content whenever
+         the scroll area is short (banners/onboarding cards squeeze it), the
+         empty-state card overflows into the actions row, and the retention
+         pill + temporary toggle paint over it. With min auto the shell grows
+         past 100% instead and the message list scrolls. */
+      grid-template-rows: 1fr auto;
       gap: var(--cog-space-300);
       padding: var(--cog-space-300) 0;
     }

@@ -138,6 +138,45 @@ func TestHTTPClientChangeSubscriptionPrice(t *testing.T) {
 	}
 }
 
+func TestHTTPClientUpdateSubscriptionQuantity(t *testing.T) {
+	var gotMethod, gotPath string
+	var gotBody map[string]any
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		raw, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(raw, &gotBody)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"id":"sub_1"}}`))
+	}))
+	defer server.Close()
+
+	client := NewHTTPClient(server.URL, "k")
+	if err := client.UpdateSubscriptionQuantity(
+		context.Background(), "sub_1", "pri_seat", 3, "prorated_immediately",
+	); err != nil {
+		t.Fatalf("UpdateSubscriptionQuantity: %v", err)
+	}
+	if gotMethod != http.MethodPatch {
+		t.Errorf("method = %q, want PATCH", gotMethod)
+	}
+	if gotPath != "/subscriptions/sub_1" {
+		t.Errorf("path = %q, want /subscriptions/sub_1", gotPath)
+	}
+	if gotBody["proration_billing_mode"] != "prorated_immediately" {
+		t.Errorf("proration_billing_mode = %v, want prorated_immediately", gotBody["proration_billing_mode"])
+	}
+	items, _ := gotBody["items"].([]any)
+	if len(items) != 1 {
+		t.Fatalf("items len = %d, want 1", len(items))
+	}
+	item, _ := items[0].(map[string]any)
+	if item["price_id"] != "pri_seat" || item["quantity"] != float64(3) {
+		t.Errorf("item = %#v, want price pri_seat quantity 3", item)
+	}
+}
+
 func TestHTTPClientCreateOneTimeCharge_Success(t *testing.T) {
 	var gotPath, gotIdem, gotMethod string
 	var gotBody map[string]any

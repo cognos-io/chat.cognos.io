@@ -948,6 +948,11 @@ func ownedConversationRecord(app core.App, e *core.RequestEvent, conversationID 
 	if !active {
 		return nil, apis.NewNotFoundError("Conversation not found", nil)
 	}
+	if e.Request.Method != http.MethodGet && e.Request.Method != http.MethodDelete {
+		if err := requireConversationWritable(app, record); err != nil {
+			return nil, err
+		}
+	}
 	return record, nil
 }
 
@@ -971,6 +976,11 @@ func ownedMessageRecord(app core.App, e *core.RequestEvent, messageID string) (*
 	}
 	if !active {
 		return nil, apis.NewNotFoundError("Message not found", nil)
+	}
+	if e.Request.Method != http.MethodGet && e.Request.Method != http.MethodDelete {
+		if err := requireConversationWritable(app, conversation); err != nil {
+			return nil, err
+		}
 	}
 	return record, nil
 }
