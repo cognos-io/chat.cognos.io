@@ -2,7 +2,7 @@ import { InjectionToken } from '@angular/core';
 
 import { environment } from '../../../environments/environment';
 
-// Privacy-respecting product analytics (docs/specs/product-analytics.md).
+// Privacy-respecting product analytics (docs/business_processes/product-analytics.md).
 // Hard rules (spec §3): no identifiers, no content, props are closed enums and
 // booleans only, sanitised route patterns instead of raw URLs, and analytics
 // must never throw into app code or be awaited on a hot path.

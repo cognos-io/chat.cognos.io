@@ -2,7 +2,7 @@
 // (TOTP) multi-factor authentication: encrypting TOTP seeds at rest with a
 // server-held key, generating and verifying time-based codes, and minting and
 // hashing the one-use tokens behind MFA sessions, recovery codes, and trusted
-// devices. See docs/specs/mfa-and-passkeys.md.
+// devices. See docs/business_processes/mfa-login.md.
 //
 // Nothing here logs secrets: seeds, codes, and tokens are never written to logs
 // or returned in errors.

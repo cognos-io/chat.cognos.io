@@ -84,7 +84,7 @@ export type RedactionSourceKind =
   | 'message'
   | 'document'
   | 'document_chunk'
-  // Text extracted from a user-uploaded attachment (spec docs/specs/attachments.md).
+  // Text extracted from a user-uploaded attachment (docs/business_processes/attachment-processing.md).
   | 'attachment';
 
 export interface RedactionSource {

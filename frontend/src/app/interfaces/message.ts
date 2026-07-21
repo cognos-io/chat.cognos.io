@@ -32,7 +32,7 @@ export type MessageAttachment = z.infer<typeof MessageAttachment>;
 
 /**
  * MessageCitation is one web-search source stored inside the encrypted message
- * blob (spec docs/specs/web-search.md §7). Same inner shape as the SSE
+ * blob (docs/business_processes/web-search.md). Same inner shape as the SSE
  * `web_search` frame so the client parses one shape for live and reload.
  * `title`/`snippet` are omitempty on the wire (proxy sources arrive title-less;
  * snippet is currently always empty from the Gemini family).
@@ -97,15 +97,16 @@ export const MessageData = z.object({
   owner_id: z.string().optional(), // the user who sent the message
   // Provider usage counts for the turn that produced this assistant message:
   // input_tokens is the real prompt size that was sent, output_tokens the reply
-  // size. Used for accurate context planning (spec §10.1). Absent on user
+  // size. Used for accurate context planning (spec). Absent on user
   // messages and on messages created before this field existed.
   input_tokens: z.number().optional(),
   output_tokens: z.number().optional(),
   // Encrypted attachments (e.g. generated images) referenced by this message.
   attachments: z.array(MessageAttachment).optional(),
   // Web-search sources cited by this assistant message, and the inline anchors
-  // that position numbered markers in `content` (spec docs/specs/web-search.md
-  // §7). snake_case matches the backend MessageRecordData and the SSE frame.
+  // that position numbered markers in `content`. See
+  // docs/business_processes/web-search.md. snake_case matches the backend
+  // MessageRecordData and the SSE frame.
   // Both absent on messages that did not search; citation_anchors absent when
   // the provider gave no usable offsets (dropdown-only rendering).
   citations: z.array(MessageCitation).optional(),
@@ -139,7 +140,7 @@ export interface Message {
   parentMessageId?: string;
   isStreaming?: boolean;
   // Client-only transient flag: a web search is in progress for this streaming
-  // assistant message (spec docs/specs/web-search.md §4.4). Never persisted;
+  // assistant message (docs/business_processes/web-search.md). Never persisted;
   // drives the "Searching the web…" status while streaming.
   isSearching?: boolean;
   // Client-only object URLs for decrypted attachments (e.g. generated images),

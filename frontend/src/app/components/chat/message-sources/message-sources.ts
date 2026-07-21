@@ -38,7 +38,7 @@ interface DisplayCitation {
 }
 
 // MessageSources is the "Searched N sources" disclosure shown at the top of an
-// assistant message (spec docs/specs/web-search.md §4.1a). Collapsed by default;
+// assistant message (docs/business_processes/web-search.md). Collapsed by default;
 // a chevron expands the list. Each row is a whole-row link to the source with a
 // letter avatar, citation number, title, domain and one-line snippet. Titles,
 // snippets and domains are plain-text bindings; links are sanitised to http(s)
@@ -249,7 +249,7 @@ export class MessageSources {
 
   protected readonly displaySources = computed<DisplayCitation[]>(() => {
     // The proxy-redirect host is never shown; a title-less proxy source falls
-    // back to a localised generic label (spec §4.1a).
+    // back to a localised generic label (spec).
     const fallback = this._transloco.translate('chat.message.sources.webResult');
     return this.citations().map((citation, index) => {
       const domain = citationDomainLabel(citation) || fallback;

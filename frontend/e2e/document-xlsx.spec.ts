@@ -11,7 +11,7 @@ import {
   seedAuthenticatedUnlockState,
 } from './fixtures';
 
-// Phase 3 (spec docs/specs/document-generation.md §5.3/§5.4/§16): XLSX golden
+// Phase 3 (docs/business_processes/document-generation.md): XLSX golden
 // bytes (typed cells, a real `<f>` formula, a number format), the formula
 // validator's advisory warning path (a reference to a missing sheet, spec
 // still downloads with the formula intact), the blocked-function downgrade
@@ -123,7 +123,7 @@ const seedConversation = async (
   return { userFixture, conversationFixture };
 };
 
-// --- XLSX fixture (spec §6.3 example, adapted) --------------------------
+// --- XLSX fixture (spec example, adapted) --------------------------
 // Built with JSON.stringify (not hand-typed JSON text) so every variant below
 // is guaranteed to be valid JSON with correctly escaped quotes — the blocked-
 // function formula in particular embeds a literal `"` that would be easy to
@@ -160,7 +160,7 @@ const xlsxContent = (body: string): string =>
   `Here is your budget.\n\n<cog-doc spec='${XLSX_SPEC_JSON}'>\n${body}\n</cog-doc>`;
 
 // --- DOCX fixture for Save-to-library (mirrors document-card.spec.ts's Board
-// Brief fixture from spec §6.1's own example) ------------------------------
+// Brief fixture from spec's own example) ------------------------------
 const DOCX_SPEC_JSON = JSON.stringify({
   v: 1,
   format: 'docx',
@@ -237,7 +237,7 @@ const parseMultipart = (buffer: Buffer, contentType: string): MultipartPart[] =>
   return parts;
 };
 
-test.describe('XLSX document card (spec §5.3)', () => {
+test.describe('XLSX document card', () => {
   test('shows title/tag/Download with no Save-to-library button, and downloads golden xlsx bytes', async ({
     page,
   }) => {
@@ -255,7 +255,7 @@ test.describe('XLSX document card (spec §5.3)', () => {
     await expect(card.getByText('XLSX')).toBeVisible();
     await expect(card.getByRole('button', { name: 'Download' })).toBeVisible();
 
-    // Pinned gating (spec §5.4 "Known gap (xlsx)"): no spreadsheet processor
+    // Pinned gating (spec "Known gap (xlsx)"): no spreadsheet processor
     // exists in the attachment registry, so the card never offers a save that
     // would guarantee a failure.
     await expect(card.getByRole('button', { name: 'Save to library' })).toHaveCount(0);
@@ -327,7 +327,7 @@ test.describe('XLSX document card (spec §5.3)', () => {
     await card.getByRole('button', { name: 'Download' }).click();
     const download = await downloadPromise;
 
-    // Advisory, not blocking (spec §5.3): the reference-topology check flags
+    // Advisory, not blocking (spec): the reference-topology check flags
     // the missing sheet but the formula is still written verbatim — Excel/
     // LibreOffice show #REF! (or resolve it, if the user later adds the
     // sheet) on open; Cognos never evaluates it.
@@ -371,7 +371,7 @@ test.describe('XLSX document card (spec §5.3)', () => {
     const bytes = readFileSync(path as string);
     const archive = unzipSync(new Uint8Array(bytes));
 
-    // Principle 4 (spec §3): a generated file must never phone home when
+    // Principle 4 (spec): a generated file must never phone home when
     // opened. WEBSERVICE() is blocked-function-downgraded (formula-
     // validator.ts) to a plain-text cell holding the formula source
     // verbatim, prefixed with '=' — the sheet keeps no live `<f>` that could
@@ -400,7 +400,7 @@ test.describe('XLSX document card (spec §5.3)', () => {
   });
 });
 
-test.describe('Save to library from a document card (spec §5.4)', () => {
+test.describe('Save to library from a document card', () => {
   test('saving a docx block runs the real attachments pipeline with ciphertext-only wire content and no composer chip', async ({
     page,
   }) => {
@@ -464,7 +464,7 @@ test.describe('Save to library from a document card (spec §5.4)', () => {
     expect(dataPart!.data.length).toBeGreaterThan(0);
     const manifestText = dataPart!.data.toString('utf-8');
     // ...and it is opaque: ciphertext must never contain the plaintext
-    // title or body words (spec §11 "no new plaintext columns").
+    // title or body words (spec "no new plaintext columns").
     expect(manifestText).not.toContain('Board Brief');
     expect(manifestText).not.toContain('Budget');
     expect(manifestText.toLowerCase()).not.toContain('revenue');
@@ -477,7 +477,7 @@ test.describe('Save to library from a document card (spec §5.4)', () => {
 
     // A card save must never surface as a composer attachment chip — it's
     // correlated outside the composer's selection state entirely
-    // (AttachmentProcessingService.saveToLibrary, spec §5.4 docstring).
+    // (AttachmentProcessingService.saveToLibrary, spec docstring).
     await expect(page.getByTestId('attachment-chip')).toHaveCount(0);
   });
 

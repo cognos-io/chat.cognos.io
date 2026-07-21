@@ -64,7 +64,7 @@ interface UsageLink {
 
 /**
  * AccountLibraryComponent is the settings page for the user's attachment library
- * (spec docs/specs/attachments.md): list, search, filter, rename, download and
+ * (docs/business_processes/attachment-processing.md): list, search, filter, rename, download and
  * remove the files they've uploaded, and see how many chats use each. It renders
  * with the shared "vault" component family (cards, list rows, filter chips) so it
  * matches the design system; all decryption is client-side via

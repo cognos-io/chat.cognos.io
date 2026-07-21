@@ -53,7 +53,7 @@ const firstH1 = (markdown: string): string | undefined =>
 
 /**
  * DocumentExportService turns one assistant (or user) message into a
- * downloadable file (spec docs/specs/document-generation.md §5.1). Content is
+ * downloadable file (docs/business_processes/document-generation.md). Content is
  * hydrated (redaction placeholders swapped back to originals) exactly like the
  * on-screen bubble, then handed to the render worker for docx/pdf, or encoded
  * directly for markdown. Any generated-image attachments on the message are
@@ -94,10 +94,10 @@ export class DocumentExportService {
   }
 
   /**
-   * renderCogDoc renders a model-authored `<cog-doc>` block (spec
-   * docs/specs/document-generation.md §5.2/§5.3) to bytes without triggering
+   * renderCogDoc renders a model-authored `<cog-doc>` block (see
+   * docs/business_processes/document-generation.md) to bytes without triggering
    * any side effect (no download, no upload) — the shared seam for
-   * `downloadCogDoc` and `saveCogDocToLibrary` (spec §5.4). Only a fully
+   * `downloadCogDoc` and `saveCogDocToLibrary` (spec). Only a fully
    * parsed, non-truncated block can be exported — 'streaming'/'invalid'
    * blocks (or a block whose `spec` failed validation) throw the same
    * `empty_document` error as an empty message, so callers' existing failure
@@ -130,7 +130,7 @@ export class DocumentExportService {
     const mime = documentMimeType(spec.format);
 
     if (spec.format === 'xlsx') {
-      // xlsx bodies are sheet-spec JSON, not markdown (spec §6.3), and never
+      // xlsx bodies are sheet-spec JSON, not markdown (spec), and never
       // carry images — but hydration still applies, since sheet cell strings
       // can contain redaction tokens like any other message content.
       const { bytes, warnings } = await this._workerClient.renderSheet(
@@ -157,7 +157,7 @@ export class DocumentExportService {
 
   /**
    * downloadCogDoc renders a `<cog-doc>` block and triggers a browser
-   * download (spec §5.2/§5.3). Returns the formula validator's advisory
+   * download (spec). Returns the formula validator's advisory
    * warnings for xlsx documents (non-empty array), or `undefined` for
    * docx/pdf and for a warning-free xlsx render — the caller
    * (document-card) surfaces them after the download resolves.
@@ -173,7 +173,7 @@ export class DocumentExportService {
 
   /**
    * saveCogDocToLibrary renders a `<cog-doc>` block and hands the bytes to
-   * the encrypted attachment pipeline as a one-off save (spec §5.4) — the
+   * the encrypted attachment pipeline as a one-off save (spec) — the
    * bytes are frozen at the current renderer version, unlike the live
    * re-render `downloadCogDoc` performs on every click. This never touches
    * the composer's attachment selection (`AttachmentProcessingService.saveToLibrary`

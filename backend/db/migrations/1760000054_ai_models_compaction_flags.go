@@ -5,8 +5,8 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Adds compaction-related capability flags to ai_models (spec
-// docs/specs/client-side-compaction.md §6.4). Compaction logic reads these
+// Adds compaction-related capability flags to ai_models (see
+// docs/business_processes/conversation-compaction.md). Compaction logic reads these
 // capabilities and never branches on model IDs, so the feature stays
 // provider-agnostic with a defined degraded path when a capability is absent:
 //

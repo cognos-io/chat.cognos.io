@@ -1,5 +1,5 @@
 // Pure, framework-free building blocks for the browser-only conversation search
-// index (spec: docs/specs/conversation-search.md). Kept separate from the
+// index (docs/business_processes/conversation-search-index.md). Kept separate from the
 // Angular service so the index logic — schema, document shape, message joining,
 // ranking — is unit-testable without TestBed and never logs decrypted text.
 import {
@@ -42,12 +42,7 @@ const SEARCH_SCHEMA = {
 // Orama stems for one language per index. We bind it to the user's active UI
 // locale (spec §8.1) — all six supported locales map to an Orama stemmer.
 export type OramaLanguage =
-  | 'english'
-  | 'german'
-  | 'french'
-  | 'spanish'
-  | 'portuguese'
-  | 'italian';
+  'english' | 'german' | 'french' | 'spanish' | 'portuguese' | 'italian';
 
 const LANGUAGE_BY_CODE: Readonly<Record<string, OramaLanguage>> = {
   en: 'english',

@@ -86,11 +86,7 @@ export interface BillingInvoicesResponse {
 }
 
 export type BillingStatus =
-  | 'trial'
-  | 'active'
-  | 'cancels_soon'
-  | 'past_due'
-  | 'inactive';
+  'trial' | 'active' | 'cancels_soon' | 'past_due' | 'inactive';
 
 // BillingApiResponse is the raw `GET /api/v1/billing` payload.
 export interface BillingApiResponse {
@@ -132,7 +128,7 @@ export interface UsageResponse {
 }
 
 // CompletionBillingRestriction is the structured 402 body the `/complete`
-// endpoint returns when billing blocks a send (spec §12.7).
+// endpoint returns when billing blocks a send (spec).
 export interface CompletionBillingRestriction {
   code: 'TRIAL_EXHAUSTED' | 'INACTIVE';
   message: string;
@@ -142,7 +138,7 @@ export interface CompletionBillingRestriction {
 }
 
 // The two organisation billing gates a completion in an org-owned Project can
-// hit (fail closed, docs/specs/organisations.md §5.8). Both mean the whole
+// hit (fail closed, docs/business_processes/organisation-lifecycle.md). Both mean the whole
 // Organisation is paused — never the member's fault, and never falls back to
 // the member's personal balance.
 export type OrgBillingRestrictionCode = 'ORG_BILLING_INACTIVE' | 'ORG_BILLING_PAST_DUE';

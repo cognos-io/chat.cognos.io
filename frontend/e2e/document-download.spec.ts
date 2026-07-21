@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { unzipSync } from 'fflate';
 import { readFileSync } from 'node:fs';
 // Legacy Node build: no DOM/canvas dependency, so text extraction works in the
-// Playwright test process without a browser (spec docs/specs/document-generation.md §7).
+// Playwright test process without a browser (docs/business_processes/document-generation.md).
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 import {
@@ -241,7 +241,7 @@ test('downloads a Word document with real docx structure', async ({ page }) => {
   expect(documentXml).toContain('<w:hyperlink');
   expect(documentXml).toContain('<w:tbl');
 
-  // Metadata hygiene (spec §7): a fixed, non-identifying creator, no email,
+  // Metadata hygiene (spec): a fixed, non-identifying creator, no email,
   // and timestamps rounded to the day.
   const coreXml = new TextDecoder().decode(archive['docProps/core.xml']);
   expect(coreXml).toContain('<dc:creator>Cognos</dc:creator>');

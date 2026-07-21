@@ -1,9 +1,9 @@
 # Billing operations runbook
 
 Practical guide for taking Cognos billing live on Paddle and operating it.
-Behaviour reference is `docs/specs/billing.md`; the build status is in
-`docs/billing-launch-plan.md`. This doc is the go-live checklist + the
-"something looks wrong, what do I do" guide.
+Current behaviour is defined by the [billing business processes](./business_processes/README.md).
+Unresolved billing work is centralised in [open points](./open-points.md#operations-and-billing).
+This doc is the go-live checklist and the “something looks wrong, what do I do?” guide.
 
 ## Canonical customer prices
 
@@ -152,7 +152,7 @@ not exist in the sandbox.
 
 ## 4. Issuing a goodwill / out-of-window refund
 
-There is no `cognos refund` CLI yet (spec §7.3 / §12.6 — future). For now:
+There is no `cognos refund` CLI. For now:
 
 1. Create the refund/adjustment in the **Paddle dashboard** against the relevant
    transaction (full or partial).
@@ -165,7 +165,7 @@ There is no `cognos refund` CLI yet (spec §7.3 / §12.6 — future). For now:
 The user-facing "Request a refund" button (in-window) only **logs** a request
 for follow-up — it does not issue anything.
 
-## 5. Known open item — overage charge timing (verify against live data)
+## 5. Overage reconciliation
 
 The overage is posted with `effective_from: next_billing_period`, so it rides a
 later renewal transaction. With "commit in advance + overage in arrears", a
@@ -173,8 +173,8 @@ single Paddle transaction can span two cycles' charges, so exact per-cycle
 `reconciled` equality is **not** asserted yet — we record for audit and assert
 only the safe lower bound (`billed ≥ expected`). After the first real PAYG cycle
 with overage in production, confirm which transaction the overage lands on and
-tighten the `reconciled` check + add a drift alert (`billing-launch-plan.md`
-Phase 4 open item).
+tighten the `reconciled` check and add a drift alert; see
+[OP-012](./open-points.md#operations-and-billing).
 
 ## 6. Organisation dissolution reconciliation
 

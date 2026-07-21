@@ -126,6 +126,3 @@ compactions after decryption and ask the backend to delete them.
 Hard invariant:
 
 > Deleted message content must not survive inside a compaction summary.
-
-See the full spec:
-[client-side-compaction](../specs/client-side-compaction.md).

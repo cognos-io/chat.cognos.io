@@ -195,7 +195,7 @@ export class RegisterComponent {
   private readonly _transloco = inject(TranslocoService);
   private readonly _submitError = viewChild<ElementRef<HTMLElement>>('submitError');
 
-  // Marketing attribution (docs/specs/product-analytics.md §6.5): the site's
+  // Marketing attribution (docs/business_processes/product-analytics.md): the site's
   // CTAs append ?ref=<location>. Read once, kept in component memory only —
   // never stored — and mapped onto the closed source enum ('direct'/'other'
   // for absent/unknown), so it can never carry a free-form string.

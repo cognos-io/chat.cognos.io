@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Org invites collection (spec docs/checkpoints/2026-07-18-organisations-teams-v1.md §3).
+// Org invites collection (docs/business_processes/organisation-lifecycle.md).
 //
 //   - org_invites holds pending invitations to join an Organisation. The
 //     token is returned ONCE to the inviting admin and stored only as a

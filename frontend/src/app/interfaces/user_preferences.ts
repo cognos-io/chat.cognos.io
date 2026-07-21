@@ -60,7 +60,7 @@ const UserPreferencesDataShape = z.object({
   modelReasoningEfforts: z.record(z.string(), z.string()).default({}),
   // Most-recently-used model ids, most-recent-first, de-duplicated and capped.
   // Surfaces a "Recent" group in the selector. Encrypted like the rest of this
-  // payload — model usage history never lives in plaintext (spec §6.3/§6.4).
+  // payload — model usage history never lives in plaintext (spec).
   recentModels: z.array(z.string()).default([]),
   // Model ids the user has hidden from the normal selector. Managed in account
   // settings. Unknown ids are ignored at read time, so stale entries are safe.
@@ -69,7 +69,7 @@ const UserPreferencesDataShape = z.object({
   // keyed by context. The plain-chat ("text") default stays in `defaultModelId`,
   // so this only holds tool contexts and existing payloads need no migration.
   // Toggling a composer tool restores that context's model; unknown/ineligible
-  // ids are ignored at read time (spec docs/specs/tool-aware-model-selection.md §5).
+  // ids are ignored at read time (docs/business_processes/model-capability-gating.md).
   toolModelDefaults: z.record(z.string(), z.string()).default({}),
   // Last quick filter chosen in the model explorer. null means no filter, and
   // is intentionally remembered so the composer/settings do not re-enable

@@ -79,7 +79,7 @@ interface HydrationCacheEntry {
 /**
  * ConversationSearchService owns the browser-only BM25 search index over
  * decrypted chat titles and lazily-hydrated recent messages (spec:
- * docs/specs/conversation-search.md). It replaces the old substring filter:
+ * docs/business_processes/conversation-search-index.md). It replaces the old substring filter:
  * the sidebar binds its input here and renders `results()` when `isActive()`.
  *
  * Security: it decrypts via a stateless helper (never MessageService, so the

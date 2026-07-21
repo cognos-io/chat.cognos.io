@@ -14,8 +14,8 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 )
 
-// These tests pin the org billing gate (spec docs/specs/organisations.md
-// §7.5/§7.6 and docs/business_processes/billing-access-gate.md): a
+// These tests pin the org billing gate described in
+// docs/business_processes/billing-access-gate.md: a
 // conversation in an org-owned Project bills the Organisation — regardless of
 // who types — and FAILS CLOSED when the org has no active billing. It must
 // never silently fall back to the member's personal balance, and org usage

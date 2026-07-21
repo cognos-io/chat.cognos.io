@@ -84,8 +84,9 @@ type Model struct {
 	SupportsToolCalling bool `json:"supports_tool_calling"`
 	SupportsWebSearch   bool `json:"supports_web_search"`
 	SupportsComputerUse bool `json:"supports_computer_use"`
-	// Compaction capability metadata (spec docs/specs/client-side-compaction.md
-	// §6.4). Compaction reads these capabilities and never branches on model IDs.
+	// Compaction capability metadata is documented in
+	// docs/business_processes/conversation-compaction.md. Compaction reads these
+	// capabilities and never branches on model IDs.
 	// EligibleForCompaction gates whether the model may be used to compact at all.
 	EligibleForCompaction bool `json:"eligible_for_compaction"`
 	// SupportsStructuredOutput enables native JSON-schema / forced-tool output;

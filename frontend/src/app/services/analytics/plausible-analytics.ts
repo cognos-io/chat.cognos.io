@@ -12,7 +12,7 @@ import { guardProps } from './prop-guard';
 
 // PlausibleAnalytics talks straight to Plausible's Events API with a plain
 // POST — no vendor JavaScript ever executes in the app context, because the
-// app handles key material (docs/specs/product-analytics.md §3.4/§6.2).
+// app handles key material (docs/business_processes/product-analytics.md).
 // Analytics is fire-and-forget: never awaited, never throws into app code,
 // failures swallowed without logging payloads.
 @Injectable({ providedIn: 'root' })

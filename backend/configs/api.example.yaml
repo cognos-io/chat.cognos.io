@@ -58,7 +58,7 @@ requesty:
 # web search (in micro-rappen; 1 rappen = 1_000_000 micro-rappen). Applied on
 # top of token/provider cost regardless of whether a provider-reported total
 # was trusted, because Requesty has not confirmed its reported cost includes
-# the provider's own search fee (docs/specs/web-search.md §5.4, §14 Q1).
+# the provider's own search fee (docs/business_processes/web-search.md, Q1).
 # Must be > 0; defaults to 1_100_000 (CHF 0.011, ~USD 0.015 + margin) when unset
 # or non-positive — it must never resolve to zero, or search would be free.
 # Env override: COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN

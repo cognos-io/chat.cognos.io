@@ -40,14 +40,14 @@ type completeRequest struct {
 	ReasoningEffort string              `json:"reasoning_effort,omitempty"`
 	Persist         *bool               `json:"persist,omitempty"`
 	// ContextSummary is a client-rendered compaction summary of older messages
-	// (spec §9.2). It is folded into the canonical system prompt inside explicit
+	// (spec). It is folded into the canonical system prompt inside explicit
 	// delimiters so summarised content is framed as reference material — never
 	// injected as a synthetic assistant turn or a caller system message.
 	ContextSummary string `json:"context_summary,omitempty"`
 	// AttachmentIDs are user_attachments (library) records the caller owns and is
 	// referencing from this message. The client embeds nothing in the encrypted
 	// blob directly; the backend persists these as user_upload references and
-	// records an attachment_usages row per (file, message) (spec §9.5).
+	// records an attachment_usages row per (file, message) (spec).
 	AttachmentIDs []string `json:"attachment_ids,omitempty"`
 	// AttachmentContexts is the transient, plaintext attachment content for the
 	// provider. It is wrapped as untrusted material, counted by the billing gate,
@@ -95,7 +95,7 @@ const requestyProviderID = "requesty"
 // opt-out — nil (omitted) or an explicit true requests it — but it only ever
 // reaches the provider for a search-capable, Requesty-routed model. Any other
 // model silently drops the tool (never a 400), so switching to a non-capable
-// model mid-conversation degrades gracefully (spec §4.3, §5.2).
+// model mid-conversation degrades gracefully (spec,).
 func webSearchEnabledForModel(reqWebSearch *bool, model catalogue.Model) bool {
 	requested := reqWebSearch == nil || *reqWebSearch
 	return requested && model.SupportsWebSearch && model.ProviderID == requestyProviderID
@@ -403,7 +403,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		// Web search is opt-out (default on when omitted) but only ever reaches the
 		// provider for search-capable, Requesty-routed models. Otherwise the tool
 		// is silently dropped — no 400 — so switching to a non-capable model
-		// mid-conversation degrades gracefully (spec §4.3, §5.2). Computed here,
+		// mid-conversation degrades gracefully (spec,). Computed here,
 		// before the billing gate below, so the pre-call estimate can add a
 		// worst-case search fee.
 		enableWebSearch := webSearchEnabledForModel(req.WebSearch, model)
@@ -435,7 +435,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		if req.ContextSummary != "" {
 			// Fold the compaction summary in after the canonical system prompt,
 			// clearly delimited so a summarised "ignore previous instructions"
-			// reads as quoted reference content, not a live directive (spec §11.1).
+			// reads as quoted reference content, not a live directive (spec).
 			systemMessage = req.SystemPrompt +
 				"\n\n<conversation_summary>\n" + req.ContextSummary + "\n</conversation_summary>"
 		}
@@ -444,7 +444,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		// Wrap any attachment context as untrusted material and append it to the
 		// user's turn (never the system prompt). Built before the estimate so the
 		// billing gate counts attachment characters and cannot be bypassed by a
-		// large attachment (spec §10.3).
+		// large attachment (spec).
 		attachmentContextBlock := WrapAttachmentContexts(req.AttachmentContexts)
 		effectiveMessages := req.Messages
 		if attachmentContextBlock != "" {
@@ -525,7 +525,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 
 			// Reject references to attachments the caller does not own before any
 			// provider work or persistence. A user may attach any file from their
-			// own library to any conversation they participate in (spec §9.5).
+			// own library to any conversation they participate in (spec).
 			if len(req.AttachmentIDs) > 0 && params.App != nil {
 				if err := verifyAttachmentsOwnedBy(params.App, owner.ID, req.AttachmentIDs); err != nil {
 					return apis.NewBadRequestError("Invalid attachment reference", nil)
@@ -560,8 +560,8 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				billingSubject = resolved.Subject
 				// Org subjects fail closed BEFORE any provider work: a
 				// missing/inactive/past-due org subscription 402s and never
-				// falls back to the member's personal balance (spec
-				// docs/specs/organisations.md §7.5).
+				// falls back to the member's personal balance (see
+				// docs/business_processes/organisation-lifecycle.md).
 				if restriction := params.BillingService.EvaluateOrgAccess(resolved); restriction != nil {
 					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, 0))
 				}
@@ -572,7 +572,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				// Add one worst-case search fee to the estimate when web search
 				// will be sent for this request, so the 402 gate stays honest
 				// without over-blocking small balances on a turn that may not
-				// end up searching at all (spec §5.4).
+				// end up searching at all (spec).
 				estimatedSearchCount := int64(0)
 				if enableWebSearch {
 					estimatedSearchCount = 1

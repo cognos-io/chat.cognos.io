@@ -91,7 +91,7 @@ describe('ComposerToolsComponent', () => {
     expect(tools.imageGenerationEnabled()).toBe(true);
   });
 
-  // ---- documents (spec docs/specs/document-generation.md §5.2) ------------
+  // ---- documents (docs/business_processes/document-generation.md) ------------
 
   it('renders the Create documents row on by default with no unsupported state', () => {
     const toggleButton: HTMLButtonElement = fixture.nativeElement.querySelector(

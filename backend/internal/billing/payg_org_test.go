@@ -3,7 +3,7 @@ package billing
 import "testing"
 
 // ComputeOrgCycleSummary is the pooled-floor variant of ComputeCycleSummary
-// (spec docs/specs/organisations.md §7.4): the Organisation pays
+// (docs/business_processes/organisation-lifecycle.md): the Organisation pays
 // max(pooled usage, seats x commit) per cycle, and only the part above the
 // pooled floor is posted as a one-time overage charge.
 func TestComputeOrgCycleSummary(t *testing.T) {

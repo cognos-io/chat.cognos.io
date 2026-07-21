@@ -23,7 +23,7 @@ import { OrganisationService } from '@app/services/organisation.service';
 /**
  * WorkspaceSwitcherComponent — the sidebar control that flips the active
  * Workspace between Personal and each Organisation the Account belongs to
- * (docs/specs/organisations.md §5.2). It renders nothing for accounts without
+ * (docs/business_processes/organisation-lifecycle.md). It renders nothing for accounts without
  * Org memberships, so individual users see zero change.
  *
  * Switching only updates OrganisationService signals — it never navigates or

@@ -5,7 +5,7 @@ import (
 )
 
 // AuditCollectionName is the content-free organisation audit log collection
-// (docs/specs/organisations.md §11 Phase 2). Rows record administrative
+// (docs/business_processes/organisation-lifecycle.md Phase 2). Rows record administrative
 // events only — membership, invites, policies, billing, sharing — never
 // message content, conversation titles or invite emails.
 const AuditCollectionName = "org_audit_events"

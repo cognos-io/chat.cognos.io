@@ -18,7 +18,7 @@ Organisation). A conversation in an org-owned Project bills the
 | -------- | -------------------------------- | --------------------------------------------------------------------------------------------- |
 | Personal | `inactive`                       | **Block** — `402 INACTIVE`, message `"Choose a plan to keep chatting."`                       |
 | Personal | `trial`                          | **Block if** `balance_rappen < estimate_rappen` — `402 TRIAL_EXHAUSTED` with balance + cost   |
-| Personal | `payg`                           | Pass — usage will be metered post-paid via Paddle (see [billing spec](../specs/billing.md))   |
+| Personal | `payg`                           | Pass — usage is metered post-paid through Paddle                                              |
 | Personal | `unlimited`                      | Pass — flat-rate plan, no per-request gating                                                  |
 | Org      | `payg`, not past due             | Pass — usage accrues to the org's pooled cycle (ledger row: `organisation` + acting user)     |
 | Org      | missing `org_billing` / not payg | **Block** — `402 ORG_BILLING_INACTIVE`; **never** falls back to the member's personal balance |

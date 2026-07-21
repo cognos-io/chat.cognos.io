@@ -5,8 +5,8 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Adds three policy columns to organisations (spec docs/specs/organisations.md
-// §11 Phase 2 — enforced policies):
+// Adds three enforced policy columns to organisations. See
+// docs/business_processes/organisation-lifecycle.md.
 //
 //   - policy_privacy_tier: select (ch_only | eu | global), optional. Acts as a
 //     CEILING for completions in this org's projects — the effective ceiling is

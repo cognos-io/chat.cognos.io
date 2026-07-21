@@ -363,7 +363,7 @@ export const buildMessageRecordFixture = (
 // buildCompactionRecordFixture seals a compaction payload to the conversation
 // key exactly as the backend would, so a GET /compactions mock can return a
 // record the CompactionService decrypts. `payload` is the snake_case decrypted
-// shape (see docs/specs/client-side-compaction.md §6.2).
+// shape (see docs/business_processes/conversation-compaction.md).
 export const buildCompactionRecordFixture = (
   conversationFixture: ConversationFixture,
   record: {

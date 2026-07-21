@@ -15,7 +15,7 @@ import { parseSheetSpec } from '../sheets/sheet-spec.types';
 /**
  * Thin Web Worker wrapper around the framework-free render pipeline so the
  * heavy docx/pdfmake libraries and the actual rendering work never touch the
- * UI thread (spec docs/specs/document-generation.md §7). Mirrors the
+ * UI thread (docs/business_processes/document-generation.md). Mirrors the
  * attachment worker exactly (attachments/workers/attachment-processing.worker.ts):
  * all real logic lives in unit-tested modules; this file only wires messages.
  */
@@ -40,7 +40,7 @@ const handleRender = async (
   try {
     const doc = markdownToDocIR(req.markdown);
     // Message images join the document as trailing blocks — this is where
-    // generated images ride along at the end of the model's text (spec §7).
+    // generated images ride along at the end of the model's text (spec).
     req.images.forEach((_, index) => {
       doc.blocks.push({ type: 'image', imageRef: index });
     });

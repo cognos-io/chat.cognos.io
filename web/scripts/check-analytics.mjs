@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Post-build analytics verification (docs/specs/product-analytics.md §10):
+// Post-build analytics verification (docs/business_processes/product-analytics.md):
 //  (a) the production build carries the Plausible script tag + queue shim,
 //  (b) the built homepage carries data-track attributes on the key CTAs,
 //  (c) grep guardrail: `plausible.io` appears in src/ only in the two

@@ -61,7 +61,7 @@ sequenceDiagram
    derivation, active tracking and localisation; `@cognos/ui-angular` only
    renders labelled ticks and emits jump ids.
 
-## Not yet wired
+## Current limits
 
 - The minimap is desktop-only and hidden for one or zero ticks.
 - It indexes at most the most recent 20 user turns; there is no pagination or

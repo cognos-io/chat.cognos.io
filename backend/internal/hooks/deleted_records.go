@@ -21,11 +21,11 @@ var softDeleteExcludedCollections = []string{
 	// Removing a library file should erase it immediately: the sealed manifest
 	// holds per-file keys (sealed to the owner), so a 30-day retention snapshot
 	// would needlessly extend the lifetime of that key material. The ciphertext
-	// bytes are removed with the record regardless (spec docs/specs/attachments.md).
+	// bytes are removed with the record regardless (docs/business_processes/attachment-processing.md).
 	"user_attachments",
 	// MFA material is auth material: a deleted TOTP seed, recovery code, auth
 	// session, or trusted-device token must disappear at once, never linger in a
-	// retention snapshot (spec docs/specs/mfa-and-passkeys.md).
+	// retention snapshot (docs/business_processes/mfa-login.md).
 	"user_mfa_totp",
 	"mfa_auth_sessions",
 	"mfa_recovery_codes",

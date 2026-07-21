@@ -35,8 +35,8 @@ flowchart TD
 
 ## Remember this device
 
-To avoid prompting for a code on every return after the 30-minute idle logout, a
-device that completes a full code challenge may be remembered. On opt-in the
+To avoid prompting for a code on every new sign-in, a device that completes a full code challenge
+may be remembered. There is no idle auto-logout. On opt-in the
 backend issues a trusted-MFA-device token (random secret, stored server-side as a
 hash only) that waives the code step for a bounded window (e.g. 30 days).
 

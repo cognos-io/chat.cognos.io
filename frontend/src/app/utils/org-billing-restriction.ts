@@ -13,7 +13,7 @@ type OrgRestrictionBody = {
 /**
  * parseOrgBillingRestriction recognises the structured 402 returned when an
  * org-owned write is blocked by the Organisation's billing (fail closed —
- * docs/specs/organisations.md §5.8). Used by completions, project creation,
+ * docs/business_processes/organisation-lifecycle.md). Used by completions, project creation,
  * and any other content-write gate that shares the same public 402 contract.
  */
 export const parseOrgBillingRestriction = (

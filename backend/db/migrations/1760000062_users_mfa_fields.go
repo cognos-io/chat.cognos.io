@@ -7,7 +7,7 @@ import (
 
 // Add server-managed MFA bookkeeping to users. Every field is hidden from the
 // API (never returned, not settable by clients) and is written only by the
-// first-party MFA hooks/handlers. See docs/specs/mfa-and-passkeys.md.
+// first-party MFA hooks/handlers. See docs/business_processes/mfa-login.md.
 //
 //   - mfa_enabled: authoritative, denormalized flag the login interceptor reads
 //     on the already-loaded auth record (no extra query on the hot path). Always

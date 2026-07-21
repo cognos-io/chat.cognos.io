@@ -4,7 +4,7 @@ import { CryptoService } from '@app/services/crypto.service';
 
 import { ProjectData, parseProjectData, serializeProjectData } from './project';
 
-// These tests pin the project encryption model from docs/specs/projects.md:
+// These tests pin the project encryption model from docs/business_processes/project-management.md:
 //   data = secretBox(serialize(metadata), projectContentKey)
 //   wrapped_project_key = sealedBox(projectContentKey, userPublicKey)
 // They guarantee round-trips succeed and that the wrong key fails closed.

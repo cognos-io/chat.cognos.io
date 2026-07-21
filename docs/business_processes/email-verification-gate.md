@@ -23,6 +23,7 @@ send with no re-login. Superusers bypass the gate.
 | `POST /completions`                                 | Reading conversations & messages                                     |
 | `POST /conversations/{id}/complete` · `/regenerate` | All key setup, `vault`, account, billing                             |
 | `POST /conversations/{id}/image`                    | Attachment CRUD (AI is only spent once a completion references one)  |
+| `POST /images`                                      |                                                                      |
 | `POST /conversations/{id}/compactions`              | `/compactions/manual` and compaction edits (store client ciphertext) |
 |                                                     | `POST /completions/{id}/stop` (cancels an in-flight call)            |
 

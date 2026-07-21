@@ -1,7 +1,7 @@
 package main
 
 // Content-free organisation audit log + admin session revocation
-// (docs/specs/organisations.md §11 Phase 2).
+// (docs/business_processes/organisation-lifecycle.md Phase 2).
 //
 // These tests pin three properties:
 //

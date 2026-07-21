@@ -36,8 +36,8 @@ import { chfFromRappen } from '@app/utils/currency';
 
 import { OverageDisplay, overageDisplay } from './org-overage';
 
-// OrgBillingComponent is the Owner/Admin billing-and-usage dashboard (spec
-// §5.6–5.8). Non-negotiables baked into this page:
+// OrgBillingComponent is the Owner/Admin billing-and-usage dashboard. See
+// docs/business_processes/organisation-lifecycle.md. Non-negotiables:
 // - the projected pooled overage is visible BEFORE cycle close, never as an
 //   invoice surprise;
 // - a billing failure surfaces exactly ONE actionable next step (Owner:

@@ -245,7 +245,7 @@ describe('ComposerToolsService', () => {
     expect(selectModel).toHaveBeenCalledWith('gemini-2-5-flash-image');
   });
 
-  // ---- web search (spec docs/specs/web-search.md §4.2) --------------------
+  // ---- web search (docs/business_processes/web-search.md) --------------------
 
   const searchModel = makeModel({ id: 'search-1', supportsWebSearch: true });
 
@@ -293,7 +293,7 @@ describe('ComposerToolsService', () => {
   });
 
   it('recomputes to off when the model is switched to a non-capable one mid-conversation', () => {
-    // Search is best-effort (spec §4.3): switching to a model that can't search
+    // Search is best-effort (spec): switching to a model that can't search
     // silently disables it — no error, no forced switch — and re-enables when a
     // capable model is selected again.
     const { service, selectedModel } = setup({
@@ -326,7 +326,7 @@ describe('ComposerToolsService', () => {
     expect(service.webSearchEnabled()).toBe(false);
   });
 
-  // ---- documents (spec docs/specs/document-generation.md §5.2) ------------
+  // ---- documents (docs/business_processes/document-generation.md) ------------
 
   it('is on by default regardless of model capability', () => {
     // No RequiredCapability gating: every text model can emit the block.

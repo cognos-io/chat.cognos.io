@@ -124,7 +124,7 @@ test.describe('web search', () => {
     await expect(row).toBeVisible();
     await expect(row).toHaveAttribute('href', MOCK_CITATION_URL);
     await expect(row).toHaveAttribute('target', '_blank');
-    // No referrer leaks the chat origin: rel carries both tokens (spec §4.1a).
+    // No referrer leaks the chat origin: rel carries both tokens (spec).
     await expect(row).toHaveAttribute('rel', /noopener/);
     await expect(row).toHaveAttribute('rel', /noreferrer/);
 
@@ -161,7 +161,7 @@ test.describe('web search', () => {
   // The hover-intent "safe triangle": moving the pointer from the citation
   // number, across the gap, into the card must keep the card open long enough
   // to click "Open source". This is the user's exact repro of the closing-gap
-  // bug (docs/specs/web-search.md §4.1a + the cogHoverIntent primitive).
+  // bug (docs/business_processes/web-search.md + the cogHoverIntent primitive).
   test('safe triangle keeps the hover card open across the gap to Open source', async ({
     page,
   }) => {

@@ -1,6 +1,6 @@
 export const BILLING_PRICES = {
   paygMinimum: 'CHF 15',
-  // Organisation Seat price (spec: docs/specs/organisations.md §5.7) — CHF 15
+  // Organisation Seat price (docs/business_processes/organisation-lifecycle.md) — CHF 15
   // per Seat per month, minimum three Seats (CHF 45 floor), pooled usage.
   orgSeatMonthly: 'CHF 15',
   orgSeatMinimum: 3,

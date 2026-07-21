@@ -1,4 +1,4 @@
-// DocIR -> .pdf renderer (spec docs/specs/document-generation.md §7), built on
+// DocIR -> .pdf renderer (docs/business_processes/document-generation.md), built on
 // pdfmake@0.3.11's browser bundle. pdfmake is a UMD/webpack bundle: its ESM
 // named exports are unreliable (its CJS `module.exports` gets reassigned to
 // the pdfmake singleton, which static CJS->ESM interop cannot see through —

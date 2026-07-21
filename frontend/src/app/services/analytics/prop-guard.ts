@@ -3,8 +3,8 @@ import { isDevMode } from '@angular/core';
 import { AppAnalyticsEvent, EventProps } from './analytics';
 
 // EVENT_PROPS is the catalogue-as-code registry of allowed prop keys per event
-// (docs/specs/product-analytics.md §7.2). A prop key outside this list is a
-// spec violation: it throws in dev mode (so it becomes a test failure, §6.4)
+// (docs/business_processes/product-analytics.md). A prop key outside this list is a
+// spec violation: it throws in dev mode (so it becomes a test failure,)
 // and is silently dropped in production (so it can never become a data leak).
 export const EVENT_PROPS: Record<AppAnalyticsEvent, readonly string[]> = {
   signup_completed: ['source'],
@@ -69,6 +69,8 @@ export function guardProps(
 
 function violation(dev: boolean, message: string): void {
   if (dev) {
-    throw new Error(`[analytics] ${message} (docs/specs/product-analytics.md §3.2)`);
+    throw new Error(
+      `[analytics] ${message} (docs/business_processes/product-analytics.md)`,
+    );
   }
 }

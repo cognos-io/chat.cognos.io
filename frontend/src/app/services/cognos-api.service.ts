@@ -59,7 +59,7 @@ export interface CompletionMessageRequest {
   name?: string;
 }
 
-/** Transient attachment context for a completion request (spec §9.5). */
+/** Transient attachment context for a completion request (spec). */
 export interface CompleteAttachmentContext {
   attachmentId: string;
   displayName: string;
@@ -86,13 +86,13 @@ export interface CompleteRequest {
   persist?: boolean;
   // Client-rendered compaction summary of older messages, folded into the
   // canonical system prompt server-side inside <conversation_summary> delimiters
-  // (spec §9.2). Omitted when there is no valid compaction for the active branch.
+  // (spec). Omitted when there is no valid compaction for the active branch.
   contextSummary?: string;
   // User-uploaded attachments to link to the new message, and their transient
-  // provider context (spec §9.5). Empty/omitted for messages without uploads.
+  // provider context (spec). Empty/omitted for messages without uploads.
   attachmentIds?: string[];
   attachmentContexts?: CompleteAttachmentContext[];
-  // Web-search opt-out (spec docs/specs/web-search.md §4.2). Sent explicitly
+  // Web-search opt-out (docs/business_processes/web-search.md). Sent explicitly
   // `false` when the user turns search off (or the model can't search); omitted
   // otherwise so the backend applies its auto-on default for capable models.
   webSearch?: boolean;
@@ -126,7 +126,7 @@ export interface CompleteResponse {
   };
 }
 
-// Web-search activity signal (spec §4.4). May arrive after the answer text on
+// Web-search activity signal (spec). May arrive after the answer text on
 // some provider families (Vertex Gemini), where it is a visual no-op.
 export type WebSearchActivity = 'started' | 'completed';
 
@@ -142,7 +142,7 @@ export type CompleteStreamEvent =
       delta: string;
     }
   | {
-      // Web-search metadata (spec docs/specs/web-search.md §7). Incremental:
+      // Web-search metadata (docs/business_processes/web-search.md). Incremental:
       // `citations` carries only newly-seen sources with stable indices, which
       // the client accumulates; `anchors` index the accumulated list. All fields
       // optional — pure-activity frames exist.
@@ -654,7 +654,7 @@ export interface ApiListRedactionEntriesResponse {
 
 // Conversation copy ("Duplicate chat"). The browser prepares the entire
 // re-encrypted bundle and the backend writes it atomically. See
-// docs/specs/conversation-copy.md and conversation-copy.service.ts.
+// docs/business_processes/conversation-copy.md and conversation-copy.service.ts.
 export interface ApiCopyConversationInput {
   id: string;
   data: string;
@@ -857,7 +857,7 @@ export const mapCompleteResponse = (
 
 // mapWebSearchEvent normalises a raw `web_search` frame into the client event,
 // defensively dropping malformed citations/anchors so a garbled payload becomes
-// a benign no-op event rather than throwing and aborting the stream (spec §7:
+// a benign no-op event rather than throwing and aborting the stream (spec:
 // "malformed frames ignored"; all fields omitempty; pure-activity frames exist).
 const mapWebSearchEvent = (
   event: ApiCompleteStreamWebSearchEvent,
@@ -907,7 +907,7 @@ const mapWebSearchEvent = (
 };
 
 // parseCompleteStreamData decodes one SSE `data:` frame into a stream event, or
-// null when the frame must be skipped. Per spec §10 a malformed or unrecognised
+// null when the frame must be skipped. Per spec a malformed or unrecognised
 // frame is ignored so a single bad frame never aborts the whole stream: a
 // JSON/shape error is skipped with a static warning, and an unknown event type
 // is skipped silently for forward-compatibility with newer backend event kinds.
@@ -940,11 +940,11 @@ export const parseCompleteStreamData = (data: string): CompleteStreamEvent | nul
         };
       default:
         // Unknown event type: skip silently so a newer backend event kind never
-        // breaks an older client (spec §10 forward-compat).
+        // breaks an older client (spec forward-compat).
         return null;
     }
   } catch {
-    // Never log the frame body — it is message content (security-model §4).
+    // Never log the frame body — it is message content (security-model).
     console.warn('Skipping malformed completion stream frame');
     return null;
   }
@@ -1155,7 +1155,7 @@ export class CognosApiService {
     );
   }
 
-  // --- Organisations (docs/specs/organisations.md) -------------------------
+  // --- Organisations (docs/business_processes/organisation-lifecycle.md) -------------------------
   // The caller only ever sees Organisations they hold an active Membership in.
 
   listOrgs(): Observable<OrganisationRecord[]> {
@@ -1203,7 +1203,7 @@ export class CognosApiService {
 
   // updateOrgPolicies changes the Organisation's enforced policies (privacy
   // tier ceiling, retention default, MFA requirement) — partial PATCH, only
-  // the fields present change (Owner/Admin only, spec §6 Phase 2).
+  // the fields present change (Owner/Admin only, spec Phase 2).
   updateOrgPolicies(
     orgId: string,
     request: OrgPolicyUpdateRequest,
@@ -1230,7 +1230,7 @@ export class CognosApiService {
 
   // removeOrgMember offboards a member (Owner/Admin). Server-side this revokes
   // the membership + org Project participation and queues a next-cycle seat
-  // decrement; the person's personal Account is untouched (spec §8.2).
+  // decrement; the person's personal Account is untouched (spec).
   removeOrgMember(
     orgId: string,
     userId: string,
@@ -1244,7 +1244,7 @@ export class CognosApiService {
   }
 
   // createOrgCheckout opens Paddle checkout for a fresh Organisation at
-  // quantity 3 minimum — the Owner occupies one Seat (Owner only, spec §7.1).
+  // quantity 3 minimum — the Owner occupies one Seat (Owner only, spec).
   createOrgCheckout(orgId: string): Observable<OrgCheckoutResponse> {
     return this._http.post<OrgCheckoutResponse>(
       `${this._baseUrl}/api/v1/orgs/${orgId}/billing/checkout`,
@@ -1274,7 +1274,7 @@ export class CognosApiService {
   }
 
   // getOrgUsage returns per-member cost/completions/model-mix metadata for the
-  // current cycle. Metadata only — never conversation content (spec §5.6).
+  // current cycle. Metadata only — never conversation content (spec).
   getOrgUsage(orgId: string): Observable<OrgUsageRecord> {
     return this._http.get<OrgUsageRecord>(
       `${this._baseUrl}/api/v1/orgs/${orgId}/usage`,
@@ -1306,7 +1306,7 @@ export class CognosApiService {
   }
 
   // createOrgInvite mints a single-use invite token. The token is returned
-  // exactly once in this response; the server keeps only a hash (spec §8.1).
+  // exactly once in this response; the server keeps only a hash (spec).
   // OrgInvitesComponent builds the shareable `{origin}/invite?token=…` link.
   createOrgInvite(
     orgId: string,
@@ -1341,7 +1341,7 @@ export class CognosApiService {
 
   // acceptOrgInvite redeems a single-use invite token for the signed-in
   // Account — the SAME Account, no new identity, no second Emergency Kit
-  // (spec §8.1). Idempotent for an already-active member; unknown, expired
+  // (spec). Idempotent for an already-active member; unknown, expired
   // and consumed tokens all return the same neutral 404.
   acceptOrgInvite(request: { token: string }): Observable<OrgInviteAcceptResponse> {
     return this._http.post<OrgInviteAcceptResponse>(
@@ -2386,7 +2386,7 @@ export class CognosApiService {
         .join('\n');
 
       if (data !== '') {
-        // Spec §10: a null event is a skipped (malformed/unknown) frame — the
+        // Spec: a null event is a skipped (malformed/unknown) frame — the
         // stream continues with the next frame rather than aborting.
         const event = parseCompleteStreamData(data);
         if (event) {

@@ -1,30 +1,81 @@
 ---
-description: Map of small, self-contained business processes used by the Cognos chat backend
+description: Index of the current business rules enforced by Cognos
 name: business-processes-index
 ---
 
 # Business Processes
 
-Each file in this directory captures **one** business process that the backend
-enforces — short enough to read in under a minute, long enough to answer
-"what does this rule actually do, and why?".
+Business processes are the source of truth for **current product behaviour**. They own the rule and
+its safety boundary; code owns the implementation. A mismatch is a defect, so change both in the
+same pull request.
 
-If a process touches >1 file, the doc owns the **rule**; the code owns the
-**how**. When in doubt, the code is authoritative.
+Each file should answer one question quickly:
 
-Domain vocabulary (Account, Conversation, Participant, Redaction, etc.) follows
-[CONTEXT.md](../../CONTEXT.md) at the repository root.
+1. What happens?
+2. Who may do it?
+3. What must never happen?
+4. Where is the rule enforced or tested?
 
-| Area          | Process                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Identity      | [signup-trial-seed](./signup-trial-seed.md) · [email-verification-gate](./email-verification-gate.md) · [single-user-key-pair](./single-user-key-pair.md) · [account-preferences](./account-preferences.md) · [email-change](./email-change.md) · [password-reset](./password-reset.md) · [mfa-login](./mfa-login.md) · [mfa-recovery-codes](./mfa-recovery-codes.md) · [passkey-authentication](./passkey-authentication.md) · [logout-token-rotation](./logout-token-rotation.md) · [vault-session](./vault-session.md) · [account-delete](./account-delete.md)                                                                                                                                                                           |
-| Conversations | [conversation-create](./conversation-create.md) · [conversation-load](./conversation-load.md) · [conversation-project-membership](./conversation-project-membership.md) · [conversation-copy](./conversation-copy.md) · [conversation-activity](./conversation-activity.md) · [conversation-search-index](./conversation-search-index.md) · [conversation-minimap](./conversation-minimap.md) · [public-share](./public-share.md) · [participant-access-control](./participant-access-control.md) · [participant-add](./participant-add.md) · [conversation-key-rotation](./conversation-key-rotation.md) · [key-version-read-gate](./key-version-read-gate.md)                                                                             |
-| Messaging     | [message-encryption](./message-encryption.md) · [pii-redaction](./pii-redaction.md) · [attachment-processing](./attachment-processing.md) · [bookmarks](./bookmarks.md) · [expired-message-cleanup](./expired-message-cleanup.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Memory        | [account-memory](./account-memory.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Personas      | [persona-management](./persona-management.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Projects      | [project-management](./project-management.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Organisations | [org-billing](./org-billing.md) · [org-invite-link](./org-invite-link.md) · [org-seat-management](./org-seat-management.md) · [org-project-access](./org-project-access.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| Images        | [image-generation](./image-generation.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Documents     | [document-generation](./document-generation.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Completions   | [completion-pipeline](./completion-pipeline.md) · [conversation-compaction](./conversation-compaction.md) · [reasoning-visibility](./reasoning-visibility.md) · [reasoning-output-budget](./reasoning-output-budget.md) · [requesty-model-sync](./requesty-model-sync.md) · [privacy-tier-gating](./privacy-tier-gating.md) · [model-capability-gating](./model-capability-gating.md) · [web-search](./web-search.md) · [grounding-redirect-resolution](./grounding-redirect-resolution.md) · [billing-access-gate](./billing-access-gate.md) · [billing-plan-management](./billing-plan-management.md) · [usage-cost-calculation](./usage-cost-calculation.md) · [usage-ledger](./usage-ledger.md) · [analytics-emit](./analytics-emit.md) |
-| Platform      | [rate-limiting](./rate-limiting.md) · [soft-delete-retention](./soft-delete-retention.md) · [encrypted-api-response-caching](./encrypted-api-response-caching.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+Unshipped ideas and unresolved decisions belong in [`open-points.md`](../open-points.md), not here.
+Durable architectural rationale belongs in [ADRs](../adr/README.md). Domain vocabulary follows
+[CONTEXT.md](../../CONTEXT.md).
+
+## Identity and Account
+
+- [Signup Trial seed](./signup-trial-seed.md),
+  [email verification gate](./email-verification-gate.md),
+  [single Account key pair](./single-user-key-pair.md),
+  [Account preferences](./account-preferences.md)
+- [Email change](./email-change.md), [password reset](./password-reset.md),
+  [MFA login](./mfa-login.md), [MFA recovery codes](./mfa-recovery-codes.md)
+- [Vault session](./vault-session.md), [logout token rotation](./logout-token-rotation.md),
+  [Account deletion](./account-delete.md)
+
+## Conversations
+
+- [Create](./conversation-create.md), [load](./conversation-load.md),
+  [activity ordering](./conversation-activity.md), [copy](./conversation-copy.md)
+- [Import](./conversation-import.md), [Project membership](./conversation-project-membership.md),
+  [retention](./conversation-retention.md), [search index](./conversation-search-index.md)
+- [Minimap](./conversation-minimap.md), [Public share](./public-share.md),
+  [Participant access](./participant-access-control.md), [add Participant](./participant-add.md)
+- [Conversation key rotation](./conversation-key-rotation.md),
+  [current key-version reads](./key-version-read-gate.md)
+
+## Messages and private data
+
+- [Message encryption](./message-encryption.md), [Redaction](./pii-redaction.md),
+  [Attachment processing](./attachment-processing.md)
+- [Bookmarks](./bookmarks.md), [disappearing Message cleanup](./expired-message-cleanup.md),
+  [soft-delete retention](./soft-delete-retention.md)
+
+## Projects and Organisations
+
+- [Project management and sharing](./project-management.md),
+  [Account and Project memory](./account-memory.md)
+- [Organisation lifecycle](./organisation-lifecycle.md),
+  [invite links](./org-invite-link.md), [Seat management](./org-seat-management.md)
+- [Organisation Project access](./org-project-access.md),
+  [Organisation billing](./org-billing.md)
+
+## Completions and Models
+
+- [Completion pipeline](./completion-pipeline.md),
+  [Model capability gating](./model-capability-gating.md),
+  [privacy-tier gating](./privacy-tier-gating.md)
+- [Requesty Model sync](./requesty-model-sync.md),
+  [reasoning visibility](./reasoning-visibility.md),
+  [reasoning output budget](./reasoning-output-budget.md)
+- [Conversation compaction](./conversation-compaction.md), [web search](./web-search.md),
+  [grounding redirect resolution](./grounding-redirect-resolution.md)
+- [Image generation](./image-generation.md), [document generation](./document-generation.md),
+  [Persona management](./persona-management.md)
+
+## Billing, analytics and platform
+
+- [Billing access gate](./billing-access-gate.md),
+  [Plan management](./billing-plan-management.md),
+  [usage cost calculation](./usage-cost-calculation.md), [usage ledger](./usage-ledger.md)
+- [Product analytics](./product-analytics.md),
+  [Completion usage emission](./analytics-emit.md)
+- [Rate limiting](./rate-limiting.md)

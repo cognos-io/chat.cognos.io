@@ -75,9 +75,8 @@ flowchart LR
 5. **Bookmarks are not Participants.** The row is Account-scoped and only
    links to Conversation/Message ids so the client can jump back.
 
-## Not yet wired
+## Current limits
 
-- Bookmark payloads have room for `note`, but the current capture flow does not
-  expose note editing.
+- Bookmark payloads have room for `note`, but the current capture flow does not expose note editing.
 - Co-participants do not share Bookmarks. A Bookmark belongs to the Account holder
   who saved it, even when the underlying Conversation is shared.

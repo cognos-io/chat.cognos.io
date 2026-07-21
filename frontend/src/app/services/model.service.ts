@@ -68,7 +68,7 @@ export class ModelService {
   // image generation when that tool is on). Pushed in by ComposerToolsService —
   // ModelService must not depend on it (that would be a DI cycle), so the arrow
   // points the other way. Drives capability-aware selection + the per-context
-  // default (spec docs/specs/tool-aware-model-selection.md §2/§6).
+  // default (docs/business_processes/model-capability-gating.md).
   private readonly _activeCapability = signal<RequiredCapability>('text_completion');
 
   // Declared before `state` so the selectedModel selector can read it.
@@ -106,7 +106,7 @@ export class ModelService {
       selectedModel: () => {
         const modelList = state.modelList();
         // Resolution is per the active capability context (tool-aware-model-
-        // selection.md §6). Every candidate must be eligible AND capable of the
+        // selection.md). Every candidate must be eligible AND capable of the
         // context: session pick → project default → per-context default →
         // recommended → first eligible. Because resolution is capability-gated,
         // toggling a tool re-resolves to the right model automatically — that is
@@ -154,7 +154,7 @@ export class ModelService {
               return {};
             }
             // Picking a model also makes it the implicit default for the *active
-            // capability context* (spec §4.3): a chat pick updates defaultModelId,
+            // capability context* (spec): a chat pick updates defaultModelId,
             // an image-context pick updates toolModelDefaults["image_generation"].
             // Selecting in one context never overwrites another's default, so a
             // user keeps a chat model and an image model independently. Selecting

@@ -2,7 +2,7 @@
 // compactions: encrypted summaries of older prefixes of a conversation's active
 // branch, so long chats keep fitting model context windows.
 //
-// See docs/specs/client-side-compaction.md. The collection stores only the
+// See docs/business_processes/conversation-compaction.md. The collection stores only the
 // conversation relation and a ciphertext `data` blob; every detail below lives
 // inside that ciphertext and is never written to a plaintext column or a log.
 package compaction

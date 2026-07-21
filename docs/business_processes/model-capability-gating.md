@@ -26,7 +26,7 @@ Enforced in **two places**:
 
 1. **`GET /api/v1/models`** exposes both flags per model so the composer can
    filter the picker to capable models and switch away from an incapable one
-   (see `docs/specs/tool-aware-model-selection.md`).
+   without another catalogue request.
 2. **The handler** re-checks the chosen model and returns `400` if a client
    smuggled in an incapable model ID:
     - text completion + `!supports_text_completion` → "This model can't be used

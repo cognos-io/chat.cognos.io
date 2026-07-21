@@ -1,5 +1,5 @@
-// Pure helpers shared by every document renderer (spec
-// docs/specs/document-generation.md §5.1, §6.4). No Angular imports — this
+// Pure helpers shared by every document renderer (see
+// docs/business_processes/document-generation.md,). No Angular imports — this
 // module runs inside the render worker as well as the main thread.
 import { DocFormat } from './document.types';
 

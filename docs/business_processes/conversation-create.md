@@ -5,6 +5,10 @@ name: conversation-create
 
 # Conversation Create
 
+This process covers a standalone Conversation. A Conversation created inside a Project inherits
+Project access and has no Conversation Participant row; see
+[Project management](./project-management.md).
+
 `POST /api/v1/conversations` writes **two** rows inside a single
 `app.RunInTransaction`:
 

@@ -22,7 +22,7 @@ import {
 // tests stand in for that browser, doing the same crypto with crypto-helpers,
 // so the ciphertext the API receives is byte-identical to production.
 //
-// v1 scope (docs/specs/conversation-copy.md §0.0): standalone conversations
+// v1 scope (docs/business_processes/conversation-copy.md): standalone conversations
 // only, PII redaction copied, attachments + project sources fail closed. The
 // fail-closed / message-cap / rollback / graph-validation rejection paths are
 // exercised in the Go backend test tables where rows can be inserted directly

@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Projects are shared encrypted workspaces (see docs/specs/projects.md). They
+// Projects are shared encrypted workspaces (see docs/business_processes/project-management.md). They
 // mirror the conversation crypto + participant model so sharing can light up
 // in a later phase without a rewrite:
 //

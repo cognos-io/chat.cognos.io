@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 // Wire/payload types use snake_case to match the backend's encrypted JSON
 // exactly (the payload is sealed by the backend, decrypted here, and parsed
-// without a case transform). See docs/specs/client-side-compaction.md §6.2.
+// without a case transform). See docs/business_processes/conversation-compaction.md.
 
 // Durable memory is a single flat list of memory items (stable facts,
 // decisions, open questions, important names/placeholders) rather than separate
-// buckets, so the user-facing memory reads as a simple bullet list (spec §8.2).
+// buckets, so the user-facing memory reads as a simple bullet list (spec).
 export const CompactionDurableMemory = z.object({
   items: z.array(z.string()).default([]),
 });
@@ -61,7 +61,7 @@ export type MemoryScope = 'conversation' | 'user' | 'project';
 
 // ScopedMemoryPayload is the decrypted shape of a user- or project-scoped memory
 // record. It reuses the durable-memory structure but is not tied to any
-// conversation/message prefix (spec §16). Sealed to the user's public key (user
+// conversation/message prefix (spec). Sealed to the user's public key (user
 // scope) or the project content key (project scope).
 export const ScopedMemoryPayload = z.object({
   version: z.string().default('1'),

@@ -5,8 +5,8 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Adds the optional `organisation` relation to balance_transactions (spec
-// docs/specs/organisations.md §6.5): usage in an org-owned Project is
+// Adds the optional `organisation` relation to balance_transactions (see
+// docs/business_processes/organisation-lifecycle.md): usage in an org-owned Project is
 // attributed to the Organisation for pooled settlement while keeping user_id
 // as the acting Account (audit + per-member metadata dashboards). Personal
 // usage leaves the field empty. Deliberately NOT cascadeDelete — ledger rows

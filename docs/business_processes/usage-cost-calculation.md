@@ -48,8 +48,9 @@ to the default — **unset can never mean free searches**. See
 
 Storage rules:
 
-- All ledger balances and transaction amounts are **integer rappen**. No
-  floats touch the balance.
+- Exact accounting uses **integer micro-rappen**. Rappen fields are rounded
+  display projections kept for compatibility; they are not the source of truth.
+- No floating-point value touches the Account balance.
 - USD values are kept as `DOUBLE` for analytics only.
 - The FX rate used for a transaction is stored on the transaction row, so
   every figure on the ledger can be independently re-derived without

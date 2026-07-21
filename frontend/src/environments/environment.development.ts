@@ -14,7 +14,7 @@ export const environment = {
   paddleClientToken: 'test_c1107d12db43b5817816135fccf',
   paddleEnvironment: 'sandbox' as 'sandbox' | 'production',
   // Analytics stay off in development: events go to console.debug only
-  // (docs/specs/product-analytics.md §1 — zero events from dev environments).
+  // (docs/business_processes/product-analytics.md — zero events from dev environments).
   analytics: {
     enabled: false,
     plausibleDomain: 'app.cognos.io',

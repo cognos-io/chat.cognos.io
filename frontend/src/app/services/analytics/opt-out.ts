@@ -1,4 +1,4 @@
-// Browser opt-out signals (docs/specs/product-analytics.md §3.5): when Do Not
+// Browser opt-out signals (docs/business_processes/product-analytics.md): when Do Not
 // Track or Global Privacy Control is set, every tracker becomes a no-op.
 
 export interface NavigatorPrivacySignals {

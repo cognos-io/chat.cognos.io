@@ -5,8 +5,8 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Content-free organisation audit log (docs/specs/organisations.md §11
-// Phase 2).
+// Content-free organisation audit log. See
+// docs/business_processes/organisation-lifecycle.md.
 //
 //   - org_audit_events records administrative events only: membership,
 //     invites, policies, billing, project sharing and key rotation. One row

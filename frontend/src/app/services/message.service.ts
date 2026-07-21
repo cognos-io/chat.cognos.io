@@ -193,7 +193,7 @@ export type MessageRequest = {
   requestId: string;
   content: string;
   parentMessageId?: string;
-  // PII redaction (spec docs/specs/pii-redaction.md). `redactionDeselected`
+  // PII redaction (docs/business_processes/pii-redaction.md). `redactionDeselected`
   // holds the offset-independent keys (see `candidateKey`) of detections the
   // user opted OUT of redacting; everything else detected is redacted by
   // default. Keys (not offsets) cross this boundary so trimming/timing can't
@@ -212,7 +212,7 @@ export type MessageRequest = {
   // When true, the request generates an image instead of a text completion.
   // Routed to the conversation image endpoint rather than /complete.
   imageGeneration?: boolean;
-  // User-uploaded attachments (spec docs/specs/attachments.md). `attachmentIds`
+  // User-uploaded attachments (docs/business_processes/attachment-processing.md). `attachmentIds`
   // are the conversation_attachments records to link to the new user message;
   // `attachmentContexts` is the transient provider context (never persisted).
   attachmentIds?: string[];
@@ -225,15 +225,15 @@ export type MessageRequest = {
 
 // REDACTION_INSTRUCTION tells the model to preserve placeholder tokens verbatim
 // so they survive the round-trip and can be hydrated on display. It contains no
-// sensitive values (spec §13).
+// sensitive values (spec).
 const REDACTION_INSTRUCTION =
   'Some sensitive values in this conversation have been replaced with ' +
   'placeholders like [[PII_EMAIL_A8F2KD]]. Preserve these placeholders exactly ' +
   'in your response; do not invent, alter, or remove them.';
 
 // composeSystemPromptSections joins the system-prompt building blocks in the
-// stable order the wire contract depends on (spec
-// docs/specs/document-generation.md §5.2/§6, Decision 8): project/persona
+// stable order the wire contract depends on (see
+// docs/business_processes/document-generation.md, Decision 8): project/persona
 // instructions first, then the documents contract (only when the "Create
 // documents" tool is on — absent entirely when it's off, so the payload stays
 // byte-identical to today for opted-out conversations), then the redaction
@@ -282,7 +282,7 @@ export const buildCompletionMessageContext = (
     // chars-per-token heuristic; defaults to the long-standing conservative 2.
     charsPerToken?: number;
     // record ids already represented by a compaction summary — skipped so they
-    // are not sent raw alongside the summary (spec §9).
+    // are not sent raw alongside the summary (spec).
     excludeMessageIds?: ReadonlySet<string>;
   },
 ): CompletionMessageRequest[] => {
@@ -350,7 +350,7 @@ export const buildCompletionMessages = (
       persona_id: resp.assistantMessage.personaId,
       model_id: resp.assistantMessage.modelId,
       // Carry the provider's real usage so context planning uses true token
-      // counts immediately, not just after a reload (spec §10.1). Mirrors what
+      // counts immediately, not just after a reload (spec). Mirrors what
       // the backend persists inside the encrypted blob.
       input_tokens: resp.usage.inputTokens,
       output_tokens: resp.usage.outputTokens,
@@ -549,7 +549,7 @@ export const applyCompletionReasoningStreamDelta = (
 };
 
 // applyCompletionWebSearchStreamDelta accumulates web-search metadata on the
-// streaming assistant message (spec docs/specs/web-search.md §7). Citations are
+// streaming assistant message (docs/business_processes/web-search.md). Citations are
 // incremental — each frame carries only newly-seen sources with stable indices —
 // so they are appended (deduped by URL as a guard); anchors are appended and
 // deduped by (citation,start,end). `searchActivity` drives the transient
@@ -823,7 +823,7 @@ export const isEmailNotVerifiedError = (error: unknown): boolean => {
 };
 
 // parseCompletionBillingRestriction recognises the structured 402 the
-// /complete endpoint returns when billing blocks a send (spec §12.7). It
+// /complete endpoint returns when billing blocks a send (spec). It
 // returns null for any other error so the caller falls back to a toast.
 //
 // The backend billing service (backend/internal/billing/service.go
@@ -897,8 +897,9 @@ export const resolveCompletionFailureMessage = (
 };
 
 // completionFailureReason maps a completion failure onto the closed
-// `message_failed.reason` analytics enum (docs/specs/product-analytics.md
-// §7.2). Conservative on purpose: only clearly-attributable failures get a
+// `message_failed.reason` analytics enum. See
+// docs/business_processes/product-analytics.md. Conservative on purpose: only
+// clearly-attributable failures get a
 // specific reason; everything ambiguous is 'other'. Never carries the error
 // payload.
 export const completionFailureReason = (
@@ -989,7 +990,7 @@ export class MessageService {
   private _activeCompletionRequestId = '';
   private _intentionalCompletionAbort = false;
   // Conversation ids with a compaction request currently in flight, so we keep
-  // at most one per conversation (spec §10.2).
+  // at most one per conversation (spec).
   private readonly _compactionInFlight = new Set<string>();
 
   private readonly pageSize = 100;
@@ -1591,8 +1592,9 @@ export class MessageService {
     // Attachment text is redacted at processing time and travels with the file
     // (its mappings are minted there, stable per file). Here we only merge those
     // mappings into this conversation's redaction scope so the placeholders in the
-    // already-redacted attachment context hydrate (spec docs/specs/pii-redaction.md
-    // §6.8). The wire attachmentContexts already carry redacted text — leave them.
+    // already-redacted attachment context hydrate. See
+    // docs/business_processes/pii-redaction.md. The wire attachmentContexts
+    // already carry redacted text — leave them.
     const carried: RedactionEntry[] = [
       ...newEntries,
       ...(req.attachmentRedactionEntries ?? []),
@@ -1889,7 +1891,7 @@ export class MessageService {
         this.consumeIntentionalCompletionAbort();
 
         // After a successful persisted response, opportunistically compact the
-        // older prefix in the background (spec §10). Never blocks the user.
+        // older prefix in the background (spec). Never blocks the user.
         if (completed && !isTemporaryConversation && originConversationId) {
           this.maybeTriggerCompaction(originConversationId);
         }
@@ -2710,7 +2712,7 @@ export class MessageService {
   }
 
   // webSearchRequestFlag maps the composer's web-search state onto the request
-  // field (spec §4.2): `false` when search is off (opted out, or the model can't
+  // field (spec): `false` when search is off (opted out, or the model can't
   // search), otherwise `undefined` so the field is omitted and the backend
   // applies its auto-on default for capable models.
   private webSearchRequestFlag(): boolean | undefined {
@@ -2827,7 +2829,7 @@ export class MessageService {
   // outgoing completion context. When a valid compaction covers an older prefix
   // of the branch, those messages are dropped from the raw context and the
   // summary is returned as contextSummary for the backend to fold into the
-  // system prompt (spec §9).
+  // system prompt (spec).
   private buildRequestContext(messagesNewestFirst: ReadonlyArray<Message>): {
     messages: Array<CompletionMessageRequest>;
     contextSummary?: string;
@@ -2839,7 +2841,7 @@ export class MessageService {
     const compaction = this.selectCompactionForContext(messagesNewestFirst);
     // Memory from every scope is combined into the injected context: the
     // user-curated conversation memory, the active-branch auto-compaction, and
-    // the branch-independent project + user memory (spec §16).
+    // the branch-independent project + user memory (spec).
     const manual = conversationId
       ? this._compactionService.manualMemoryFor(conversationId)
       : null;
@@ -2897,7 +2899,7 @@ export class MessageService {
   // recent assistant turn that recorded one. That input_tokens value is the
   // provider's exact measurement of everything we last sent (system + context +
   // user), so it is the most accurate available estimate of current context size
-  // — already accounting for any compaction summary that was in play (spec §10.1).
+  // — already accounting for any compaction summary that was in play (spec).
   private newestRecordedContextTokens(path: ReadonlyArray<Message>): number | null {
     for (let i = path.length - 1; i >= 0; i--) {
       const tokens = path[i].decryptedData.input_tokens;
@@ -2911,7 +2913,7 @@ export class MessageService {
   // maybeTriggerCompaction opportunistically compacts the older prefix of the
   // active branch in the background once raw context passes the trigger
   // threshold. Non-blocking, at most one in flight per conversation, and never
-  // for temporary, disappearing-message or project conversations (spec §10, §12).
+  // for temporary, disappearing-message or project conversations (spec,).
   private maybeTriggerCompaction(conversationId: string): void {
     const conversation = this._conversationService.conversation();
     if (!conversation || conversation.record.id !== conversationId) {
@@ -3105,7 +3107,7 @@ export class MessageService {
           id: conversation.record.id,
         });
         // Remove any compaction (and fold-chain descendants) representing the
-        // deleted message so its content cannot survive in a summary (spec §12).
+        // deleted message so its content cannot survive in a summary (spec).
         this._compactionService
           .invalidateForDeletedMessage(conversation.record.id, recordId)
           .subscribe({

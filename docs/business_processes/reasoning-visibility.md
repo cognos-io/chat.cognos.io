@@ -79,12 +79,6 @@ its `ai_models` record) once its provider's accepted tiers are confirmed.
 4. **Absent reasoning shows nothing.** Models that return no reasoning render no
    disclosure and report `reasoning_tokens: 0`.
 
-## Not yet wired
-
-- No usage label renders the token count (the number flows through, the UI is a
-  fast-follow).
-- Public shares and exports are **not** reviewed for reasoning yet — treat
-  reasoning as out of scope for those surfaces until decided.
-
-See `docs/specs/reasoning-visibility.md` for the full product spec and open
-questions.
+Public shares render stored Reasoning using the same disclosure. Document exports currently omit
+it, and no usage label renders the token count; both review points live in
+[OP-020](../open-points.md#conversations-and-retrieval).

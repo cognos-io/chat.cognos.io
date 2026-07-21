@@ -7,7 +7,7 @@ import { CognosIconComponent } from '@cognos/ui-angular';
 /**
  * WorkspaceContextBadgeComponent — the persistent, unambiguous billing-context
  * cue shown on the composer and Project pages once an Account holds Org
- * memberships (docs/specs/organisations.md §5.2; Nils's friction #1: he must
+ * memberships (docs/business_processes/organisation-lifecycle.md; Nils's friction #1: he must
  * always know which context is billed).
  *
  * `orgName` set → "Billed to <org>"; null → "Personal — billed to you". The

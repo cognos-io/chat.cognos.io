@@ -21,7 +21,7 @@ import { CryptoService } from './crypto.service';
 
 // isCompactionValidForBranch reports whether a compaction's covered messages
 // form a contiguous prefix of the active branch ending exactly at its anchor
-// (spec §9.1). Validity is about applicability to THIS branch — not which branch
+// (spec). Validity is about applicability to THIS branch — not which branch
 // created it — so a prefix compaction is reused across siblings that share
 // history.
 export const isCompactionValidForBranch = (
@@ -72,7 +72,7 @@ export const selectNewestValidCompaction = (
 
 // compactionsInvalidatedByMessage returns the record ids of every compaction
 // whose summary represents the given message, including recursive fold-chain
-// descendants that inherited that coverage (spec §12). Deleting a message must
+// descendants that inherited that coverage (spec). Deleting a message must
 // remove this whole lineage so its content cannot survive in any summary.
 export const compactionsInvalidatedByMessage = (
   compactions: readonly Compaction[],
@@ -115,7 +115,7 @@ const renderDurableMemory = (memory: CompactionPayload['durable_memory']): strin
   memory.items.map((item) => `- ${item}`).join('\n');
 
 // renderCompactionSummary renders a decrypted payload into the plain text the
-// backend wraps in <conversation_summary> delimiters (spec §9.2). It mirrors the
+// backend wraps in <conversation_summary> delimiters (spec). It mirrors the
 // durable-memory + rolling-narrative structure.
 export const renderCompactionSummary = (payload: CompactionPayload): string => {
   const lines: string[] = ['Durable memory:'];
@@ -151,7 +151,7 @@ export const renderConversationMemory = (
 };
 
 // renderCombinedMemory merges every memory scope into the single block injected
-// as context_summary (spec §16): the user-curated conversation memory, the
+// as context_summary (spec): the user-curated conversation memory, the
 // active-branch auto-compaction, plus project- and user-scoped memory. Each is
 // optional; returns undefined when nothing has content. Ordered conversation →
 // project → user (specific to general).
@@ -230,10 +230,10 @@ export interface CompactionPlan {
 }
 
 // COMPACTION_TRIGGER_FRACTION is the usable-context fraction at which background
-// compaction starts (spec §10.1).
+// compaction starts (spec).
 export const COMPACTION_TRIGGER_FRACTION = 0.7;
 // COMPACTION_KEEP_RECENT_FRACTION of usable context is kept as a raw tail; the
-// older prefix is what gets compacted (spec §10.3).
+// older prefix is what gets compacted (spec).
 export const COMPACTION_KEEP_RECENT_FRACTION = 0.25;
 // Minimum messages worth compacting — below this the savings aren't worth a
 // provider call.
@@ -273,7 +273,7 @@ export const shouldTriggerCompaction = (
 
 // planCompaction decides which prefix of the active branch to compact and, when
 // a valid compaction already exists, folds onto it by only compacting messages
-// added since its anchor (spec §8.1, §10.3). Returns null when there is nothing
+// added since its anchor (spec,). Returns null when there is nothing
 // worth compacting.
 export const planCompaction = (
   branchOldestFirst: readonly CompactionPlanMessage[],
@@ -397,7 +397,7 @@ export class CompactionService {
    * updateDurableMemory re-encrypts a compaction with edited durable memory and
    * persists the new ciphertext. The narrative and all other payload fields are
    * preserved; only durable_memory changes. The caller is responsible for having
-   * re-redacted any edited text before passing it in (spec §8.2, §12.2).
+   * re-redacted any edited text before passing it in (spec,).
    */
   updateDurableMemory(
     compaction: Compaction,
@@ -430,8 +430,9 @@ export class CompactionService {
 
   /**
    * addManualFact appends a single user-pinned snippet to the conversation's
-   * manual memory, creating the manual record if it does not exist yet (spec
-   * §8.2). The caller must have re-redacted the snippet first.
+   * manual memory, creating the manual record if it does not exist yet. The
+   * caller must have re-redacted the snippet first. See
+   * docs/business_processes/conversation-compaction.md.
    */
   addManualFact(
     conversationId: string,
@@ -511,7 +512,7 @@ export class CompactionService {
   /**
    * invalidateForDeletedMessage deletes every compaction (and fold-chain
    * descendant) that represents the deleted message, so its content cannot
-   * survive in any persisted summary (spec §12).
+   * survive in any persisted summary (spec).
    */
   invalidateForDeletedMessage(
     conversationId: string,
@@ -544,7 +545,7 @@ export class CompactionService {
       const payload = CompactionPayload.parse(
         JSON.parse(new TextDecoder().decode(plaintext)),
       );
-      // Reject a payload that does not bind to this conversation (spec §11).
+      // Reject a payload that does not bind to this conversation (spec).
       if (payload.conversation_id !== conversationId) {
         return null;
       }

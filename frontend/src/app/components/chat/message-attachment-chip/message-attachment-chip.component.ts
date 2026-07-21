@@ -6,7 +6,7 @@ import { CognosDocAttachmentComponent, CognosIconComponent } from '@cognos/ui-an
 
 /**
  * One user-upload attachment as it appears inside a message bubble. The state
- * captures what the *current viewer* can see (spec docs/specs/attachments.md):
+ * captures what the *current viewer* can see (docs/business_processes/attachment-processing.md):
  *   - resolved: the viewer owns the file → name + click-to-download;
  *   - removed:  the owner deleted it from their library → "File removed";
  *   - private:  another participant's file the viewer can't decrypt → "Private

@@ -19,7 +19,7 @@ import (
 // ciphertext bundle here. The backend never sees plaintext: it validates the
 // message graph against the authoritative source rows, then writes the
 // conversation, keys, participant, messages, and (optional) redaction map in a
-// single transaction — all or nothing (docs/specs/conversation-copy.md §9).
+// single transaction — all or nothing (docs/business_processes/conversation-copy.md).
 //
 // v1 scope (§0.0): standalone conversations only; PII redaction copied;
 // attachments and project sources fail closed. Larger work (projects,
@@ -467,7 +467,7 @@ func idMapContainsValue(idMap map[string]string, value string) bool {
 
 // copyMessageExpiry mirrors the per-message expiry a fresh conversation would
 // stamp: derived from the duplicate's expiry_duration, not copied from the
-// source rows (spec §13). Returns the zero time when the duplicate never
+// source rows (spec). Returns the zero time when the duplicate never
 // expires.
 func copyMessageExpiry(expiryDuration string) time.Time {
 	duration, err := time.ParseDuration(expiryDuration)

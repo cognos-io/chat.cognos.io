@@ -38,7 +38,7 @@ export const routes: Routes = [
   {
     // Organisation invite landing page (?token=… deep link or manual paste).
     // Auth first: accepting binds the invite to the signed-in Account — the
-    // SAME account, no new identity (docs/specs/organisations.md §8.1).
+    // SAME account, no new identity (docs/business_processes/organisation-lifecycle.md).
     path: 'invite',
     canActivate: [authGuard, featureFlagGuard],
     data: { featureFlag: 'team' },
@@ -156,7 +156,7 @@ export const routes: Routes = [
       },
       {
         // Organisation admin: create org, members, invites, billing & usage
-        // (docs/specs/organisations.md). Gated behind the `team` flag until
+        // (docs/business_processes/organisation-lifecycle.md). Gated behind the `team` flag until
         // Teams v1 ships end-to-end.
         path: 'team',
         canActivate: [featureFlagGuard],

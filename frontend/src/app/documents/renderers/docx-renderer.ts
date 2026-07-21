@@ -1,4 +1,4 @@
-// DocIR -> .docx renderer (spec docs/specs/document-generation.md §7). The
+// DocIR -> .docx renderer (docs/business_processes/document-generation.md). The
 // `docx` library is loaded lazily, inside the render call, so it never enters
 // the initial bundle — this module only imports its TYPES (erased at build
 // time). No Angular imports; runs inside the render worker as well as the
@@ -54,8 +54,7 @@ interface InlineStyle {
 }
 
 type RunOrHyperlink =
-  | InstanceType<DocxLib['TextRun']>
-  | InstanceType<DocxLib['ExternalHyperlink']>;
+  InstanceType<DocxLib['TextRun']> | InstanceType<DocxLib['ExternalHyperlink']>;
 
 /**
  * createDocxRenderer builds a `DocumentRenderer['render']` implementation.
@@ -140,7 +139,7 @@ export const renderDocx: DocumentRenderer['render'] = createDocxRenderer();
 // `Document()` (verified against node_modules/docx/dist/index.mjs). A .docx
 // is just a zip of XML, so this rewrites the packed `docProps/core.xml`
 // in place to the day-rounded date instead, honouring the metadata-hygiene
-// rule (spec §7: no precise activity timestamps in exported files). Falls
+// rule (spec: no precise activity timestamps in exported files). Falls
 // back to the untouched bytes if the zip doesn't look as expected, so a
 // hygiene pass can never break the actual download.
 export function scrubDocxTimestamps(bytes: Uint8Array, roundedDate: Date): Uint8Array {
@@ -282,7 +281,7 @@ function buildFooters(
 }
 
 // One reused numbering definition for every ordered list in the document,
-// referenced by level (spec §7: "define one numbering config reused").
+// referenced by level (spec: "define one numbering config reused").
 function buildNumbering(docx: DocxLib) {
   const levels = Array.from({ length: MAX_LIST_NUMBERING_LEVELS }, (_, level) => ({
     level,
@@ -431,8 +430,7 @@ function mapListItem(
     : { level: Math.min(level, MAX_LIST_NUMBERING_LEVELS - 1) };
 
   const paragraphs: (
-    | InstanceType<DocxLib['Paragraph']>
-    | InstanceType<DocxLib['Table']>
+    InstanceType<DocxLib['Paragraph']> | InstanceType<DocxLib['Table']>
   )[] = [];
   let firstParagraphHandled = false;
 

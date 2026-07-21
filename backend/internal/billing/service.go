@@ -96,8 +96,8 @@ type AccessRestriction struct {
 	AdminMessage     string
 }
 
-// ORG_* error codes returned when an org-billed request fails closed (spec
-// docs/specs/organisations.md §7.5): a missing org_billing row resolves to
+// ORG_* error codes returned when an org-billed request fails closed (see
+// docs/business_processes/organisation-lifecycle.md): a missing org_billing row resolves to
 // inactive, so both "never subscribed" and "canceled" surface as
 // ORG_BILLING_INACTIVE.
 const (
@@ -114,7 +114,7 @@ type Usage struct {
 	// SearchCount is the number of provider web searches this completion
 	// performed (0 when web search was off or unused). Drives the
 	// per-search floor fee in CalculateCost regardless of whether
-	// ProviderCostUSD is also set (spec §5.4 Decision 4, amended by the
+	// ProviderCostUSD is also set (spec Decision 4, amended by the
 	// spike — Requesty has not confirmed its reported cost includes the
 	// provider's own search fee).
 	SearchCount int64
@@ -190,8 +190,8 @@ func (s *Service) CalculateCost(
 	// Web-search floor fee: added whenever the completion counted any search
 	// invocations, REGARDLESS of whether a provider-reported total was
 	// trusted above (UsedProviderCost). Requesty has not confirmed that its
-	// reported cost includes the underlying provider's own search fee (spec
-	// §14 Q1), so Decision 4 as amended by the spike is to always add the
+	// reported cost includes the underlying provider's own search fee (see
+	// Q1), so Decision 4 as amended by the spike is to always add the
 	// floor on top when SearchCount > 0 — over-charging slightly beats
 	// silently eating the cost, and revisit once pass-through is confirmed.
 	//

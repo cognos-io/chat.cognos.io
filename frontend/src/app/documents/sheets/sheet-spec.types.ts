@@ -1,10 +1,10 @@
-// Types + zod schema for the XLSX sheet body JSON (spec
-// docs/specs/document-generation.md §6.3-§6.4). No Angular imports — this
+// Types + zod schema for the XLSX sheet body JSON (see
+// docs/business_processes/document-generation.md). No Angular imports — this
 // module runs inside the render worker as well as the main thread, and is
 // parsed on every `<cog-doc format="xlsx">` body.
 import { z } from 'zod';
 
-// Spec §6.4 caps, enforced at parse time (never left to the renderer/library
+// Spec caps, enforced at parse time (never left to the renderer/library
 // to discover, so failure is a clean translated error, not a stalled tab).
 export const SHEET_MAX_SHEETS = 50;
 export const SHEET_MAX_ROWS_PER_SHEET = 10_000;
@@ -136,7 +136,7 @@ const enforceCaps = (spec: SheetSpec): string[] => {
  * violation or a cap breach all come back as `{ spec: null, errors }` with
  * machine-readable, translatable error codes — the caller (the render
  * worker) turns that into the same fail-open UX every other document format
- * uses (spec docs/specs/document-generation.md §3.5).
+ * uses (docs/business_processes/document-generation.md).
  */
 export const parseSheetSpec = (
   body: string,

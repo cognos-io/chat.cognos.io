@@ -18,7 +18,7 @@ import (
 // AuthMethod == "password". Refresh passes an empty AuthMethod, and our own MFA
 // completion endpoints issue their token under a non-password method, so both
 // pass straight through and are never re-challenged. See
-// docs/specs/mfa-and-passkeys.md ("Load-bearing constraint").
+// docs/business_processes/mfa-login.md ("Load-bearing constraint").
 //
 // On interception we write a distinct mfa_required 401 (not a bare 401, so the
 // frontend can branch to the code step instead of treating it as session

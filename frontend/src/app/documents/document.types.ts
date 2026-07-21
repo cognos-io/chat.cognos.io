@@ -1,5 +1,5 @@
-// Shared, framework-free contract for the documents module (spec
-// docs/specs/document-generation.md §7). No Angular imports allowed here —
+// Shared, framework-free contract for the documents module (see
+// docs/business_processes/document-generation.md). No Angular imports allowed here —
 // this module runs inside the render worker as well as the main thread.
 import { SheetWarning } from './sheets/formula-validator';
 
@@ -60,10 +60,7 @@ export interface DocumentRenderer {
 }
 
 export type DocumentErrorCode =
-  | 'unsupported_format'
-  | 'empty_document'
-  | 'render_failed'
-  | 'source_too_large';
+  'unsupported_format' | 'empty_document' | 'render_failed' | 'source_too_large';
 
 export class DocumentRenderError extends Error {
   constructor(
@@ -76,7 +73,7 @@ export class DocumentRenderError extends Error {
 }
 
 /**
- * Render worker protocol (spec docs/specs/document-generation.md §7), mirroring
+ * Render worker protocol (docs/business_processes/document-generation.md), mirroring
  * the attachment worker's request/event shape (attachment.types.ts). Markdown
  * "rendering" is a pass-through done on the main thread — only docx/pdf/xlsx
  * need the worker (and their lazily-loaded heavy libraries).
@@ -114,7 +111,7 @@ export interface DocumentWorkerErrorPayload {
 }
 
 // `warnings` is only ever populated for a `render-sheet` response (the
-// formula validator's advisory findings, spec §5.3); docx/pdf renders never
+// formula validator's advisory findings, spec); docx/pdf renders never
 // set it, so existing `{ bytes }`-only callers are unaffected.
 export type DocumentWorkerEvent =
   | {

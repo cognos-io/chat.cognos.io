@@ -5,8 +5,7 @@ name: org-billing
 
 # Organisation Billing
 
-_(Planned — not yet shipped; ships with Teams v1.)_ Every Completion bills
-exactly **one** subject, resolved by **Project scope**, not by who is
+Every Completion bills exactly **one** subject, resolved by **Project scope**, not by who is
 typing: a personal Project bills the Account's `user_billing`; an
 org-owned Project bills its Organisation's `org_billing`. An org member
 typing in an org Project never touches their own balance.

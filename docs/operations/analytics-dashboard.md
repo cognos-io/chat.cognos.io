@@ -1,14 +1,14 @@
 # Product analytics dashboard verification
 
 Plausible provisioning is an external operation. This checklist verifies that the two production
-sites match the event registry in [the analytics spec](../specs/product-analytics.md); its presence
-does not claim that provisioning has happened.
+sites match the [product analytics process](../business_processes/product-analytics.md); its
+presence does not claim that provisioning has happened.
 
 ## Provisioning
 
 - [ ] Create separate sites for `cognos.io` and `app.cognos.io` in the approved EU-hosted account.
 - [ ] Restrict dashboard access, enable MFA for operators and record the owner/reviewer privately.
-- [ ] Create goals for every event in spec §7 on the correct site.
+- [ ] Create goals for every event in the current event catalogue on the correct site.
 - [ ] Create funnels: marketing pageview → `cta_click`; `signup_completed` → `message_sent`; and
       `trial_exhausted` → `checkout_started` → `checkout_completed`.
 - [ ] After the sites/goals exist, add only `https://plausible.io` to the app CSP `connect-src` and
@@ -32,9 +32,10 @@ Use synthetic Accounts and test billing only. Inspect browser requests and the P
 
 ## Baseline record
 
-For the first four weeks, record weekly aggregate K1–K3 values from spec §9 without setting targets.
-After week four, write the baseline ranges, sample limitations and the first decision each metric
-changed. Small cookieless aggregates are directional, not per-Account conversion rates.
+For the first four weeks, record weekly aggregate acquisition, first-Message and paid-conversion
+counts without setting targets. After week four, write the baseline ranges, sample limitations and
+the first decision each metric changed. Small cookieless aggregates are directional, not
+per-Account conversion rates.
 
 ```markdown
 - Verification date (UTC):

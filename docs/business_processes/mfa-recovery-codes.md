@@ -31,7 +31,6 @@ Do not email recovery codes. Do not log them.
 
 Recovery favours security over convenience. A password reset does **not** disable
 or recover MFA — the new password still faces the code challenge. There is no
-self-service MFA reset. If both the authenticator and all MFA recovery codes are lost,
-Account access is unrecoverable except via a deliberate, audited support action.
-This is an accepted risk: encrypted data was always governed by the Account Key,
-not by MFA.
+self-service or support MFA reset. If both the authenticator and every recovery code are lost,
+Account access is unrecoverable. This is an accepted risk: encrypted data was always governed by
+the Account Key, not by MFA.

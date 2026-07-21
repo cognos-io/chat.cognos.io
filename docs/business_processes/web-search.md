@@ -51,4 +51,5 @@ Properties this gives us:
 Authoritative code: `backend/internal/handler/complete.go` (`enableWebSearch`
 gate), `backend/internal/gateway/bifrost_client.go` (tool + citation
 normalisation), `backend/internal/catalogue/requestysync/enrich.go` (EU
-predicate). Spec: `docs/specs/web-search.md`.
+predicate). Provider validation and fee questions are tracked in
+[OP-029](../open-points.md#models-and-providers).

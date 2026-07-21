@@ -1,5 +1,5 @@
 // COG_DOC_INSTRUCTION is the system-prompt contract for the "Create documents"
-// composer tool (spec docs/specs/document-generation.md §5.2/§6, Decision 8).
+// composer tool (docs/business_processes/document-generation.md, Decision 8).
 // It is appended verbatim by MessageService.composeSystemPrompt whenever the
 // tool is enabled, and MUST stay byte-stable across releases: provider prompt
 // caching keys on this text, so an incidental rewording silently defeats the

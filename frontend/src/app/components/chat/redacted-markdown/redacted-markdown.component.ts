@@ -47,8 +47,8 @@ import { injectRedactionPills } from './redaction-pills';
  * received a placeholder). Stored content is never mutated — this is a display
  * layer over the already-redacted text.
  *
- * When web-search `citations`/`citationAnchors` are supplied (spec
- * docs/specs/web-search.md §4.1a), numbered citation-marker tokens are inserted
+ * When web-search `citations`/`citationAnchors` are supplied (see
+ * docs/business_processes/web-search.md), numbered citation-marker tokens are inserted
  * into the RAW markdown at the anchor offsets BEFORE rendering (offsets index
  * the source, not the rendered DOM), then hydrated into interactive
  * `app-citation-marker` chips after render — the same token/hydrate strategy as

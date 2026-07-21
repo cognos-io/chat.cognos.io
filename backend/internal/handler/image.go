@@ -240,8 +240,8 @@ func imageBillingGate(
 	}
 
 	// Org subjects fail closed BEFORE any provider work — a lapsed org never
-	// falls back to the member's personal balance (spec
-	// docs/specs/organisations.md §7.5).
+	// falls back to the member's personal balance (see
+	// docs/business_processes/organisation-lifecycle.md).
 	if restriction := params.BillingService.EvaluateOrgAccess(resolved); restriction != nil {
 		response := completeBillingRestrictionResponse(*restriction, 0)
 		return nil, &response, nil

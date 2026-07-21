@@ -5,7 +5,7 @@ import "testing"
 import "pgregory.net/rapid"
 
 // Property: ComputeOrgCycleSummary pins the pooled PAYG settlement contract
-// (spec docs/specs/organisations.md §7.4). For every usage/seats/commit
+// (docs/business_processes/organisation-lifecycle.md). For every usage/seats/commit
 // combination: nothing is ever negative, the pooled floor is seats x commit,
 // overage + floor == expected bill (i.e. the recurring seat charge plus the
 // one-time overage always reconstructs the invoice exactly), and the bill is

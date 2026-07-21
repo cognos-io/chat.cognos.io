@@ -1,7 +1,8 @@
-// Pure `<cog-doc>` block parser (spec docs/specs/document-generation.md
-// §6.1-§6.2). No Angular imports — this runs on every streamed delta repaint
+// Pure `<cog-doc>` block parser. See
+// docs/business_processes/document-generation.md. No Angular imports — this
+// runs on every streamed delta repaint
 // as well as on reload, so the hot "no sentinel" path stays a single O(n)
-// scan and the parser never throws (fail-open by construction, spec §3.5).
+// scan and the parser never throws (fail-open by construction, spec).
 import { RenderOptions } from '../document.types';
 import {
   COG_DOC_MAX_SOURCE_BYTES,
@@ -24,7 +25,7 @@ const OPEN_SENTINEL_RE = /(^|\n)( {0,3})<cog-doc(?=[\s>])/g;
 // see the pinned test for the resulting v1 quirk.
 const CLOSE_SENTINEL_RE = /^[ \t]*<\/cog-doc>[ \t]*$/m;
 
-// spec §6.1: single-quoted attribute value only (models receive the exact
+// spec: single-quoted attribute value only (models receive the exact
 // contract in the system prompt). A literal `'` inside the JSON would
 // truncate the match early — an accepted limitation, not our problem to
 // paper over with a smarter scanner.
@@ -32,7 +33,7 @@ const SPEC_ATTR_RE = /\bspec='([^']*)'/;
 
 const isBlank = (text: string): boolean => text.trim() === '';
 
-/** Strips exactly one leading and one trailing newline, per spec §6.1. */
+/** Strips exactly one leading and one trailing newline, per spec. */
 const stripOuterNewline = (text: string): string => {
   let out = text;
   if (out.startsWith('\n')) {
@@ -63,8 +64,8 @@ const parseSpecAttr = (attrsRaw: string): CogDocSpec | null => {
  * markdown / document segments. Total function — never throws. `streaming`
  * controls how an unterminated block at end-of-content is treated: mid-
  * stream it becomes an in-progress document segment; once streaming has
- * finished an unterminated block fails open to plain markdown (spec §6.2,
- * §5.2) so nothing the model wrote is ever hidden.
+ * finished an unterminated block fails open to plain markdown, so nothing the
+ * model wrote is ever hidden. See docs/business_processes/document-generation.md.
  */
 export const segmentMessageContent = (
   content: string | null | undefined,
@@ -153,7 +154,7 @@ export const segmentMessageContent = (
     const body = stripOuterNewline(text.slice(openTagEnd, closeStartAbs));
     const blockRaw = text.slice(sentinelStart, closeEndAbs);
 
-    // Measure once per candidate block, not per character (spec §6.4).
+    // Measure once per candidate block, not per character (spec).
     const byteLength = textEncoder.encode(blockRaw).length;
     const state =
       spec !== null && byteLength <= COG_DOC_MAX_SOURCE_BYTES ? 'ready' : 'invalid';
@@ -172,7 +173,7 @@ export const segmentMessageContent = (
 /**
  * filenameBaseFromSpec picks the un-sanitised filename base: explicit
  * filename → title → first `# ` heading in the body → null (caller supplies
- * a localised fallback via the existing `documentFilename()`, spec §5.1).
+ * a localised fallback via the existing `documentFilename()`, spec).
  */
 export const filenameBaseFromSpec = (
   spec: CogDocSpec | null,

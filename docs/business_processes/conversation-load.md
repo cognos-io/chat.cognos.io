@@ -43,6 +43,5 @@ flowchart LR
 
 See:
 
-- [conversation-load-request-reduction](../specs/conversation-load-request-reduction.md)
-- [encrypted-api-response-caching](../specs/encrypted-api-response-caching.md)
 - [key-version-read-gate](./key-version-read-gate.md)
+- [encrypted response caching review](../open-points.md#conversations-and-retrieval)

@@ -68,7 +68,4 @@ No plaintext search index in the backend. No plaintext search cache in localStor
 Search hydration may benefit from browser/CDN caching of encrypted API responses, but that is a
 separate platform concern. It needs principal-scoped keys, endpoint-specific TTLs, and purge tests.
 
-See:
-
-- [conversation-search](../specs/conversation-search.md)
-- [encrypted-api-response-caching](../specs/encrypted-api-response-caching.md)
+See [Search V2 and caching open points](../open-points.md#conversations-and-retrieval).

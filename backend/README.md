@@ -1,273 +1,66 @@
-# Backend
+# Cognos backend
 
-## Security model note
+The backend is a Go API built on PocketBase. It authenticates Accounts, enforces access and billing
+rules, sends transient plaintext prompts to approved AI Providers, and persists private content as
+ciphertext.
 
-The backend is in the middle of a model-selection and security rework.
+The browser owns decryption keys. Read the [security model](../docs/security-model.md) before
+changing Message, key, Attachment, memory, Redaction or Vault handling. Current product rules live
+in [business processes](../docs/business_processes/README.md); endpoint scope lives in
+[API permissions](../docs/api-permissions.md).
 
-Target direction:
+## Run and test
 
-- first-party Cognos API endpoints instead of long-term OpenAI compatibility
-- backend-driven model catalogue
-- encrypted private-key backup with an **Account Key** for new-device unlock; persistent unlock
-  uses a server-revocable split-key session (see `../docs/security-model.md`)
-- ciphertext-only message storage at rest
+From the repository root:
 
-See:
+```sh
+just backend
+just go-test
+go -C backend vet ./...
+just e2e-api
+```
 
-- [`../CONTEXT.md`](../CONTEXT.md) — domain glossary
-- `../docs/security-model.md`
-- `../docs/specs/backend-model-selector.md`
+`just backend` serves PocketBase on <http://localhost:8090>. The admin UI is at
+<http://localhost:8090/_/> and local data is stored in `backend/pb_data`.
 
-## Useful links
-
-- [How I write HTTP services in Go after 13 years](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/)
-    - a collection of useful tips for those writing Go services
+`just e2e-api` is the preferred HTTP-boundary check. It starts an isolated backend and mock AI
+Provider; a running development stack is not required.
 
 ## Configuration
 
-In the `configs` directory copy the `api.example.yaml` to an environment specific file (`local`,
-`development`) and adjust accordingly. It will be picked up and auto loaded by the
-`internal/config/api.go`.
+[`configs/api.example.yaml`](./configs/api.example.yaml) documents every setting and environment
+override. Configuration precedence is:
 
-For production, prefer `COGNOS_*` environment variables and `COGNOS_*_FILE` secret-file inputs
-instead of mounting a plaintext config file into the container.
+1. `configs/api.{development,production,local}.yaml`
+2. `COGNOS_*` environment variables
+3. `COGNOS_*_FILE` secret files for supported secrets
 
-### Two-factor authentication (MFA)
+Keep local configuration in ignored files. Prefer secret-file settings for Provider, Paddle and MFA
+keys. Never log configuration values, prompts, Message content, filenames, URLs returned by web
+search, key material or Provider payloads.
 
-Authenticator-app (TOTP) MFA needs a server-held key to encrypt TOTP seeds at rest:
-`COGNOS_MFA_TOTP_ENCRYPTION_KEY` — **base64 of exactly 32 random bytes**.
+## Main packages
 
-This is **required in production**: while it is unset, the enrolment endpoints return
-"MFA is not configured" and no one can turn on 2FA (we never store a seed in plaintext). Existing
-password sign-ins keep working regardless.
+| Path                            | Responsibility                                         |
+| ------------------------------- | ------------------------------------------------------ |
+| `cmd/api/`                      | API entry point, routes, middleware and scheduled jobs |
+| `internal/handler/`             | HTTP boundary and product orchestration                |
+| `internal/chat/`                | encrypted Message persistence                          |
+| `internal/crypto/`              | server-side cryptographic helpers                      |
+| `internal/billing/`             | access gates, cost calculation and ledgers             |
+| `internal/gateway/`             | AI Provider transport and normalisation                |
+| `internal/participants/`        | standalone Conversation access                         |
+| `internal/projectparticipants/` | Project access and roles                               |
 
-Generate one securely:
+Database schema changes are forward-only migrations under `db/migrations/`. Add or change an API
+route only with the permission-map update and cross-Account denial tests required by
+[`docs/api-permissions.md`](../docs/api-permissions.md).
 
-```sh
-openssl rand -base64 32
-```
+## Supporting commands
 
-Set it like any other secret — via the env var, or a mounted secret file referenced by
-`COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE` — never in a committed config file. Rotating the key strands
-already-enrolled seeds (affected users must re-enrol); the `secret_key_id` column records which key
-sealed each row. See `docs/specs/mfa-and-passkeys.md`.
-
-## Requesty model sync
-
-The AI model catalogue (`ai_models`) mirrors Models enabled for the configured Requesty Account.
-It runs **automatically in-app** on boot and roughly every 6 hours.
-
-What the sync does for `provider = requesty` models (Infomaniak models are never touched):
-
-- **Discovers** newly enabled Requesty Models, including their description and release date.
-- **Refreshes** Provider-owned fields — pricing, context window, max output, capability flags
-  (`supports_vision`, `supports_tool_calling`, …) — and sets `reasoning_efforts` only when unset
-  (so manual overrides win).
-- Marks Models that vanish from Requesty unavailable (`provider_available = false`) without deleting
-  them or changing the local `enabled` value.
-
-Effective visibility requires `enabled && whitelisted && provider_available`. Local disables always
-win. Existing `privacy_tier`, `hosting_*`, release dates, descriptions and display names are
-preserved; pricing, context and synced capability flags are refreshed on the next run. New Models
-receive `eu` only for an explicit Requesty `geolocation: eu`; otherwise they default to `global`.
-
-### Run it manually
-
-Use the wrapper (reads the same `COGNOS_REQUESTY_*` config as the API):
-
-```sh
-./scripts/sync-requesty-models.sh
-```
-
-Or the raw subcommand:
-
-```sh
-cd backend && go run ./cmd/api sync-requesty-models
-```
-
-### Marking absent Models unavailable (safety guard)
-
-The availability pass is guarded so a partial response cannot hide a large part of the catalogue:
-if **more than 25%** of available Requesty Models are absent, the pass is **skipped** and logged. An
-**empty fetch never changes availability**, even when forced.
-
-If you intentionally remove several Models and want them unavailable now, force the pass:
-
-```sh
-# one-off manual cleanup (CLI flag)
-./scripts/sync-requesty-models.sh --force-disable-absent
-
-# standing override for the scheduled in-app job (env var)
-COGNOS_REQUESTY_FORCE_DISABLE_ABSENT=true
-```
-
-## Authentication
-
-We use PocketBase's built-in `users` auth collection for authentication.
-
-The cross-device security model is documented in `../docs/security-model.md`.
-
-Password reset is enabled. Under the `account_key_v2` scheme the password only
-authenticates sign-in — it is **not** an input to any data-encryption key — so a
-reset never re-wraps key material or affects encrypted chats. The Account Key
-(never seen by the server) is what unlocks data and is the sole recovery secret.
-
-### Setup
-
-1. Open the PocketBase admin UI, usually at `http://127.0.0.1:8090/_/`
-2. Create or migrate a user in the `users` auth collection
-3. Make sure the user has an email address set
-4. Use that email address and password to sign in through the frontend
-
-## Custom tools
-
-### Generate a Public Key and Encrypted Secret Key
-
-Useful when creating test users, we have provided a script to generate a public key and an encrypted
-private key for a given user.
-
-```text
-go run cmd/generate-key-pair/main.go \
-    -account-key={{ USER_ACCOUNT_KEY }}
-```
-
-The helper will prompt for the account password on stdin.
-
-If `-account-key` is omitted, the helper generates one and prints it along with the unlock scheme,
-random per-user password salt, and encrypted secret key.
-
-## HTTPie requests
-
-### Send a message to the OpenAI API
-
-```text
-http POST https://api.openai.com/v1/chat/completions \
-    Authorization:"Bearer $OPENAI_KEY" \
-    model="gpt-3.5-turbo" \
-    messages:='[{"role": "user", "content": "Say this is a test!"}]' \
-    stream:=true
-```
-
-### Authenticate
-
-Get a token to authenticate.
-
-```text
-http POST :8090/api/collections/users/auth-with-password \
-    identity="test@example.com" \
-    password="password"
-```
-
-Pipe to `jq` to get the `token`.
-
-```text
-http POST :8090/api/collections/users/auth-with-password \
-    identity="test@example.com" \
-    password="password" | jq -r .token
-```
-
-```text
-export AUTH_TOKEN=$(http POST :8090/api/collections/users/auth-with-password \
-    identity="test@example.com" \
-    password="password" | jq -r .token)
-```
-
-### List available models from localhost
-
-```text
-http GET :8090/api/v1/models \
-    Authorization:"Bearer $AUTH_TOKEN"
-```
-
-### Send a temporary message to localhost
-
-```text
-http POST :8090/api/v1/completions \
-    Authorization:"Bearer $AUTH_TOKEN" \
-    model_id="llama-3-3-infomaniak" \
-    persona_id="cognos:simple-assistant" \
-    system_prompt="You are a helpful assistant." \
-    request_id="req-local-1" \
-    messages:='[{"role": "user", "content": "Say this is a test!"}]'
-```
-
-### Send a persisted conversation message to localhost
-
-```text
-http POST :8090/api/v1/conversations/{{CONVERSATION_ID}}/complete \
-    Authorization:"Bearer $AUTH_TOKEN" \
-    model_id="llama-3-3-infomaniak" \
-    persona_id="cognos:simple-assistant" \
-    system_prompt="You are a helpful assistant." \
-    request_id="req-local-2" \
-    messages:='[{"role": "user", "content": "Say this is a test!"}]'
-```
-
-## Encryption benchmarks
-
-To decide on an encryption strategy for messages we wrote benchmarks to compare the following
-methods:
-
-1. 'Sealed box' asymmetric encryption using the conversations public key as the recipient. This
-   method generates an ephemeral key pair and uses NaCl box under the hood to asymmetrically encrypt
-   the data, including the ephemeral public key in the output. Decryption is done using the
-   conversation secret key and the ephemeral public key.
-1. 'Hybrid' encryption. This method generates a random 256bit symmetric key which is used with the
-   NaCl secretbox to encrypt the message contents. The symmetric key is then encrypted with the same
-   'Sealed box' asymmetric encryption detailed above. The advantages here are that the symmetric
-   encryption should be a lot faster than the asymmetric encryption (which is only used for a small
-   message - the symmetric key).
-
-Benchmarks are found in the `internal/crypto/encrypt_benchmark_test.go` file.
-
-### Results
-
-We compared encryption of messages (with random content) of various lengths.
-
-Interestingly the results are not as different as I would have expected with a consistent ±10%
-between the methods (example output below).
-
-```text
-goos: linux
-goarch: amd64
-pkg: github.com/cognos-io/chat.cognos.io/backend/internal/crypto
-cpu: AMD Ryzen 7 3700X 8-Core Processor
-BenchmarkAsymmetricEncrypt1KB-16           12063             99801 ns/op
-BenchmarkAsymmetricEncrypt2KB-16           10000            112588 ns/op
-BenchmarkAsymmetricEncrypt5KB-16            8796            128814 ns/op
-BenchmarkAsymmetricEncrypt10KB-16           7284            180291 ns/op
-BenchmarkAsymmetricEncrypt500KB-16           835           1373146 ns/op
-BenchmarkAsymmetricEncrypt1MB-16             447           2585302 ns/op
-BenchmarkAsymmetricEncrypt10MB-16             63          22883566 ns/op
-BenchmarkSymmetricEncrypt1KB-16            11070            109244 ns/op
-BenchmarkSymmetricEncrypt2KB-16            10000            108873 ns/op
-BenchmarkSymmetricEncrypt5KB-16             9358            135506 ns/op
-BenchmarkSymmetricEncrypt10KB-16           10000            156142 ns/op
-BenchmarkSymmetricEncrypt500KB-16            801           1369121 ns/op
-BenchmarkSymmetricEncrypt1MB-16              471           2517422 ns/op
-BenchmarkSymmetricEncrypt10MB-16              68          18383260 ns/op
-```
-
-Worth noting that if we were **only** using symmetric encryption (and not asymmetrically encrypting
-the symmetric key), the results are very different:
-
-```text
-BenchmarkSymmetricEncrypt1KB-16           204798              5351 ns/op
-BenchmarkSymmetricEncrypt2KB-16           145189              7862 ns/op
-BenchmarkSymmetricEncrypt5KB-16            99870             15468 ns/op
-BenchmarkSymmetricEncrypt10KB-16           43687             26931 ns/op
-BenchmarkSymmetricEncrypt500KB-16           1008           1258649 ns/op
-BenchmarkSymmetricEncrypt1MB-16              436           2617675 ns/op
-BenchmarkSymmetricEncrypt10MB-16              61          19730876 ns/op
-```
-
-### Conclusion
-
-We will use the 'sealed box' asymmetric encryption approach.
-
-While the 'hybrid' approach is a little faster it does include additional complexity having to use
-two encryption approaches on both the server and the client. As the difference is not huge it
-doesn't make sense to over complicate things at this time.
-
-(I also have a theory that this also requires less from the source of randomness which may become a
-bottleneck but that's purely a hypothetical)
+- [`cmd/bunny-deploy`](./cmd/bunny-deploy/README.md) uploads built frontend and marketing assets.
+- [`cmd/promote-deployment`](./cmd/promote-deployment/README.md) updates the private GitOps
+  deployment repository with an immutable image digest.
+- `cmd/mock-ai-provider` provides deterministic local and e2e Completion responses.
+- `cmd/generate-key-pair` generates development key material; never use its output as a production
+  secret without the production runbook.

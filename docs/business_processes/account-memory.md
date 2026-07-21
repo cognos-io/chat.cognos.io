@@ -1,39 +1,26 @@
 ---
-description: Account memory stores encrypted user-scoped facts that can be injected into future Completions when memory is enabled
-name: account-memory
+description: Account and Project memory keep encrypted context that the browser decrypts, combines and Redacts before a Completion
+name: scoped-memory
 ---
 
-# Account Memory
+# Account and Project Memory
 
-**Account memory** is user-scoped context: facts, preferences, decisions, or
-standing instructions the Account holder wants Cognos to remember across
-Conversations.
+Memory stores facts, preferences, decisions or standing instructions for future Completions.
 
-Memory is off/on through Account preferences. When enabled, the client decrypts
-the Account's memory entries and includes the relevant plaintext in the
-Completion request. The server stores memory encrypted at rest and does not keep
-a plaintext memory index.
+| Scope   | Encryption                           | Access                      | Used in                                                     |
+| ------- | ------------------------------------ | --------------------------- | ----------------------------------------------------------- |
+| Account | Sealed to the Account key pair       | Owning Account only         | The Account's eligible Conversations when memory is enabled |
+| Project | Sealed under the Project content key | Active Project Participants | Conversations in that Project                               |
 
-Endpoints:
+The backend stores opaque memory data and plaintext routing metadata only. On send, the browser
+loads and decrypts applicable Account, Project and Conversation memory, combines it with the active
+Message branch, then applies Redaction before the request leaves the device.
 
-| Method   | Path                       | Behaviour                  |
-| -------- | -------------------------- | -------------------------- |
-| `GET`    | `/api/v1/user-memory`      | List Account-owned entries |
-| `POST`   | `/api/v1/user-memory`      | Create encrypted entry     |
-| `PATCH`  | `/api/v1/user-memory/{id}` | Update encrypted entry     |
-| `DELETE` | `/api/v1/user-memory/{id}` | Delete encrypted entry     |
+Account memory uses `/api/v1/user-memory`. Project memory uses
+`/api/v1/projects/{projectID}/memory` for create/list and `/api/v1/project-memory/{id}` for
+update/delete. Every write carries client-encrypted data; Project routes use the same role and
+`rotation_pending` write gates as other Project content.
 
-```mermaid
-flowchart LR
-  A[Memory enabled] --> B[client decrypts Account memory]
-  B --> C[build Completion context]
-  C --> D[Redaction replaces sensitive values]
-  D --> E[Provider receives prompt with Placeholders]
-```
-
-Redaction runs before provider dispatch. If memory contains sensitive values and
-Redaction is enabled, the Provider receives Placeholders while the original
-values remain in encrypted Redaction mappings.
-
-Deleting a memory entry prevents it from being injected into future Completions.
-Past Messages are not rewritten.
+Deleting or changing memory affects future Completions only. Past Messages and existing Compactions
+are not rewritten. Conversation-specific manual and generated memory is covered by
+[Conversation compaction](./conversation-compaction.md).

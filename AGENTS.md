@@ -5,9 +5,10 @@ encrypts Messages server-side so only the Account holder can decrypt them — si
 ProtonMail for email.
 
 **Domain language:** see [`CONTEXT.md`](./CONTEXT.md) for canonical terms — use it when writing
-specs, docs, or user-facing copy so we stay consistent (e.g. Account vs User, Account Key).
-[`docs/business_processes/`](./docs/business_processes/) and [`docs/specs/`](./docs/specs/) follow
-that glossary in domain prose (code identifiers such as `user_id` stay unchanged).
+docs or user-facing copy so we stay consistent (e.g. Account vs User, Account Key).
+[`docs/business_processes/`](./docs/business_processes/) is the current behavioural source of truth;
+unresolved work lives in [`docs/open-points.md`](./docs/open-points.md). Both follow the glossary in
+domain prose (code identifiers such as `user_id` stay unchanged).
 
 ## Claude Orchestration workflow
 

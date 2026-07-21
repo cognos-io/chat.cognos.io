@@ -1,6 +1,6 @@
 # Security risk register
 
-Updated 20 July 2026. Owner: Cognos engineering unless a row says otherwise.
+Updated 21 July 2026. Owner: Cognos engineering unless a row says otherwise.
 
 This register supersedes the 6 June 2026 security findings that previously lived at this path. That
 review described retired deployment files and pre-MFA application behaviour; Git history preserves
@@ -8,9 +8,8 @@ it for audit purposes. Current controls and launch evidence live in:
 
 - [`security-model.md`](./security-model.md) — authoritative trust boundaries and cryptographic
   model
-- [`production-readiness.md`](./production-readiness.md) — current application posture
-- [`checkpoints/2026-07-20-go-live-tech-security.md`](./checkpoints/2026-07-20-go-live-tech-security.md)
-  — go-live decision and remediation evidence
+- [`business_processes/`](./business_processes/) — current product and security behaviour
+- [`open-points.md`](./open-points.md) — consolidated unresolved work and recommendations
 - [`deployment-interface.md`](./deployment-interface.md) — application/deployment ownership boundary
 
 Statuses: **Open** needs engineering or operational work; **Accepted** is consciously tolerated for
@@ -46,5 +45,6 @@ the final column.
 
 1. Update a row when its control, owner or evidence changes.
 2. Add the dated test, runbook or external evidence location; never write “fixed” without it.
-3. Move resolved rows to the checkpoint that closed them instead of keeping stale claims open here.
+3. Remove resolved rows after their control and evidence are recorded in the durable source of
+   truth; Git history preserves the old risk.
 4. Review P0/P1 rows before every paid release and all rows at least monthly.

@@ -36,7 +36,7 @@ const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
 const DEFAULT_PAYG_MIN_COMMIT_CHF = 15;
 
 // Which surface a checkout was started from — the `entry` prop on the
-// `checkout_started` analytics event (docs/specs/product-analytics.md §7.2).
+// `checkout_started` analytics event (docs/business_processes/product-analytics.md).
 export type CheckoutEntry = 'pricing' | 'trial_lock' | 'billing';
 
 // The analytics `plan` prop is the coarse plan family, not the billing
@@ -84,8 +84,9 @@ export class BillingService {
   private readonly _sendBlocked = signal(false);
 
   // Set when a /complete call in an org-owned Project is rejected because the
-  // owning Organisation's billing is inactive or past due (fail closed, spec
-  // §5.8). Deliberately SEPARATE from the personal plan state: an org pause
+  // owning Organisation's billing is inactive or past due. This fails closed;
+  // see docs/business_processes/billing-access-gate.md. Deliberately SEPARATE
+  // from the personal plan state: an org pause
   // never locks the personal workspace and never reads as the member's fault.
   private readonly _orgSendBlock = signal<OrgCompletionBillingRestriction | null>(null);
 
@@ -143,7 +144,7 @@ export class BillingService {
     // activation poll the moment checkout completes.
     this._paddle.checkoutCompleted$.pipe(takeUntilDestroyed()).subscribe(() => {
       // Trial→paid conversion, attributed to the last-started plan. Paddle's
-      // webhooks stay the revenue source of truth (spec §8).
+      // webhooks stay the revenue source of truth (spec).
       this._analytics.track(
         'checkout_completed',
         this._lastCheckoutPlan ? { plan: this._lastCheckoutPlan } : undefined,

@@ -1,8 +1,8 @@
 // Curated, product-owned capability metadata keyed by the stable model id (the
 // slug returned by /api/v1/models, e.g. "claude-opus-4-8"). These labels are
 // subjective and MUST be curated by product — never inferred from a model's
-// name or price (see docs/specs/composer-model-discovery.md §6.2 and the
-// "fast/powerful are subjective" risk in §12). Unknown ids resolve to empty
+// name or price (see docs/business_processes/model-capability-gating.md and the
+// "fast/powerful are subjective" risk in). Unknown ids resolve to empty
 // metadata so the catalogue can grow without code changes.
 import { PrivacyTier } from '@app/interfaces/model';
 

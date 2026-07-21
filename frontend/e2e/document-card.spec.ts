@@ -12,8 +12,8 @@ import {
   seedAuthenticatedUnlockState,
 } from './fixtures';
 
-// Phase 2 model-created documents (spec docs/specs/document-generation.md
-// §5.2/§6/§16): the stream parser turning a `<cog-doc>` block into a document
+// Model-created documents (docs/business_processes/document-generation.md):
+// the stream parser turning a `<cog-doc>` block into a document
 // card while it streams, the completed card's download, fail-open behaviour on
 // truncated/invalid blocks, the composer opt-out's effect on the wire, and
 // re-render from persisted (encrypted) history. Phase 1's "Download as…" path
@@ -110,7 +110,7 @@ const seedEmptyMessages = (page: Page, conversationId: string) =>
 const composerLabel =
   'Message Cognos — stored encrypted; sent to your provider to reply';
 
-// The reply fixture from spec §6.1's own example: prose, a `<cog-doc>` block
+// The reply fixture from spec's own example: prose, a `<cog-doc>` block
 // (docx, titled, with a page-number footer) containing a heading, a paragraph
 // and a table, then trailing prose. Reused across every test below.
 const PROSE_BEFORE = 'Here is your report.';
@@ -337,7 +337,7 @@ test('a completed document card shows title, format and prose either side, and d
   const footerXml = new TextDecoder().decode(archive['word/footer1.xml']);
   expect(footerXml).toContain('PAGE');
 
-  // Renderer metadata hygiene (spec §7): a fixed, non-identifying creator.
+  // Renderer metadata hygiene (spec): a fixed, non-identifying creator.
   const coreXml = new TextDecoder().decode(archive['docProps/core.xml']);
   expect(coreXml).toContain('<dc:creator>Cognos</dc:creator>');
 });
@@ -357,7 +357,7 @@ test('an unterminated persisted block fails open to plain markdown with no note'
 
   // Simulates a stream that stopped (max_output_tokens) before the closing
   // tag ever arrived — a persisted, non-streaming message, so the parser's
-  // fail-open rule (spec §6.2) applies: the whole thing renders as plain
+  // fail-open rule (spec) applies: the whole thing renders as plain
   // markdown, no card, no note.
   const truncatedContent = [
     PROSE_BEFORE,
@@ -425,7 +425,7 @@ test('a closed block with an invalid spec fails open with the documentInvalid no
 
   // "pptx" isn't in the v1 format enum (docx | pdf), so the spec attribute
   // fails zod validation → spec is null → the closed block is 'invalid', not
-  // 'ready' — fails open to raw content + a translated note (spec §5.2).
+  // 'ready' — fails open to raw content + a translated note (spec).
   const invalidContent = [
     PROSE_BEFORE,
     '',
@@ -561,7 +561,7 @@ test('the "Create documents" toggle controls whether the cog-doc contract reache
 
   expect(requestBodies).toHaveLength(2);
   // Not just "no opening tag" — no trace of the feature anywhere on the wire,
-  // matching a pre-feature client's request (spec §16 API e2e: "byte-identical
+  // matching a pre-feature client's request (spec API e2e: "byte-identical
   // … only the system prompt differs" — and here it doesn't differ at all).
   expect(requestBodies[1]).not.toContain('cog-doc');
 });

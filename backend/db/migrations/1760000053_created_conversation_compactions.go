@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Conversation compaction collection (spec docs/specs/client-side-compaction.md §6).
+// Conversation compaction collection (docs/business_processes/conversation-compaction.md).
 //
 // Stores encrypted summaries of older prefixes of a conversation's active branch
 // so long chats keep fitting model context windows. Like messages and redaction

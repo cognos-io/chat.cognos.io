@@ -6,7 +6,7 @@ import (
 )
 
 // conversation_attachments stores client-side encrypted user-uploaded
-// attachments (spec docs/specs/attachments.md). It mirrors the ciphertext-only
+// attachments (docs/business_processes/attachment-processing.md). It mirrors the ciphertext-only
 // collections (user_memory, conversation_compactions): every rule is locked, so
 // all access flows through the /api/v1 conversation attachment handlers, which
 // authorise by conversation participant access.

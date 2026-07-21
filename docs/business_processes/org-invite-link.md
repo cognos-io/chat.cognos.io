@@ -71,5 +71,5 @@ flowchart LR
 ## Related
 
 - Seats, offboarding, key wrap: [org-seat-management](./org-seat-management.md)
-- API contract: `docs/specs/organisations.md` §8.1
-- Permissions: `docs/api-permissions.md` (Organisation invites / invite accept)
+- Project access: [org-project-access](./org-project-access.md)
+- Permissions: [API permissions](../api-permissions.md)

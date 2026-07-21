@@ -32,18 +32,18 @@ import { ConversationService } from '@app/services/conversation.service';
 import { RedactionService } from '@app/services/redaction.service';
 
 /**
- * DocumentCardComponent shows a model-authored `<cog-doc>` block (spec
- * docs/specs/document-generation.md §5.2) inline in an assistant message: a
+ * DocumentCardComponent shows a model-authored `<cog-doc>` block (see
+ * docs/business_processes/document-generation.md) inline in an assistant message: a
  * title/format header, a state area ("Creating document…" while streaming, a
  * Download button once ready), and a collapsed-by-default preview of the raw
  * body through the same markdown renderer used for the rest of the message.
  *
  * `state: 'invalid'` is never passed in — the caller (message-list-item) fails
  * that case open to plain markdown at the segment level instead of rendering
- * this card (spec §3.5), so this component only ever needs to distinguish
+ * this card (spec), so this component only ever needs to distinguish
  * 'streaming' from 'ready'.
  *
- * xlsx bodies are sheet-spec JSON, not prose (spec §6.3), so a spreadsheet
+ * xlsx bodies are sheet-spec JSON, not prose (spec), so a spreadsheet
  * card offers no preview at all: the header is static (no expand caret) and
  * only the Download action is shown. Dumping raw sheet JSON into the card was
  * more noise than help — the document is a render, not text to read inline.
@@ -283,7 +283,7 @@ export class DocumentCardComponent {
   protected readonly showFormulaWarning = signal(false);
   // Save-to-library has its own in-flight/feedback state, independent of
   // Download's — the two actions can be triggered independently and must
-  // not fight over the same button label (spec §5.4).
+  // not fight over the same button label (spec).
   protected readonly saving = signal(false);
   protected readonly saved = signal(false);
   protected readonly saveFailed = signal(false);
@@ -295,7 +295,7 @@ export class DocumentCardComponent {
   // The attachment registry deliberately accepts no spreadsheets (pinned in
   // processor-registry.spec.ts), so an xlsx library save always fails closed —
   // hide the action rather than offer a guaranteed failure. Revisit if a
-  // permissively-licensed sheet processor lands (spec §5.4).
+  // permissively-licensed sheet processor lands (spec).
   protected readonly canSaveToLibrary = computed(() => !this.isXlsx());
 
   // xlsx bodies are sheet-spec JSON, not prose — there's nothing worth reading

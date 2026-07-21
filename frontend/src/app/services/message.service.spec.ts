@@ -124,7 +124,7 @@ describe('parseCompletionBillingRestriction', () => {
 
   // Pin: org billing 402s must NEVER parse as a personal restriction — the
   // personal path mutates the member's own plan state and locks the personal
-  // composer, both of which are wrong for an org pause (spec §5.8).
+  // composer, both of which are wrong for an org pause (spec).
   it('returns null for org billing codes so they never touch personal state', () => {
     expect(
       parseCompletionBillingRestriction(
@@ -1395,7 +1395,7 @@ describe('titleReasoningEffort', () => {
   });
 });
 
-// composeSystemPrompt (spec docs/specs/document-generation.md §5.2/§6, Decision
+// composeSystemPrompt (docs/business_processes/document-generation.md, Decision
 // 8) delegates its joining logic to this exported pure function so it's
 // testable without instantiating MessageService's full dependency graph.
 describe('composeSystemPromptSections', () => {

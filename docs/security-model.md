@@ -1,7 +1,6 @@
 # Cognos Security Model
 
-**Status:** Implemented baseline / source of truth for the current rework state
-**Related spec:** `docs/specs/backend-model-selector.md`
+**Status:** Implemented baseline and source of truth
 
 ## 1. Overview
 
@@ -418,8 +417,9 @@ health-card numbers, date-of-birth context, and some account/licence/passport pa
 browser and replaces them with stable placeholder tokens (`[[PII_<TYPE>_<RANDOM>]]`) **before** any
 completion request leaves the device. Users can choose **Off**, **Simple (fast)**, or **Better
 (slower)** detection in settings. **Better** is still local-only. The disabled **Comprehensive**
-option is labelled as server-assisted and is not active. See `docs/specs/pii-redaction.md` and
-`docs/specs/pii-redaction-v2.md` for the full design.
+option is labelled as server-assisted and is not active. See the
+[Redaction process](./business_processes/pii-redaction.md) for current behaviour; remaining
+quality and collaboration work is centralised in [open points](./open-points.md).
 
 ### 14.1 What this changes about the trust model
 
@@ -487,8 +487,8 @@ control, because the key material does not exist in the link.
 
 Long conversations are kept within a model's context window by **compaction**: older messages on the
 active branch are summarised and the summary is reused in place of the raw messages on later sends.
-The summary is treated as message-grade content — it is **encrypted at rest and never stored in
-plaintext**. See `docs/specs/client-side-compaction.md` for the full design.
+The summary is treated as Message-grade content — it is **encrypted at rest and never stored in
+plaintext**. See the [compaction process](./business_processes/conversation-compaction.md).
 
 ### 15.1 Storage and encryption
 
@@ -535,10 +535,10 @@ client-side and replaces the ciphertext via a PATCH; the server never sees the e
 
 ## 16. User- and project-scoped memory, and scoped redaction
 
-Pinned memory and its redaction can be scoped beyond a single conversation: to the **user** (follows
-them across all chats) or to a **project** (shared by the project's conversations). All scopes are
-client-encrypted and combined into the injected context when sending a message. See
-`docs/specs/client-side-compaction.md` §16.
+Pinned memory and its Redaction can be scoped beyond a single Conversation: to the **Account**
+(follows them across all chats) or to a **Project** (shared by the Project's Conversations). All
+scopes are client-encrypted and combined into the injected context when sending a Message. See the
+[memory process](./business_processes/account-memory.md).
 
 ### 16.1 Scoped memory storage
 
@@ -627,7 +627,7 @@ What does not change:
   catalogue sync forces the capability off for anything else. (The search index behind the
   provider's tool remains global — marketing copy must not claim otherwise.)
 
-## 18. Open limitations
+## 18. Explicit limitations
 
 This model does **not** attempt to protect against a malicious server during live completion
 requests, because the backend must see plaintext to call AI providers (this includes the compaction
@@ -663,7 +663,7 @@ Web search (§17):
 - `backend/internal/gateway/bifrost_client.go` (tool attachment, citation normalisation)
 - `backend/internal/handler/complete.go` (`enableWebSearch` gate, SSE, encrypted persistence)
 - `backend/internal/catalogue/requestysync/enrich.go` (EU-only capability predicate)
-- `docs/specs/web-search.md`, `docs/business_processes/web-search.md`
+- `docs/business_processes/web-search.md`
 
 Compaction, memory, and scoped redaction (§15–§16):
 

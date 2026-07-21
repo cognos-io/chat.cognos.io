@@ -1,4 +1,4 @@
-// Organisation domain types for the Workspace switcher (docs/specs/organisations.md).
+// Organisation domain types for the Workspace switcher (docs/business_processes/organisation-lifecycle.md).
 //
 // An Organisation is a billing + membership + policy boundary. The caller only
 // ever sees Organisations they hold an active Membership in, together with

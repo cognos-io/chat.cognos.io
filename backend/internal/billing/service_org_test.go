@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-// EvaluateOrgAccess is the fail-closed gate for org-billed requests (spec
-// docs/specs/organisations.md §7.5/§7.6): only an active payg org passes;
+// EvaluateOrgAccess is the fail-closed gate for org-billed requests (see
+// docs/business_processes/organisation-lifecycle.md): only an active payg org passes;
 // inactive (including a missing org_billing row, which StateForOrg maps to
 // inactive) and past_due both 402 with an ORG_* code — never falling back to
 // the member's personal balance. Member-facing copy stays neutral (never the

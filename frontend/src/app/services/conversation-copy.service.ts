@@ -23,7 +23,7 @@ import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { VaultService } from './vault.service';
 
-// Mirrors the backend cap (docs/specs/conversation-copy.md §13). Sources above
+// Mirrors the backend cap (docs/business_processes/conversation-copy.md). Sources above
 // this fail closed: v1 copy is one synchronous, single-transaction request.
 export const MAX_COPY_MESSAGES = 500;
 
@@ -71,7 +71,7 @@ interface DecryptedRedaction {
  * must decrypt every source payload and re-encrypt it to the duplicate key
  * before the backend can store it. This service does that work, bundles the
  * ciphertext, and POSTs it to the atomic copy endpoint — the server never sees
- * plaintext. See docs/specs/conversation-copy.md.
+ * plaintext. See docs/business_processes/conversation-copy.md.
  *
  * v1 scope: standalone conversations, PII redaction copied, attachments and
  * project sources fail closed.

@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Org billing collections (spec docs/specs/organisations.md §6.4/§6.7).
+// Org billing collections (docs/business_processes/organisation-lifecycle.md).
 //
 //   - org_billing is the per-Organisation sibling of user_billing. It is
 //     deliberately BALANCE-FREE: Organisations have no trial and no prepaid

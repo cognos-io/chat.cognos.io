@@ -1,5 +1,6 @@
-// Pure, browser-only helpers for web-search citations (spec docs/specs/web-search.md
-// §4.1a, §7). No Angular/DOM-framework dependencies beyond the standard DOM used
+// Pure, browser-only helpers for web-search citations. See
+// docs/business_processes/web-search.md. No Angular/DOM-framework dependencies
+// beyond the standard DOM used
 // by the marker-injection helper, so the offset maths, URL sanitisation and
 // domain-label derivation stay fast and unit-testable.
 
@@ -30,7 +31,7 @@ export interface CitationAnchor {
 }
 
 // The vertexaisearch grounding-redirect host is never a useful label — the real
-// displayable domain travels in the annotation title (spec §4.1a, §12 risks).
+// displayable domain travels in the annotation title (spec, risks).
 const PROXY_HOSTS = ['vertexaisearch.cloud.google.com'];
 
 // A conservative "looks like a bare domain" test: labels of alphanumerics and
@@ -40,7 +41,7 @@ const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])
 /**
  * sanitizeCitationUrl returns the URL only when it parses and uses an http(s)
  * scheme, otherwise null. Guards every rendered link against `javascript:`,
- * `data:` and other non-navigational schemes (spec §4.1a rendering safety).
+ * `data:` and other non-navigational schemes (spec rendering safety).
  */
 export function sanitizeCitationUrl(url: string | undefined): string | null {
   if (!url) {

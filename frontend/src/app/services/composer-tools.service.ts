@@ -13,8 +13,9 @@ import { ModelService } from './model.service';
 export type ComposerToolId = 'image_generation';
 
 // ModelAutoSwitchNotice describes a model swap the composer made on the user's
-// behalf when a tool was toggled (spec docs/specs/tool-aware-model-selection.md
-// §4.4). Surfaced as a dismissible banner so the change — especially a privacy
+// behalf when a tool was toggled. See
+// docs/business_processes/model-capability-gating.md. Surfaced as a dismissible
+// banner so the change — especially a privacy
 // region change — is never silent.
 export interface ModelAutoSwitchNotice {
   modelName: string;
@@ -35,7 +36,7 @@ export class ComposerToolsService {
 
   readonly imageGenerationEnabled = signal(false);
 
-  // Per-conversation web-search opt-out (spec docs/specs/web-search.md §4.2).
+  // Per-conversation web-search opt-out (docs/business_processes/web-search.md).
   // Search is on by default for capable models; this flips it off for the
   // current composer state. Reset when leaving a conversation, mirroring the
   // image-generation mechanics. Unlike image generation it drives NO capability
@@ -54,8 +55,8 @@ export class ComposerToolsService {
     () => this.webSearchSupported() && !this._webSearchOptOut(),
   );
 
-  // Per-conversation "Create documents" opt-out (spec
-  // docs/specs/document-generation.md §5.2). On by default for every text
+  // Per-conversation "Create documents" opt-out (see
+  // docs/business_processes/document-generation.md). On by default for every text
   // model — no RequiredCapability change and no auto model switch: any model
   // can emit the `<cog-doc>` block, quality varies but correctness does not
   // (Principle 2). Reset alongside the web-search opt-out.
@@ -68,7 +69,7 @@ export class ComposerToolsService {
 
   // The capability the current composer state requires of the model. Never null:
   // plain chat requires text completion, the image tool requires image
-  // generation (spec §2). The model selector filters on this, and ModelService
+  // generation (spec). The model selector filters on this, and ModelService
   // resolves the selected model against it.
   readonly requiredCapability = computed<RequiredCapability>(() =>
     this.imageGenerationEnabled() ? 'image_generation' : 'text_completion',

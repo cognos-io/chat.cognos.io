@@ -1,5 +1,5 @@
-// Framework-free client for the document render worker (spec
-// docs/specs/document-generation.md §7). No Angular imports — DocumentExportService
+// Framework-free client for the document render worker (see
+// docs/business_processes/document-generation.md). No Angular imports — DocumentExportService
 // constructs (or is given a fake of) this directly rather than injecting it,
 // so the heavy render pipeline stays fully testable without a real Worker.
 import {
@@ -89,8 +89,8 @@ export class DocumentWorkerClient {
   }
 
   /**
-   * renderSheet renders a `<cog-doc format="xlsx">` sheet-spec body (spec
-   * docs/specs/document-generation.md §5.3). Unlike render(), it also
+   * renderSheet renders a `<cog-doc format="xlsx">` sheet-spec body (see
+   * docs/business_processes/document-generation.md). Unlike render(), it also
    * surfaces the formula validator's advisory warnings — the caller decides
    * whether/how to show them on the document card.
    */

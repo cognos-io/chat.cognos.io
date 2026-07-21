@@ -1,5 +1,5 @@
 // Privacy-respecting event tracking for the marketing site.
-// See docs/specs/product-analytics.md — props are enums/booleans only,
+// See docs/business_processes/product-analytics.md — props are enums/booleans only,
 // no identifiers, no content, and browser opt-out signals are honoured.
 
 export type EventProps = Record<string, string | number | boolean>;

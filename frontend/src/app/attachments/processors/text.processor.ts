@@ -30,8 +30,8 @@ const decodeStrictUtf8 = (bytes: Uint8Array): string => {
 const normalizeNewlines = (text: string): string => text.replace(/\r\n?/g, '\n');
 
 /**
- * TextProcessor handles `.txt`, `.md`, `.csv` and valid UTF-8 `.json` (spec
- * §5.3/§8.5). It fails closed on binary / non-UTF-8 input so unsupported files
+ * TextProcessor handles `.txt`, `.md`, `.csv` and valid UTF-8 `.json`. It fails
+ * closed on binary / non-UTF-8 input so unsupported files
  * never reach the model as text.
  */
 export class TextProcessor implements AttachmentProcessor {

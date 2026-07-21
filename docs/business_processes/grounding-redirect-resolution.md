@@ -50,5 +50,5 @@ Properties this gives us:
 
 Authoritative code: `backend/internal/gateway/grounding.go`
 (`HTTPGroundingResolver`), wired in `backend/internal/gateway/bifrost_client.go`
-at citation finalisation. Related: [web-search](./web-search.md); legal
-rationale in `docs/specs/web-search.md` (Decision 9).
+at citation finalisation. Related: [web search](./web-search.md) and the
+[security model](../security-model.md).

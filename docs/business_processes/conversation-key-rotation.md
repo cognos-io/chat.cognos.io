@@ -5,6 +5,9 @@ name: conversation-key-rotation
 
 # Conversation Key Rotation
 
+This process covers standalone Conversations. Project Conversations reject this endpoint and rotate
+through [Project management](./project-management.md).
+
 `POST /api/v1/conversations/{id}/rotate` cycles the conversation's
 encryption key. It is the **only** way to remove a participant or to lock
 out a revoked participant from **future** messages, since previously-wrapped

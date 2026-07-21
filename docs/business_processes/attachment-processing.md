@@ -88,8 +88,8 @@ manifest, so a reused library file keeps **stable** placeholders. When the file 
 used in a conversation, those mappings are merged into that conversation's
 redaction scope (`source_kind: 'attachment'`) and behave like any other redaction
 entry — they hydrate the assistant's reply for anyone who can open the
-conversation's redaction key. The provider only ever receives placeholders, even
-on reuse. (See `docs/specs/pii-redaction.md` §6.8.)
+conversation's Redaction key. The Provider only ever receives placeholders, even
+on reuse. See [Redaction](./pii-redaction.md).
 
 ## Per-viewer visibility
 
@@ -195,7 +195,7 @@ OCR invariants:
   Account-keyed, so rotation doesn't reach them).
 - **Redaction** — detected values are tokenised in the worker before upload; the
   provider only ever sees placeholders, even on reuse. See
-  [pii-redaction spec](../specs/pii-redaction.md) §6.8.
+  [Redaction](./pii-redaction.md).
 - **Prompt injection** — attachment text is wrapped as untrusted content server-side
   (see [completion-pipeline](./completion-pipeline.md)).
 - **Lifecycle** — a referenced file survives message expiry/deletion
@@ -203,4 +203,4 @@ OCR invariants:
   referencing chats and **erases immediately** — `user_attachments` is excluded
   from soft-delete retention so the sealed manifest isn't snapshotted
   ([soft-delete-retention](./soft-delete-retention.md)).
-- **Full threat model**: [docs/specs/attachments.md](../specs/attachments.md).
+- **Threat model**: [security model](../security-model.md).

@@ -20,8 +20,12 @@ purges `deleted` rows older than 30 days.
 - `conversation_secret_keys`
 - `user_key_pairs`
 - `user_attachments`
+- `user_mfa_totp`
+- `mfa_auth_sessions`
+- `mfa_recovery_codes`
+- `mfa_trusted_devices`
 
-Why exclude these: they hold key material. Copying a wrapped key into a
+Why exclude these: they hold key material or short-lived authentication secrets. Copying one into a
 retention table that lives 30 days extends the window during which a DB
 snapshot could be replayed against a revoked participant. The audit value
 is also low — the

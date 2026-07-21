@@ -5,8 +5,9 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Marks text models eligible for compaction (spec docs/specs/client-side-
-// compaction.md §13). eligible_for_compaction is a curated flag that defaults
+// Marks text models eligible for compaction. See
+// docs/business_processes/conversation-compaction.md. eligible_for_compaction
+// is a curated flag that defaults
 // false, so without this seed compaction would never run for anyone. We enable
 // it for every model that is not an image-generation model; the structured-
 // output and cache-hint capabilities stay false because V1 uses the universal

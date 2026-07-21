@@ -7,8 +7,8 @@ standalone, imported from `@cognos/ui-angular`, and use design tokens from `@cog
 `.stories.ts` (Storybook) and a `.component.spec.ts` next to it.
 
 When something is used in **more than two** places and no component fits, extract a new one here
-(component + story + spec + `public-api.ts` export) rather than copying. See
-`COMPONENT_EXTRACTION_OPPORTUNITIES.md` for the running backlog.
+(component + story + spec + `public-api.ts` export) rather than copying. Add a concrete extraction
+need to [`docs/open-points.md`](../../docs/open-points.md) only when it has a current consumer.
 
 ## Layout & structure
 

@@ -11,7 +11,7 @@ import (
 )
 
 // Redaction handlers back the browser PII-redaction feature
-// (docs/specs/pii-redaction.md). The server only ever holds the redaction
+// (docs/business_processes/pii-redaction.md). The server only ever holds the redaction
 // public key, per-user wrapped redaction secret keys, and sealed token→original
 // mappings — never a plaintext sensitive value. Access is gated by active
 // conversation participation (the same membership check that gates sending a

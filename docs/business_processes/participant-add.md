@@ -5,6 +5,9 @@ name: participant-add
 
 # Add Participant (Share)
 
+This process covers standalone Conversations. Project sharing uses Project Participants and rejects
+this endpoint; see [Project management](./project-management.md).
+
 `POST /api/v1/conversations/{id}/participants` is the **sharing primitive**.
 The caller must already be an `Admin` of the conversation; anyone else gets
 `403 Only conversation admins can add participants`.

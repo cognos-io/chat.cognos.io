@@ -82,8 +82,8 @@ import { ModelService } from '@app/services/model.service';
       </div>
 
       <!-- Create documents: on by default, per-conversation opt-out, no
-           capability gating — every text model can emit the block (spec
-           docs/specs/document-generation.md §5.2). -->
+           capability gating — every text model can emit the block (see
+           docs/business_processes/document-generation.md). -->
       <div class="composer-tools__row">
         <cog-icon name="file-text" [size]="18" tone="text-subtle" />
         <label

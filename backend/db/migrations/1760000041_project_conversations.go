@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Phase 3 of projects (see docs/specs/projects.md): conversations can belong to
+// Phase 3 of projects (see docs/business_processes/project-management.md): conversations can belong to
 // a project, and a project conversation's secret key is wrapped by the project
 // content key instead of per-participant.
 //

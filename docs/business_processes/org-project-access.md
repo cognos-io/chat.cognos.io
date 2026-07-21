@@ -5,8 +5,7 @@ name: org-project-access
 
 # Organisation Project Access
 
-_(Planned — not yet shipped; ships with Teams v1.)_ An org-owned Project's
-participant list is a **subset** of the
+An org-owned Project's participant list is a **subset** of the
 Organisation's active members — never a separate list. The rule is
 enforced at write time: adding a participant to an org-owned Project
 checks Organisation Membership first.

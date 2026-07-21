@@ -12,6 +12,14 @@ Deletion is intentionally blocked while the Account has an active paid Plan. The
 Account holder must cancel or resolve billing first, so subscription ownership
 and payment obligations are not orphaned.
 
+> **Known P0 defect:** the current handler still assumes every Project is
+> personal. It deletes every Project whose `creator` is the caller, including an
+> Organisation-owned shared Project created by an ordinary member. An
+> Organisation Owner instead receives a generic failure from the required owner
+> relation. Treat Account deletion as unsafe for Accounts with Organisation
+> relationships until [OP-001](../open-points.md#op-001-account-deletion-and-organisation-data)
+> is fixed and tested.
+
 Deletion is a step-up operation. The request body must contain the current
 Account password. When authenticator-app MFA is enabled, it must also contain a
 current six-digit code. The server verifies both immediately before checking

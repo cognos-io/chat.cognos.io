@@ -1,7 +1,7 @@
 package billing
 
 // DefaultPAYGMinCommitRappen is the CHF 15.00 minimum commit billed per PAYG
-// cycle (spec §4.4, BILLING_PAYG_MIN_COMMIT_RAPPEN). It must match the
+// cycle (spec, BILLING_PAYG_MIN_COMMIT_RAPPEN). It must match the
 // cognos-payg Paddle price. Usage above this is posted as a one-time overage
 // charge at cycle end.
 const DefaultPAYGMinCommitRappen = 1500
@@ -19,7 +19,7 @@ type CycleSummary struct {
 }
 
 // OrgCycleSummary is the locally-computed view of a closed pooled org cycle
-// (spec docs/specs/organisations.md §7.4): total org-attributed usage, the
+// (docs/business_processes/organisation-lifecycle.md): total org-attributed usage, the
 // billed seat count, what we expect Paddle to invoice, and the one-time
 // overage above the pooled floor.
 type OrgCycleSummary struct {

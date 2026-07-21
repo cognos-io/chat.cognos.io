@@ -1107,7 +1107,7 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
-	// User-scoped attachment library (spec docs/specs/attachments.md). Files belong
+	// User-scoped attachment library (docs/business_processes/attachment-processing.md). Files belong
 	// to the user and are reusable across conversations; access is gated by file
 	// ownership inside the handlers.
 	e.Router.POST(

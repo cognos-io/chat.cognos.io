@@ -2,7 +2,7 @@ package migrations
 
 import "testing"
 
-// Pins the org billing schema (spec docs/specs/organisations.md §6.4/§6.7):
+// Pins the org billing schema (docs/business_processes/organisation-lifecycle.md):
 // org_billing is balance-free (orgs are pure pooled PAYG — no trial, no
 // prepaid credit), org_cycle_summaries mirrors payg_cycle_summaries plus the
 // pooled seat dimension, and balance_transactions gains the optional

@@ -1,5 +1,6 @@
-// SheetSpec -> .xlsx renderer (spec docs/specs/document-generation.md §5.3,
-// §7). `write-excel-file` is loaded lazily, inside the render call, so it
+// SheetSpec -> .xlsx renderer. See
+// docs/business_processes/document-generation.md. `write-excel-file` is loaded
+// lazily, inside the render call, so it
 // never enters the initial bundle — this module only imports its TYPES
 // (erased at build time). No Angular imports; runs inside the render worker
 // as well as the main thread.
@@ -57,7 +58,7 @@ const scalarConstructor = (
   }
 };
 
-// isAllStringHeaderRow drives the "bold header row" rule (spec §5.3): a
+// isAllStringHeaderRow drives the "bold header row" rule (spec): a
 // first row where every cell resolves to a string reads as a header even
 // without an explicit `freezeHeader` flag.
 const isAllStringHeaderRow = (row: SheetRow | undefined): boolean => {

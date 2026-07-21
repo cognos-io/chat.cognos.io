@@ -5,8 +5,9 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// User- and project-scoped memory collections (spec docs/specs/client-side-
-// compaction.md §16.4). They mirror conversation_compactions: ciphertext-only,
+// Account- and Project-scoped memory collections. See
+// docs/business_processes/account-memory.md. They mirror
+// conversation_compactions: ciphertext-only,
 // all rules locked so every access flows through the /api/v1 memory handlers,
 // which authorise by ownership (user memory) or active project membership
 // (project memory).

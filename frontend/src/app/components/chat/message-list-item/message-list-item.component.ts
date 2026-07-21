@@ -435,7 +435,7 @@ import {
                 @if (segments.length === 1 && segments[0].kind === 'markdown') {
                   <!-- The overwhelmingly common case (no <cog-doc> block): keep
                        today's render path byte-identical, including the
-                       streaming/plain-text shortcut, spec §5.2. -->
+                       streaming/plain-text shortcut. -->
                   @if (message.isStreaming) {
                     <!-- Progressive render: completed blocks (up to the last
                          blank-line boundary) render as markdown while the
@@ -465,7 +465,7 @@ import {
                     Citation-anchor offsets index the FULL raw content, which no
                     longer matches any single segment's text, so inline citation
                     markers are suppressed here — the sources dropdown above
-                    still lists every source (spec §5.2, web-search "never guess
+                    still lists every source (spec, web-search "never guess
                     anchor positions" rule).
                   -->
                   @for (segment of segments; track $index) {
@@ -1096,7 +1096,7 @@ export class MessageListItemComponent implements OnChanges {
     return !!reasoning && reasoning.trim() !== '';
   }
 
-  // Web-search sources cited by this assistant message (spec §4.1a). Empty for
+  // Web-search sources cited by this assistant message (spec). Empty for
   // messages that did not search.
   citations(): Citation[] {
     return this.message?.decryptedData.citations ?? [];
@@ -1109,7 +1109,7 @@ export class MessageListItemComponent implements OnChanges {
   }
 
   // Splits the assistant content into ordered markdown/document segments
-  // (spec docs/specs/document-generation.md §5.2, §6). Called directly from the
+  // (docs/business_processes/document-generation.md,). Called directly from the
   // template rather than cached in a signal: the parser has a single-scan fast
   // path for the overwhelmingly common "no <cog-doc> block" case, so
   // re-running it every change-detection pass is cheap.
@@ -1130,7 +1130,7 @@ export class MessageListItemComponent implements OnChanges {
 
   // The transient "Searching the web…" status shows only while streaming with a
   // search in progress and before any answer text — so a late activity event
-  // (Vertex Gemini emits it after the answer) is a visual no-op (spec §4.4).
+  // (Vertex Gemini emits it after the answer) is a visual no-op (spec).
   showSearching(): boolean {
     return (
       !!this.message?.isStreaming &&
@@ -1227,7 +1227,7 @@ export class MessageListItemComponent implements OnChanges {
   }
 
   // A floating "Add to memory" action shown over a text selection inside this
-  // message — mirrors the composer's redact popover (spec §8.2).
+  // message — mirrors the composer's redact popover (spec).
   readonly addToMemoryPopover = signal<{ x: number; y: number; text: string } | null>(
     null,
   );
@@ -1398,7 +1398,7 @@ export class MessageListItemComponent implements OnChanges {
 
   // addSelectionToMemory re-redacts the selected snippet (so no plaintext PII is
   // stored) and pins it to the chosen memory scope: conversation, project, or
-  // user (spec §16).
+  // user (spec).
   addSelectionToMemory(scope: MemoryScope, text: string): void {
     const conversation = this._conversationService.conversation();
     this.addToMemoryPopover.set(null);
@@ -1410,7 +1410,7 @@ export class MessageListItemComponent implements OnChanges {
     const projectId = conversation.record.project;
 
     // Re-redact in the TARGET scope so no plaintext PII is stored and the
-    // placeholder hydrates wherever that scope is shown (spec §16).
+    // placeholder hydrates wherever that scope is shown (spec).
     let snippet = text;
     if (this._redactionService.enabled()) {
       snippet = this.redactForScope(scope, text, conversation, projectId);
@@ -1525,7 +1525,7 @@ export class MessageListItemComponent implements OnChanges {
   }
 
   // A completed assistant message with content can be exported to a file
-  // (spec docs/specs/document-generation.md §5.1). record_id is not required —
+  // (docs/business_processes/document-generation.md). record_id is not required —
   // export works on any decrypted content, unlike regenerate/delete which need
   // a persisted record to act on.
   canDownload(): boolean {

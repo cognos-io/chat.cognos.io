@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// PII redaction collections (spec docs/specs/pii-redaction.md §10).
+// PII redaction collections (docs/business_processes/pii-redaction.md).
 //
 // Two collections, both locked down (all rules null) so the PocketBase
 // collection API returns 403 and every access flows through the /api/v1

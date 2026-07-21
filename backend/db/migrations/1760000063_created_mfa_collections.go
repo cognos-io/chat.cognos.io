@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// Create the authenticator-app MFA collections (docs/specs/mfa-and-passkeys.md).
+// Create the authenticator-app MFA collections (docs/business_processes/mfa-login.md).
 // All four are pure auth material: every collection API rule is locked (null),
 // so they are unreachable through PocketBase's generic record API. Access flows
 // only through the first-party /api/v1/mfa and /api/v1/auth/mfa handlers. They

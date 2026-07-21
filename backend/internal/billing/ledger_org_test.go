@@ -5,7 +5,7 @@ import "testing"
 // Org-attributed usage records the acting Account (user) AND the paying
 // Organisation, meters like personal PAYG (negative accrual toward the pooled
 // cycle), and never carries a balance-after — orgs have no balance to deplete
-// (spec docs/specs/organisations.md §6.5).
+// (docs/business_processes/organisation-lifecycle.md).
 func TestBuildUsageRecordCarriesOrgAttribution(t *testing.T) {
 	t.Parallel()
 

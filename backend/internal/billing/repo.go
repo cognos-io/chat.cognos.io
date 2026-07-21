@@ -68,7 +68,7 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 // torn down) reads as PlanTypeInactive rather than an error, so the gate
 // 402s instead of accidentally proceeding ungated — the personal
 // ErrStateNotFound escape hatch (trial not yet bootstrapped) must never apply
-// to an org (spec docs/specs/organisations.md §7.5).
+// to an org (docs/business_processes/organisation-lifecycle.md).
 func (r *PocketBaseRepo) StateForOrg(orgID string) (State, error) {
 	records, err := r.app.FindRecordsByFilter(
 		orgBillingCollectionName,
@@ -114,7 +114,7 @@ func (r *PocketBaseRepo) StateForOrg(orgID string) (State, error) {
 //   - org-owned Project → the Organisation's state (StateForOrg), Subject
 //     org — REGARDLESS of who is typing. A missing org_billing row resolves
 //     to inactive; the resolver NEVER falls back to the member's personal
-//     balance (spec docs/specs/organisations.md §7.5).
+//     balance (docs/business_processes/organisation-lifecycle.md).
 //
 // Callers must have already authorised the caller against the conversation;
 // this resolver only decides who pays.

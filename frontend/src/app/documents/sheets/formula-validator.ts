@@ -1,14 +1,12 @@
-// Hand-rolled XLSX formula validator (spec docs/specs/document-generation.md
-// §5.3, Decision 11 — `hyperformula` is GPLv3 and excluded on principle; no
+// Hand-rolled XLSX formula validator. `hyperformula` is GPLv3 and excluded on
+// principle; no
 // permissively-licensed full evaluator exists, so this is reference-topology
 // checking only, never evaluation). No Angular imports — runs inside the
 // render worker as well as the main thread.
 import { SheetCell, SheetDef, SheetSpec, isFormulaCell } from './sheet-spec.types';
 
 export type SheetWarningKind =
-  | 'blocked_function'
-  | 'ref_out_of_range'
-  | 'unknown_sheet';
+  'blocked_function' | 'ref_out_of_range' | 'unknown_sheet';
 
 export interface SheetWarning {
   readonly sheet: string;
@@ -17,7 +15,7 @@ export interface SheetWarning {
   readonly detail: string;
 }
 
-// Principle 4 (spec §3): a generated file must never phone home or execute
+// Principle 4 (spec): a generated file must never phone home or execute
 // anything when opened. These built-in Excel functions can reach the network
 // (WEBSERVICE, FILTERXML, RTD) or invoke arbitrary code (CALL, REGISTER, EXEC)
 // or a link-like action (HYPERLINK) — all attacker-reachable via prompt
@@ -196,7 +194,7 @@ const checkReferences = (
 // downgradeFormulaCell replaces a blocked formula with a plain-text cell
 // holding the formula source verbatim (prefixed with `=` so it visibly reads
 // as "this was a formula") — the cell keeps its content, it just never
-// executes (spec §3.5 "fail open"; §3.4 "zero network I/O").
+// executes (spec "fail open"; "zero network I/O").
 const downgradeFormulaCell = (cell: SheetCell): SheetCell =>
   isFormulaCell(cell) ? `=${cell.f}` : cell;
 

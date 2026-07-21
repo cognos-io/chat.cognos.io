@@ -19,7 +19,7 @@ import {
 
 // The e2e (and development) environment must never emit analytics events:
 // `environment.analytics.enabled` is explicitly false, and the app never loads
-// vendor analytics JavaScript (docs/specs/product-analytics.md §1/§3.4/§10).
+// vendor analytics JavaScript (docs/business_processes/product-analytics.md).
 // This walks a full login → send-message → logout journey while recording
 // every network request the page makes and asserts none of them touch
 // Plausible. It would also catch an accidentally added vendor script tag.

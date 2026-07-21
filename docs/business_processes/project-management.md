@@ -1,41 +1,48 @@
 ---
-description: Projects group encrypted Conversations and project-scoped memory behind active project membership; production currently ships standalone Projects without team sharing
+description: Projects group encrypted Conversations and memory behind Project membership, with Organisation-only sharing and forward-only key rotation
 name: project-management
 ---
 
-# Project Management
+# Project Management and Sharing
 
-A **Project** is an encrypted workspace that groups Conversations and
-project-scoped memory. Production currently ships standalone Projects for a
-single Account's organisation; team sharing is a later phase.
+A **Project** groups encrypted Conversations and Project-scoped memory. A Project is either personal
+or owned by an Organisation. Access always comes from an active Project Participant row, except that
+Organisation Owners and Admins receive administrative access without a redundant Participant row.
 
-Project endpoints are authenticated and gated by active project membership:
+| Role   | May read | May create/edit | May share, rotate or delete |
+| ------ | -------- | --------------- | --------------------------- |
+| Viewer | Yes      | No              | No                          |
+| Editor | Yes      | Yes             | No                          |
+| Admin  | Yes      | Yes             | Yes                         |
 
-| Method   | Path                                  | Behaviour                        |
-| -------- | ------------------------------------- | -------------------------------- |
-| `GET`    | `/api/v1/projects`                    | List Projects visible to Account |
-| `POST`   | `/api/v1/projects`                    | Create Project; creator is Admin |
-| `GET`    | `/api/v1/projects/{id}`               | Read Project metadata            |
-| `PATCH`  | `/api/v1/projects/{id}`               | Update Project metadata          |
-| `DELETE` | `/api/v1/projects/{id}`               | Delete Project                   |
-| `GET`    | `/api/v1/projects/{id}/conversations` | List Project Conversations       |
-| `POST`   | `/api/v1/projects/{id}/conversations` | Create Conversation in Project   |
-| `PATCH`  | `/api/v1/conversations/{id}/project`  | Move Conversation between scopes |
+Personal Projects start with the creator as Admin and are not shareable. Organisation Projects may
+only add active members of the same Organisation. Adding a Participant and their client-wrapped
+Project key is one transaction; a key without membership, or membership without a key, must never
+survive.
 
-```mermaid
-flowchart LR
-  A[Create Project] --> B[Project row]
-  B --> C[creator gets Admin membership]
-  C --> D[Conversations can be created or moved into Project]
-  D --> E[Project memory can be injected into Completions]
-```
+Project Conversations inherit Project access and intentionally have no Conversation Participant
+rows. Their Conversation secret key is wrapped by the current Project content key.
 
-Project memory uses the same at-rest rule as Account memory: encrypted data in
-storage, plaintext only in the active Completion request after client decrypt,
-and Redaction before provider dispatch.
+## Removal and rotation
 
-Team sharing is specified in `docs/specs/organisations.md` and remains
-unmarketable until Teams v1 ships. Until then, avoid marketing Projects as
-collaborative workspaces — use "organise related Conversations" rather than
-"invite your team" (when Teams ships, admins copy an invite link from
-**Team → Invites** — see [org-invite-link](../business_processes/org-invite-link.md)).
+Removing a Participant cuts API access immediately and marks the Project `rotation_pending`. Writes
+remain blocked until an Admin browser:
+
+1. generates the next Project content key
+2. re-encrypts Project metadata
+3. wraps the new key for every remaining Participant
+4. re-wraps child Conversation keys
+5. submits the complete rotation atomically
+
+Previously downloaded content cannot be revoked. Rotation prevents the removed Participant from
+decrypting content written after the new key version.
+
+## Memory and movement
+
+Project memory is encrypted under the Project key and may be injected into Completions after browser
+decryption and Redaction. Conversations can be created inside a Project or moved between standalone
+and Project scope through the transactional
+[Conversation Project membership](./conversation-project-membership.md) process.
+
+Shared Project files are not implemented; Attachments remain Account-owned. See
+[OP-023](../open-points.md#data-documents-and-sharing).

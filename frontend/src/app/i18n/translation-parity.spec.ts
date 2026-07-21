@@ -43,7 +43,7 @@ function getPath(source: unknown, path: string): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-// Every web-search string the feature renders (spec docs/specs/web-search.md §9).
+// Every web-search string the feature renders (docs/business_processes/web-search.md).
 const WEB_SEARCH_KEYS = [
   'chat.composer.tools.webSearch.title',
   'chat.composer.tools.webSearch.description',
@@ -58,7 +58,7 @@ const WEB_SEARCH_KEYS = [
 ];
 
 // Org billing gate copy rendered by OrgBillingBannerComponent across chat and
-// project write surfaces (fail closed, spec §5.8).
+// project write surfaces (fail closed, spec).
 const ORG_BILLING_LOCK_KEYS = [
   'billing.orgLock.titleInactive',
   'billing.orgLock.titlePastDue',

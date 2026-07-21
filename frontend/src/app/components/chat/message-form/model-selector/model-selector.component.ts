@@ -621,7 +621,7 @@ export class ModelSelectorComponent implements OnInit {
 
   // Restrict the list to models that can do the current task: `text_completion`
   // in plain chat, `image_generation` when the image tool is on. `null` (account
-  // settings) shows every model. See docs/specs/tool-aware-model-selection.md.
+  // settings) shows every model. See docs/business_processes/model-capability-gating.md.
   readonly requiredCapability = input<RequiredCapability>(null);
 
   // A one-shot filter the composer asks us to pre-select for *this* open only —

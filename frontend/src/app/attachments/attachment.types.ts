@@ -1,11 +1,11 @@
 /**
- * Types for the client-side encrypted attachment pipeline (spec
- * docs/specs/attachments.md). These are framework-free so they can be shared by
+ * Types for the client-side encrypted attachment pipeline (see
+ * docs/business_processes/attachment-processing.md). These are framework-free so they can be shared by
  * the Angular services and the attachment Web Worker.
  */
 import { RedactionEntry } from '@app/redaction';
 
-/** USER_ATTACHMENT_* limits (spec §8.4). */
+/** USER_ATTACHMENT_* limits (spec). */
 export const USER_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
 export const USER_ATTACHMENT_MAX_COUNT_PER_MESSAGE = 4;
 export const USER_ATTACHMENT_MAX_CONTEXT_CHARS_PER_FILE = 100_000;
@@ -37,11 +37,7 @@ export interface ProcessorInput {
 }
 
 export type ArtifactKind =
-  | 'original'
-  | 'extracted_text'
-  | 'text_chunk'
-  | 'thumbnail'
-  | 'model_image';
+  'original' | 'extracted_text' | 'text_chunk' | 'thumbnail' | 'model_image';
 
 export interface ArtifactTextStats {
   char_count: number;
@@ -106,7 +102,7 @@ export interface ManifestArtifact {
   kind: ArtifactKind;
   mime_type: string;
   size_bytes: number; // plaintext size
-  key: string; // base64 raw 32-byte secretbox key (single seal — see spec §0)
+  key: string; // base64 raw 32-byte secretbox key (single seal)
   plaintext_hash: string; // base64 blake2b-256 of plaintext
   text_stats?: ArtifactTextStats;
 }
@@ -136,7 +132,7 @@ export interface AttachmentManifestV1 {
   // Redaction mappings minted over the extracted text at processing time. They
   // travel with the file (sealed in the manifest) so a reused library file keeps
   // stable placeholders, and are merged into a conversation's redaction scope
-  // when the file is used there (spec docs/specs/pii-redaction.md §6.8).
+  // when the file is used there (docs/business_processes/pii-redaction.md).
   redactions?: RedactionEntry[];
   created_at: string;
 }
@@ -199,14 +195,9 @@ export class AttachmentProcessingError extends Error {
 }
 
 export type AttachmentProcessingStage =
-  | 'queued'
-  | 'processing'
-  | 'encrypting'
-  | 'uploading'
-  | 'ready'
-  | 'failed';
+  'queued' | 'processing' | 'encrypting' | 'uploading' | 'ready' | 'failed';
 
-/** Worker protocol (spec §8.3). */
+/** Worker protocol (spec). */
 export type AttachmentWorkerRequest =
   | {
       type: 'process';

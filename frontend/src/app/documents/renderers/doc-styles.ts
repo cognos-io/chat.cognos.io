@@ -1,10 +1,10 @@
-// Shared layout/typography constants for every document renderer (spec
-// docs/specs/document-generation.md §7). Kept in one framework-free module so
+// Shared layout/typography constants for every document renderer (see
+// docs/business_processes/document-generation.md). Kept in one framework-free module so
 // docx and pdfmake stay visually consistent and the type scale changes in one
 // place. No Angular imports — this module runs inside the render worker as
 // well as the main thread.
 
-// Generated files carry no user-identifying metadata (spec §7 metadata
+// Generated files carry no user-identifying metadata (spec metadata
 // hygiene): core properties are set to the document title only, and
 // creator/producer strings are always this fixed value.
 export const DOCUMENT_CREATOR = 'Cognos';

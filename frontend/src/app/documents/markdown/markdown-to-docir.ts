@@ -1,5 +1,6 @@
-// Pure markdown -> DocIR mapper (spec docs/specs/document-generation.md §5.1,
-// §7). Uses a plain marked Lexer — marked-alert/marked-footnote/katex
+// Pure markdown -> DocIR mapper. See
+// docs/business_processes/document-generation.md. Uses a plain marked Lexer —
+// marked-alert/marked-footnote/katex
 // extensions are deliberately NOT registered, so their syntaxes degrade to
 // literal text rather than being interpreted. No Angular imports; this
 // module runs inside the render worker as well as the main thread.

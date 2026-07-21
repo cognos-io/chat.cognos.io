@@ -5,7 +5,7 @@ import (
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
-// User-scoped attachment library (spec docs/specs/attachments.md). Replaces the
+// User-scoped attachment library (docs/business_processes/attachment-processing.md). Replaces the
 // conversation-scoped conversation_attachments collection: a file now belongs to
 // the USER (its per-file key + manifest are sealed to the user's personal key, so
 // it is reusable across any of their chats), and a conversation only *references*

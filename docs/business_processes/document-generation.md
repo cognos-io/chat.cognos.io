@@ -85,6 +85,5 @@ Authoritative code: `frontend/src/app/documents/` —
 hygiene), `sheets/` (sheet spec + formula validator + xlsx facade),
 `workers/document-render.worker.ts`,
 `cog-doc/` (block parser + prompt contract),
-`../components/chat/document-card/` (the card). Spec:
-`docs/specs/document-generation.md` (Phases 1–3 of 5 shipped — the
-browser tool loop and sandboxed code execution build on this same path).
+`../components/chat/document-card/` (the card). Compatibility, browser tool-loop and optional
+sandbox work is tracked in [open points](../open-points.md#data-documents-and-sharing).

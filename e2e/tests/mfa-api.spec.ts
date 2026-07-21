@@ -4,7 +4,7 @@ import { newAnonymousApi, provisionApiUser } from './api-helpers';
 import { enrolMfa, generateTotp, passwordLogin } from './mfa-helpers';
 
 // End-to-end MFA contract against the real backend. These mirror the spec's P0
-// test plan (docs/specs/mfa-and-passkeys.md) at the HTTP boundary.
+// test plan (docs/business_processes/mfa-login.md) at the HTTP boundary.
 
 test.describe('MFA login interception', () => {
   test('non-enrolled user logs in normally (control)', async () => {

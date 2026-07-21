@@ -10,8 +10,8 @@ forcing the Account holder to re-enter their Account Key every time they refresh
 wrapped unlock key is encrypted **once more** with a random 32-byte AES key, and that AES "wrap
 key" is uploaded to `/api/v1/vault-session` and stored in the `vault_session_wrap_keys` table.
 
-The session cookie controls whether the wrap key is fetchable; the wrap key itself is useless
-without the encrypted Vault material held client-side.
+The Account's bearer auth token controls whether the wrap key is fetchable; the wrap key itself is
+useless without the encrypted Vault material held client-side.
 
 Endpoints:
 
@@ -24,3 +24,6 @@ Endpoints:
 The wrap key is automatically deleted on
 [logout](./logout-token-rotation.md). The strict 44-byte length check at the
 write boundary keeps malformed payloads out without a runtime length check.
+
+Every successful read refreshes `last_used_at`. A jittered hourly job deletes wrap keys idle for
+more than 30 days, so abandoned devices do not retain the server half indefinitely.

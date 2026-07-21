@@ -11,8 +11,8 @@ API/private keys, and national IDs (Swiss AHV, UK NINo, German Steuer-IdNr, and
 friends) — and replaces each one with a **placeholder token** like
 `[[PII_IBAN_Q7K9M2]]`. The backend and the AI provider only ever see the
 placeholder; the original value is stored in a **separate encrypted mapping** the
-server cannot read. See `docs/specs/pii-redaction.md` for the full detector list
-and `docs/security-model.md` §14/§16 for the trust-model rationale.
+server cannot read. See the [security model](../security-model.md) for the trust boundary and
+[open points](../open-points.md#data-documents-and-sharing) for known gaps.
 
 This is a **data-minimisation layer on top of** the encryption model, not a
 replacement for it. Detection is best-effort and tuned for precision (it favours

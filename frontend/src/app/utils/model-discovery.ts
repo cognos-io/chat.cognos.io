@@ -10,23 +10,23 @@ import { blendedModelCostUsd, deriveModelCostTier } from './model-cost-tier';
 // Pure, browser-only model discovery helpers: normalisation, search matching,
 // capability-filter predicates, the ordering pipeline, and contextual default
 // resolution. No service or DOM dependencies so they stay fast and testable
-// (see docs/specs/composer-model-discovery.md §7). Nothing here calls an API or
+// (see docs/business_processes/model-capability-gating.md). Nothing here calls an API or
 // reads prompt text — search runs entirely client-side.
 
 // The capability the current composer state requires of the model. The composer
 // is never in a "no constraint" state: plain chat requires `text_completion`,
-// the image tool requires `image_generation` (spec
-// docs/specs/tool-aware-model-selection.md §2). `null` remains a valid input —
+// the image tool requires `image_generation` (see
+// docs/business_processes/model-capability-gating.md). `null` remains a valid input —
 // the account-settings model list passes it to show every model unfiltered.
 export type RequiredCapability = 'text_completion' | 'image_generation' | null;
 
 // CAPABILITY_CONTEXT_TEXT is the context key for plain text completion. Its
 // remembered default lives in `defaultModelId` (not `toolModelDefaults`), so the
-// chat default is byte-for-byte backward compatible (spec §5).
+// chat default is byte-for-byte backward compatible (spec).
 export const CAPABILITY_CONTEXT_TEXT = 'text';
 
 // capabilityContextKey maps a required capability to the stable key used to
-// store the user's per-context default model (spec §2/§5). Text completion (and
+// store the user's per-context default model (spec). Text completion (and
 // the unconstrained `null`) map to the `"text"` context.
 export function capabilityContextKey(capability: RequiredCapability): string {
   return capability === 'image_generation'
@@ -103,7 +103,7 @@ export function isVisionModel(model: Model): boolean {
 }
 
 // Web search = the model can search the public web and cite live sources
-// (spec docs/specs/web-search.md §4.3). EU-only enforcement lives server-side;
+// (docs/business_processes/web-search.md). EU-only enforcement lives server-side;
 // the flag as delivered already reflects it.
 export function isWebSearchModel(model: Model): boolean {
   return model.supportsWebSearch;
@@ -481,7 +481,7 @@ export interface ResolveDefaultInput {
 }
 
 // A model is usable as a default when it exists, is eligible, supports the
-// active capability, and is not hidden (a hidden default falls through, §5.5).
+// active capability, and is not hidden (a hidden default falls through,).
 function isUsableDefault(
   model: Model | undefined,
   hidden: Set<string>,
@@ -495,7 +495,7 @@ function isUsableDefault(
   );
 }
 
-// resolveDefaultModel implements the §5.6/§5.7 resolution order:
+// resolveDefaultModel implements the resolution order:
 // session pick → project default → user default → recommended eligible
 // (purpose-aware) → first eligible visible → first eligible (even if hidden).
 // The last step keeps chat usable when the user has hidden every model they can

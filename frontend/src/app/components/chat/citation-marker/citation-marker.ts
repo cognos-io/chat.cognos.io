@@ -23,7 +23,7 @@ import {
 import { avatarLetter } from '../message-sources/message-sources';
 
 // CitationMarker is the inline, superscript-style numbered chip inserted into an
-// answer at a citation anchor (spec docs/specs/web-search.md §4.1a). Hovering,
+// answer at a citation anchor (docs/business_processes/web-search.md). Hovering,
 // focusing or tapping it opens a hover card with the source's letter avatar,
 // title, domain, snippet and an "Open source" link. Keyboard accessible
 // (focusable chip, Escape closes) and touch friendly (tap toggles). Titles,
@@ -220,7 +220,7 @@ export class CitationMarker {
   protected readonly title = computed(() => (this.citation().title ?? '').trim());
   protected readonly snippet = computed(() => (this.citation().snippet ?? '').trim());
   // The proxy-redirect host is never shown; a title-less proxy source falls back
-  // to a localised generic label instead (spec §4.1a).
+  // to a localised generic label instead (spec).
   protected readonly domain = computed(
     () =>
       citationDomainLabel(this.citation()) ||

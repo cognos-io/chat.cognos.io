@@ -1610,7 +1610,7 @@ export class MessageFormComponent {
   // and the unsupported-model warning consistently.
   public readonly composerTools = inject(ComposerToolsService);
 
-  // Attachments (spec docs/specs/attachments.md). The service owns the worker
+  // Attachments (docs/business_processes/attachment-processing.md). The service owns the worker
   // and selection state; the composer renders chips and feeds files in.
   public readonly attachments = inject(AttachmentProcessingService);
   readonly attachmentAccept = ACCEPTED_ATTACHMENT_ACCEPT;

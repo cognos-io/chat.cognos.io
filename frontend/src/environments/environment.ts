@@ -13,7 +13,7 @@ export const environment = {
   // disables the overlay and falls back to the hosted checkout URL.
   paddleClientToken: '',
   paddleEnvironment: 'production' as 'sandbox' | 'production',
-  // Privacy-respecting product analytics (docs/specs/product-analytics.md).
+  // Privacy-respecting product analytics (docs/business_processes/product-analytics.md).
   // Keep production disabled until docs/operations/analytics-dashboard.md
   // records Plausible provisioning and a live content-free event smoke. The
   // app CSP deliberately excludes the vendor while this is false.

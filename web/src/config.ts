@@ -5,7 +5,7 @@ export const SIGN_IN_URL = `${APP_URL}/auth/login`;
 export const SIGN_UP_URL = `${APP_URL}/auth/register`;
 
 // Coarse CTA placement labels, mirrored in the analytics spec
-// (docs/specs/product-analytics.md §5.3). Never a visitor identifier.
+// (docs/business_processes/product-analytics.md). Never a visitor identifier.
 export type CtaLocation =
   | 'navbar'
   | 'hero'

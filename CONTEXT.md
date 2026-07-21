@@ -247,8 +247,8 @@ _Avoid:_ upload (the action), file (too generic)
 ### Project
 
 An encrypted grouping of Conversations, Attachments, and memory — the collaboration boundary above
-a single Conversation. Shipped today for a single Account; team sharing and Organisation ownership
-are planned (see `docs/specs/organisations.md`).
+a single Conversation. Projects may be personal or Organisation-owned; Organisation Projects can
+be shared with active Org members.
 
 _Avoid:_ workspace, folder, team
 
@@ -256,8 +256,8 @@ _Avoid:_ workspace, folder, team
 
 A billing and administration boundary that groups Accounts through **Org memberships** and owns
 **org-owned Projects**. Pays for its members' work in those Projects through a single Subscription
-with one **Seat** per member. Organisation admins see Usage metadata only — never content.
-_(Planned — see `docs/specs/organisations.md`.)_
+with one **Seat** per member. Organisation admins see Usage metadata only — never content. Available
+in-app for selected design partners; self-serve sales remain gated by operational evidence.
 
 _Avoid:_ team (marketing/UI informal only), company, tenant, workspace
 

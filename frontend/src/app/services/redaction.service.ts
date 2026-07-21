@@ -60,7 +60,7 @@ interface ConversationRedaction {
  *   - persist(): seal new mappings and store them under the redaction key,
  *   - hydrate(): restore originals for display for an authorised viewer.
  *
- * Security invariants (spec §17):
+ * Security invariants (spec):
  *   - the redaction keypair is independent of the conversation key and its
  *     secret is sealed to each participant's PERSONAL key, so a redacted-only
  *     public reader (who only holds the conversation key) can never open it;
@@ -82,7 +82,7 @@ export class RedactionService {
   private _loadedConversationId: string | null = null;
 
   // User-scoped redaction: token→original sealed to the user's own key (no
-  // separate keypair). Loaded once; merged into hydration everywhere (spec §16).
+  // separate keypair). Loaded once; merged into hydration everywhere (spec).
   private readonly _userEntries = new Map<string, RedactionEntry>();
   private readonly _userAllowlist = new Map<string, RedactionEntry>();
   private _userLoaded = false;
@@ -139,7 +139,7 @@ export class RedactionService {
     const swallow = {
       error: () => {
         // A failed load leaves placeholders visible rather than breaking the
-        // conversation view (spec §17 reliability).
+        // conversation view (spec reliability).
       },
     };
     this.loadConversation(conversation).subscribe(swallow);
@@ -224,7 +224,7 @@ export class RedactionService {
   /**
    * Redact text extracted from a user-uploaded attachment before it reaches the
    * provider. Attachment text is untrusted user content just like the prompt
-   * (spec docs/specs/attachments.md §9.5), so detected sensitive values are
+   * (docs/business_processes/attachment-processing.md), so detected sensitive values are
    * tokenised with the same engine. Token reuse spans the conversation's stored
    * entries, `carryEntries` (tokens just minted for the message body or earlier
    * attachments in the same send), and the conversation's manual `customValues`
@@ -374,7 +374,7 @@ export class RedactionService {
   /**
    * Restore originals for known tokens. Display-only; never mutates stored data.
    * Resolves a token against the union of the conversation, its project (when
-   * given), and the user — so placeholders pinned to any scope hydrate (spec §16).
+   * given), and the user — so placeholders pinned to any scope hydrate (spec).
    */
   hydrate(
     conversationId: string | null | undefined,
@@ -390,7 +390,7 @@ export class RedactionService {
 
   /**
    * The merged token→entry map across the conversation, its project, and the
-   * user, for renderers that show each redacted span as a pill (spec §16).
+   * user, for renderers that show each redacted span as a pill (spec).
    */
   combinedEntriesFor(
     conversationId: string | null | undefined,
@@ -734,7 +734,7 @@ export class RedactionService {
       }
       const redactionKeyPair = this._crypto.newKeyPair();
       // MVP: wrap for the current user only. Other participants gain mapping
-      // access when participant-add integration lands (spec §11.3); until then
+      // access when participant-add integration lands (spec); until then
       // they see placeholders. The secret is sealed to the user's PERSONAL key,
       // so holding the conversation key alone never unlocks it.
       const wrapped = this._crypto.createSealedBox(
@@ -798,7 +798,7 @@ export class RedactionService {
   }
 
   // tryDecryptEntry isolates a single entry's failure so one bad blob never
-  // takes down hydration for the rest (spec §17 reliability).
+  // takes down hydration for the rest (spec reliability).
   private tryDecryptEntry(dataB64: string, keyPair: KeyPair): RedactionEntry | null {
     try {
       const plaintext = this._crypto.openSealedBox(
