@@ -11,7 +11,9 @@ does not claim that provisioning has happened.
 - [ ] Create goals for every event in spec §7 on the correct site.
 - [ ] Create funnels: marketing pageview → `cta_click`; `signup_completed` → `message_sent`; and
       `trial_exhausted` → `checkout_started` → `checkout_completed`.
-- [ ] Confirm the production CSP permits only the documented marketing script and app Events API.
+- [ ] After the sites/goals exist, add only `https://plausible.io` to the app CSP `connect-src` and
+      set `environment.analytics.enabled` to `true` in the same reviewed release. The contract test
+      keeps both off until this gate is complete.
 
 ## Production verification
 

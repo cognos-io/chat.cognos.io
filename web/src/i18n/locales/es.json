@@ -246,7 +246,7 @@
       ],
       "cta": "Pásate a Ilimitado"
     },
-    "roadmap": "Equipos: desde CHF 45/mes (mínimo 3 plazas) + uso, una factura — próximamente. ",
+    "roadmap": "Equipos: desde CHF 45/mes (mínimo 3 plazas) + uso, una factura — disponible para colaboradores piloto seleccionados. ",
     "roadmapLink": "Escríbenos",
     "roadmapAfter": "."
   },
@@ -749,8 +749,8 @@
       },
       "team": {
         "eyebrow": "Para equipos",
-        "title": "Una organización, una factura — próximamente",
-        "lead": "Estamos preparando una oferta sencilla para equipos. Esto es lo que incluirá:",
+        "title": "Una organización, una factura — para colaboradores piloto",
+        "lead": "La oferta para Equipos está disponible para un pequeño grupo de colaboradores piloto. Incluye:",
         "points": [
           "<b>Una organización, una factura</b> — desde CHF 45/mes como mínimo (tres plazas a CHF 15 cada una), más lo que tu equipo realmente use, todo junto",
           "<b>Invita y elimina personas cuando quieras</b> — sin necesidad de un proyecto de IT",
@@ -758,7 +758,7 @@
           "<b>El trabajo se queda en la empresa</b> — los proyectos pertenecen a la organización, los chats personales siguen siendo personales",
           "<b>Una salida limpia</b> — el acceso termina al instante, y la cuenta personal de esa persona queda intacta"
         ],
-        "footnote": "El inicio de sesión único y las políticas de administración llegarán después. Esto está en fase de acceso anticipado — cuéntanos sobre tu equipo abajo y te incorporaremos según lo vayamos lanzando."
+        "footnote": "El inicio de sesión único no está incluido. Las políticas de administración ya están disponibles. Cuéntanos sobre tu equipo abajo; incorporamos personalmente a los colaboradores piloto seleccionados."
       },
       "form": {
         "heading": "Pregúntanos lo que quieras",

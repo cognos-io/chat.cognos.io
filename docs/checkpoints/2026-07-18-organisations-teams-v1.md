@@ -1,6 +1,7 @@
 # Checkpoint: Organisations / Teams v1 (B2B) — branch `feat/b2b-positioning`
 
-**Date:** 2026-07-18 · **Status:** production-ready · **Maintainer:** update this file
+**Date:** 2026-07-18 · **Status:** technically ready for selected design partners; not self-serve
+GA · **Maintainer:** update this file
 at every slice commit — it is the handoff document if another agent finishes the implementation.
 
 The single source of truth for the design is
@@ -16,7 +17,7 @@ org-owned Project, Workspace). Personas [`PER-005`](../personas/05-team-lead-org
 | `0a6677bc`  | CONTEXT.md glossary: Organisation terms, refreshed Project entry, ambiguity table                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | (personas)  | `docs/personas/05-team-lead-org-owner.md` + `06-org-member-professional.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | (processes) | `docs/business_processes/org-{billing,seat-management,project-access}.md` + README index + project-management guardrail                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `37952281`  | web/: `/business` team-offer section + pricing roadmap note, six locales, honest coming-soon                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `37952281`  | web/: `/business` team-offer section + pricing roadmap note, six locales; copy superseded on 20 July to describe the shipped, selected-design-partner offer                                                                                                                                                                                                                                                                                                                                                                         |
 | (spec)      | `docs/specs/organisations.md` — full PRD, adversarially reviewed (2 blockers fixed: invite scope = membership only + optional day-1 project list; dissolution lifecycle §8.3)                                                                                                                                                                                                                                                                                                                                                       |
 | `1d971c88`  | backend: `organisations` + `org_memberships` migrations (1760000073/74, locked rules, soft revoke, unique (org,user), dissolved_at), `projects.organisation` relation, organisations repo, 5 authed `/api/v1/orgs` routes (neutral 404), 22 tests, api-permissions.md                                                                                                                                                                                                                                                               |
 | `b73025aa`  | frontend: OrganisationService (per-user persisted workspace), sidebar Workspace switcher behind `team` flag, billing-context badges (composer + project headers), workspace-scoped project lists, org API client, `workspace.*` i18n ×6, draft-preservation pin test                                                                                                                                                                                                                                                                |
@@ -38,7 +39,8 @@ Later commits (same order of work):
 
 ## Release-candidate state
 
-**Teams v1 is feature-complete.** The persona-driven red/green loop now covers Sophie (Owner) and
+**Teams v1 is feature-complete in the application and limited to selected design partners. It is
+not self-serve GA.** The persona-driven red/green loop now covers Sophie (Owner) and
 Nils (Member) in the browser, plus organisation lifecycle, authorization, lapse, dissolution, and
 compaction accounting through Playwright API tests. Screenshots were captured and reviewed at each
 critical state: create/checkout, billing, invite, members, offboarding, Workspace context, lapse,

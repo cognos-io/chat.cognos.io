@@ -246,7 +246,7 @@
       ],
       "cta": "Escolher Ilimitado"
     },
-    "roadmap": "Equipas: a partir de CHF 45/mês (mínimo 3 lugares) + utilização, uma fatura — brevemente. ",
+    "roadmap": "Equipas: a partir de CHF 45/mês (mínimo 3 lugares) + utilização, uma fatura — disponível para parceiros-piloto selecionados. ",
     "roadmapLink": "Entra em contacto",
     "roadmapAfter": "."
   },
@@ -749,8 +749,8 @@
       },
       "team": {
         "eyebrow": "Para equipas",
-        "title": "Uma organização, uma fatura — brevemente",
-        "lead": "Estamos a preparar uma oferta simples para equipas. Eis o que vai incluir:",
+        "title": "Uma organização, uma fatura — para parceiros-piloto",
+        "lead": "A oferta para Equipas está disponível para um pequeno grupo de parceiros-piloto. Inclui:",
         "points": [
           "<b>Uma organização, uma fatura</b> — a partir de CHF 45/mês no mínimo (três lugares a CHF 15 cada), mais o que a tua equipa realmente usar, tudo junto",
           "<b>Convida e remove pessoas quando quiseres</b> — sem precisares de um projeto de TI",
@@ -758,7 +758,7 @@
           "<b>O trabalho fica na empresa</b> — os projetos pertencem à organização, as conversas pessoais continuam pessoais",
           "<b>Uma saída limpa</b> — o acesso termina de imediato, e a conta pessoal dessa pessoa fica intacta"
         ],
-        "footnote": "O início de sessão único e as políticas de administração chegam a seguir. Isto está em acesso antecipado — conta-nos sobre a tua equipa abaixo e trazemos-te a bordo à medida que avançamos."
+        "footnote": "O início de sessão único não está incluído. As políticas de administração já estão disponíveis. Conta-nos sobre a tua equipa abaixo; integramos pessoalmente os parceiros-piloto selecionados."
       },
       "form": {
         "heading": "Pergunta-nos o que quiseres",

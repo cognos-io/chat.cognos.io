@@ -9,6 +9,22 @@ const supportResponsePhrases = {
   pt: 'uma semana útil',
   it: 'una settimana lavorativa',
 };
+const designPartnerPhrases = {
+  en: 'design partners',
+  de: 'Designpartner',
+  fr: 'partenaires pilotes',
+  es: 'colaboradores piloto',
+  pt: 'parceiros-piloto',
+  it: 'partner pilota',
+};
+const unshippedTeamPhrases = {
+  en: ['coming soon', "we're building", 'will include'],
+  de: ['bald verfügbar', 'wir bauen', 'ist geplant'],
+  fr: ['bientôt disponible', 'nous préparons', 'est prévu'],
+  es: ['próximamente', 'estamos preparando', 'incluirá'],
+  pt: ['brevemente', 'estamos a preparar', 'vai incluir'],
+  it: ['in arrivo', 'stiamo preparando', 'includerà'],
+};
 const localeDirectory = new URL('../src/i18n/locales/', import.meta.url);
 const pricingSource = await readFile(
   new URL('../../frontend/src/app/billing/pricing.ts', import.meta.url),
@@ -60,6 +76,23 @@ for (const locale of locales) {
   const teamPoint = catalogue.pages.business.team.points[0];
   if (!teamPoint.includes('CHF 45')) {
     throw new Error(`${locale}: team pricing point must mention the CHF 45 three-seat minimum`);
+  }
+
+  const teamAvailabilityCopy = [
+    catalogue.audience.roadmap,
+    catalogue.pages.business.team.title,
+    catalogue.pages.business.team.lead,
+  ];
+  for (const copy of teamAvailabilityCopy) {
+    if (!copy.includes(designPartnerPhrases[locale])) {
+      throw new Error(`${locale}: Teams must be described as available to design partners`);
+    }
+  }
+  const combinedTeamAvailabilityCopy = teamAvailabilityCopy.join(' ').toLowerCase();
+  for (const phrase of unshippedTeamPhrases[locale]) {
+    if (combinedTeamAvailabilityCopy.includes(phrase)) {
+      throw new Error(`${locale}: Teams must not be described as unshipped (${phrase})`);
+    }
   }
 
   const supportCopy = [catalogue.pages.business.form.note, catalogue.pages.contact.channels[0].body];

@@ -246,7 +246,7 @@
       ],
       "cta": "Passa a Illimitato"
     },
-    "roadmap": "Team: da CHF 45/mese (minimo 3 posti) + utilizzo, una fattura — in arrivo. ",
+    "roadmap": "Team: da CHF 45/mese (minimo 3 posti) + utilizzo, una fattura — disponibile per partner pilota selezionati. ",
     "roadmapLink": "Scrivici",
     "roadmapAfter": "."
   },
@@ -743,8 +743,8 @@
       },
       "team": {
         "eyebrow": "Per i team",
-        "title": "Un'organizzazione, una fattura — in arrivo",
-        "lead": "Stiamo preparando un'offerta semplice per i team. Ecco cosa includerà:",
+        "title": "Un'organizzazione, una fattura — per partner pilota",
+        "lead": "L'offerta Team è disponibile per un piccolo gruppo di partner pilota. Include:",
         "points": [
           "<b>Un'organizzazione, una fattura</b> — da CHF 45/mese come minimo (tre posti a CHF 15 ciascuno), più quello che il tuo team usa davvero, tutto insieme",
           "<b>Invita e rimuovi le persone quando vuoi</b> — senza bisogno di un progetto IT",
@@ -752,7 +752,7 @@
           "<b>Il lavoro resta all'azienda</b> — i progetti appartengono all'organizzazione, le chat personali restano personali",
           "<b>Un'uscita pulita</b> — l'accesso termina subito, e l'account personale di quella persona resta intatto"
         ],
-        "footnote": "L'accesso unico e le politiche di amministrazione arrivano dopo. Questo è in accesso anticipato — raccontaci del tuo team qui sotto e ti porteremo a bordo man mano che lo lanciamo."
+        "footnote": "L'accesso unico non è incluso. Le politiche di amministrazione sono già disponibili. Raccontaci del tuo team qui sotto; seguiamo personalmente i partner pilota selezionati."
       },
       "form": {
         "heading": "Chiedici quello che vuoi",

@@ -8,11 +8,15 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 )
@@ -675,6 +679,100 @@ func TestOrgInvitesAcceptUpdatesPaddleSeatQuantity(t *testing.T) {
 	}
 
 	scenario.Test(t)
+}
+
+func TestOrgInvitesAcceptSerialisesConcurrentSeatUpdates(t *testing.T) {
+	fake := &fakeOrgPaddleClient{
+		seatCallStarted: make(chan struct{}, 2),
+		seatCallRelease: make(chan struct{}, 2),
+	}
+	app := setupTestAppWithOrgBilling(t, fake)
+	seedOrganisation(t, app, "orginvite000026", "Acme GmbH", "test1@example.com")
+	seedOrgMembership(t, app, "orginvite000026", "test2@example.com", "member", false)
+	seedOrgBillingFields(t, app, "orginvite000026", map[string]any{
+		"paddle_subscription_id": "sub_org_concurrent",
+		"paddle_price_id":        "pri_org_seats",
+		"seat_quantity":          3,
+	})
+	seedOrgInviteWithID(t, app, "orginvitacpt010", "orginvite000026", "no_data@example.com", "member", "accept-token-concurrent-a", time.Now().UTC().Add(24*time.Hour), false)
+	seedOrgInviteWithID(t, app, "orginvitacpt011", "orginvite000026", "unverified@example.com", "member", "accept-token-concurrent-b", time.Now().UTC().Add(24*time.Hour), false)
+
+	baseRouter, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatalf("apis.NewRouter() error = %v", err)
+	}
+	var mux http.Handler
+	serveEvent := &core.ServeEvent{App: app, Router: baseRouter}
+	if err := app.OnServe().Trigger(serveEvent, func(e *core.ServeEvent) error {
+		mux, err = e.Router.BuildMux()
+		return err
+	}); err != nil {
+		t.Fatalf("OnServe.Trigger() error = %v", err)
+	}
+
+	tokenFor := func(email string) string {
+		t.Helper()
+		account, err := app.FindAuthRecordByEmail("users", email)
+		if err != nil {
+			t.Fatalf("FindAuthRecordByEmail(users, %q) error = %v", email, err)
+		}
+		token, err := account.NewAuthToken()
+		if err != nil {
+			t.Fatalf("NewAuthToken(%q) error = %v", email, err)
+		}
+		return token
+	}
+
+	accept := func(token, authToken string) int {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/org-invites/accept", strings.NewReader(`{"token":"`+token+`"}`))
+		req.Header.Set("content-type", "application/json")
+		req.Header.Set("Authorization", authToken)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+		return recorder.Code
+	}
+
+	statuses := make(chan int, 2)
+	firstAuthToken := tokenFor("no_data@example.com")
+	secondAuthToken := tokenFor("unverified@example.com")
+	var requests sync.WaitGroup
+	requests.Add(2)
+	go func() {
+		defer requests.Done()
+		statuses <- accept("accept-token-concurrent-a", firstAuthToken)
+	}()
+	<-fake.seatCallStarted
+	go func() {
+		defer requests.Done()
+		statuses <- accept("accept-token-concurrent-b", secondAuthToken)
+	}()
+
+	select {
+	case <-fake.seatCallStarted:
+		// Both Paddle calls raced before either membership landed.
+		fake.seatCallRelease <- struct{}{}
+		fake.seatCallRelease <- struct{}{}
+	case <-time.After(250 * time.Millisecond):
+		// The second request is correctly waiting on the per-Organisation lock.
+		fake.seatCallRelease <- struct{}{}
+		<-fake.seatCallStarted
+		fake.seatCallRelease <- struct{}{}
+	}
+	requests.Wait()
+	close(statuses)
+	for status := range statuses {
+		if status != http.StatusOK {
+			t.Errorf("OrgInvitesAccept(concurrent) status = %d, want %d", status, http.StatusOK)
+		}
+	}
+
+	fake.mu.Lock()
+	quantities := append([]int(nil), fake.seatQuantities...)
+	fake.mu.Unlock()
+	sort.Ints(quantities)
+	if len(quantities) != 2 || quantities[0] != 3 || quantities[1] != 4 {
+		t.Errorf("UpdateSubscriptionQuantity(concurrent) quantities = %v, want [3 4]", quantities)
+	}
 }
 
 func TestOrgInvitesAcceptDoesNotCreateSeatWhenPaddleFails(t *testing.T) {

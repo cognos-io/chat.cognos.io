@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 const webRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = join(webRoot, 'dist');
 const srcDir = join(webRoot, 'src');
+const frontendRoot = join(webRoot, '..', 'frontend');
 
 const failures = [];
 const check = (ok, message) => {
@@ -64,6 +65,22 @@ check(
   `"plausible.io" appears in src/ only in the allowed files${
     offenders.length ? ` (offenders: ${offenders.join(', ')})` : ''
   }`,
+);
+
+// (d) App analytics stays fail-closed until the external Plausible site/goals
+// and live event smoke are evidenced in docs/operations/analytics-dashboard.md.
+const productionEnvironment = readFileSync(
+  join(frontendRoot, 'src/environments/environment.ts'),
+  'utf8',
+);
+const appHeaders = readFileSync(join(frontendRoot, 'src/_headers'), 'utf8');
+check(
+  /analytics:\s*\{\s*enabled:\s*false,/.test(productionEnvironment),
+  'app production analytics is disabled pending the external enablement gate',
+);
+check(
+  !appHeaders.match(/connect-src[^;]*https:\/\/plausible\.io/),
+  'app CSP does not allow Plausible while app analytics is disabled',
 );
 
 if (failures.length > 0) {

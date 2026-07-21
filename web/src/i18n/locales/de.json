@@ -246,7 +246,7 @@
       ],
       "cta": "Unbegrenzt wählen"
     },
-    "roadmap": "Für Teams: ab CHF 45/Monat (mindestens 3 Plätze) plus Verbrauch, eine Rechnung — bald verfügbar. ",
+    "roadmap": "Für Teams: ab CHF 45/Monat (mindestens 3 Plätze) plus Verbrauch, eine Rechnung — für ausgewählte Designpartner verfügbar. ",
     "roadmapLink": "Melde dich",
     "roadmapAfter": "."
   },
@@ -743,8 +743,8 @@
       },
       "team": {
         "eyebrow": "Für Teams",
-        "title": "Eine Organisation, eine Rechnung — bald verfügbar",
-        "lead": "Wir bauen ein unkompliziertes Team-Angebot. Das ist geplant:",
+        "title": "Eine Organisation, eine Rechnung — für Designpartner",
+        "lead": "Das Team-Angebot ist für eine kleine Gruppe von Designpartnern verfügbar. Es umfasst:",
         "points": [
           "<b>Eine Organisation, eine Rechnung</b> — mindestens CHF 45/Monat (drei Plätze zu je CHF 15), plus das, was dein Team wirklich nutzt, gemeinsam abgerechnet",
           "<b>Lade Leute selbst ein oder entferne sie</b> — ganz ohne IT-Projekt",
@@ -752,7 +752,7 @@
           "<b>Die Arbeit bleibt bei der Firma</b> — Projekte gehören der Organisation, private Chats bleiben privat",
           "<b>Sauberer Austritt</b> — der Zugriff endet sofort, das eigene Konto bleibt unangetastet"
         ],
-        "footnote": "Einmal-Anmeldung und Admin-Richtlinien folgen danach. Das ist ein früher Zugang — erzähl uns unten von deinem Team, und wir holen dich an Bord, sobald es so weit ist."
+        "footnote": "Einmal-Anmeldung ist noch nicht enthalten. Admin-Richtlinien sind bereits verfügbar. Erzähl uns unten von deinem Team; ausgewählte Designpartner nehmen wir persönlich an Bord."
       },
       "form": {
         "heading": "Frag uns alles",

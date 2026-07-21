@@ -234,6 +234,8 @@ func OrgInvitesAccept(
 	orgRepo organisations.Repo,
 	seatUpdater paddle.SeatQuantityUpdater,
 ) func(e *core.RequestEvent) error {
+	orgLocks := newKeyedMutex()
+
 	return func(e *core.RequestEvent) error {
 		user := auth.ExtractUser(e)
 		if user == nil {
@@ -268,6 +270,18 @@ func OrgInvitesAccept(
 		}
 
 		orgID := invite.GetString("organisation")
+		unlockOrg := orgLocks.lock(orgID)
+		defer unlockOrg()
+
+		// The invite was first read before the lock so we knew which
+		// Organisation to serialise. Re-read it inside the critical section:
+		// another request may have consumed the same token while this one was
+		// waiting.
+		invite, err = app.FindRecordById("org_invites", invite.Id)
+		if err != nil || invite == nil || !invite.GetDateTime("consumed_at").IsZero() ||
+			invite.GetDateTime("expires_at").Time().Before(time.Now().UTC()) {
+			return apis.NewNotFoundError("Invite not found.", nil)
+		}
 
 		if isMember, _ := orgRepo.IsActiveMember(orgID, user.ID); isMember {
 			existingRole, _, _ := orgRepo.ActiveRole(orgID, user.ID)

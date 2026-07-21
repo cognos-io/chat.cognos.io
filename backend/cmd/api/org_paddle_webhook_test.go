@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -404,6 +406,100 @@ func TestOrgPaddleWebhookReactivationClearsPastDue(t *testing.T) {
 	}
 	if got := ob.GetString("plan_type"); got != "payg" {
 		t.Errorf("plan_type = %q, want payg", got)
+	}
+}
+
+func TestOrgPaddleWebhookReactivationReconcilesSeatsAcceptedDuringLapse(t *testing.T) {
+	client := &fakeOrgPaddleClient{}
+	app, mux, orgID := activateOrgPAYGWithClient(t, client)
+	seedOrgMembership(t, app, orgID, "test2@example.com", "member", false)
+	seedOrgMembership(t, app, orgID, "no_data@example.com", "member", false)
+
+	cancelBody := `{"event_id":"evt_org_lapse","event_type":"subscription.canceled",` +
+		`"data":{"id":"sub_org_1","customer_id":"ctm_org_1","status":"canceled",` +
+		`"custom_data":{"org_id":"` + orgID + `"}}}`
+	if rec := postWebhook(mux, cancelBody, signPaddle(t, webhookSecret, cancelBody)); rec.Code != http.StatusOK {
+		t.Fatalf("cancel status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+	// Pin the comparison boundary: the stale local snapshot is not Paddle's
+	// reported quantity and must not suppress reconciliation.
+	staleBilling := orgBillingFor(t, app, orgID)
+	staleBilling.Set("seat_quantity", 5)
+	if err := app.Save(staleBilling); err != nil {
+		t.Fatalf("Save(stale org_billing seat_quantity) error = %v", err)
+	}
+
+	seedOrgInviteWithID(t, app, "orginvitacpt012", orgID, "unverified@example.com", "member", "accept-token-during-lapse", time.Now().UTC().Add(24*time.Hour), false)
+	account, err := app.FindAuthRecordByEmail("users", "unverified@example.com")
+	if err != nil {
+		t.Fatalf("FindAuthRecordByEmail(users, unverified@example.com) error = %v", err)
+	}
+	authToken, err := account.NewAuthToken()
+	if err != nil {
+		t.Fatalf("NewAuthToken(unverified@example.com) error = %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/org-invites/accept", strings.NewReader(`{"token":"accept-token-during-lapse"}`))
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("Authorization", authToken)
+	acceptRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(acceptRecorder, req)
+	if acceptRecorder.Code != http.StatusOK {
+		t.Fatalf("OrgInvitesAccept(during lapse) status = %d, want 200 — body: %s", acceptRecorder.Code, acceptRecorder.Body.String())
+	}
+
+	reactivateBody := `{"event_id":"evt_org_lapse_reactivate","event_type":"subscription.activated",` +
+		`"data":{"id":"sub_org_1","customer_id":"ctm_org_1","status":"active",` +
+		`"custom_data":{"org_id":"` + orgID + `"},` +
+		`"items":[{"price":{"id":"pri_payg"},"quantity":3}],` +
+		`"current_billing_period":{"starts_at":"2026-07-01T00:00:00Z","ends_at":"2026-08-01T00:00:00Z"}}}`
+	if rec := postWebhook(mux, reactivateBody, signPaddle(t, webhookSecret, reactivateBody)); rec.Code != http.StatusOK {
+		t.Fatalf("reactivate status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	client.mu.Lock()
+	gotQuantity := client.seatQuantity
+	gotMode := client.seatMode
+	client.mu.Unlock()
+	if gotQuantity != 4 {
+		t.Errorf("UpdateSubscriptionQuantity(reactivation) quantity = %d, want 4", gotQuantity)
+	}
+	if gotMode != "prorated_immediately" {
+		t.Errorf("UpdateSubscriptionQuantity(reactivation) mode = %q, want prorated_immediately", gotMode)
+	}
+	if got := orgBillingFor(t, app, orgID).GetInt("seat_quantity"); got != 4 {
+		t.Errorf("org_billing.seat_quantity after reactivation = %d, want 4", got)
+	}
+}
+
+func TestOrgPaddleWebhookRetriesFailedSeatReconciliation(t *testing.T) {
+	client := &fakeOrgPaddleClient{seatError: errors.New("paddle unavailable")}
+	app, mux, orgID := activateOrgPAYGWithClient(t, client)
+	seedOrgMembership(t, app, orgID, "test2@example.com", "member", false)
+	seedOrgMembership(t, app, orgID, "no_data@example.com", "member", false)
+	seedOrgMembership(t, app, orgID, "unverified@example.com", "member", false)
+
+	reactivateBody := `{"event_id":"evt_org_reconcile_retry","event_type":"subscription.activated",` +
+		`"data":{"id":"sub_org_1","customer_id":"ctm_org_1","status":"active",` +
+		`"custom_data":{"org_id":"` + orgID + `"},` +
+		`"items":[{"price":{"id":"pri_payg"},"quantity":3}],` +
+		`"current_billing_period":{"starts_at":"2026-07-01T00:00:00Z","ends_at":"2026-08-01T00:00:00Z"}}}`
+	first := postWebhook(mux, reactivateBody, signPaddle(t, webhookSecret, reactivateBody))
+	if first.Code != http.StatusInternalServerError {
+		t.Fatalf("first reconcile status = %d, want 500 — body: %s", first.Code, first.Body.String())
+	}
+
+	client.mu.Lock()
+	client.seatError = nil
+	client.mu.Unlock()
+	second := postWebhook(mux, reactivateBody, signPaddle(t, webhookSecret, reactivateBody))
+	if second.Code != http.StatusOK {
+		t.Fatalf("retried reconcile status = %d, want 200 — body: %s", second.Code, second.Body.String())
+	}
+	if strings.Contains(second.Body.String(), "duplicate") {
+		t.Errorf("retried reconcile body = %s, want failed event to be processed", second.Body.String())
+	}
+	if got := orgBillingFor(t, app, orgID).GetInt("seat_quantity"); got != 4 {
+		t.Errorf("org_billing.seat_quantity after retry = %d, want 4", got)
 	}
 }
 

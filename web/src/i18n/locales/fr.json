@@ -246,7 +246,7 @@
       ],
       "cta": "Passer à l'illimité"
     },
-    "roadmap": "Équipes : à partir de CHF 45/mois (3 sièges minimum) + usage, une facture — bientôt disponible. ",
+    "roadmap": "Équipes : à partir de CHF 45/mois (3 sièges minimum) + usage, une facture — disponible pour des partenaires pilotes sélectionnés. ",
     "roadmapLink": "Écrivez-nous",
     "roadmapAfter": "."
   },
@@ -743,8 +743,8 @@
       },
       "team": {
         "eyebrow": "Pour les équipes",
-        "title": "Une organisation, une facture — bientôt disponible",
-        "lead": "Nous préparons une offre simple pour les équipes. Voici ce qui est prévu :",
+        "title": "Une organisation, une facture — pour nos partenaires pilotes",
+        "lead": "L'offre Équipes est disponible pour un petit groupe de partenaires pilotes. Elle comprend :",
         "points": [
           "<b>Une organisation, une facture</b> — à partir de CHF 45/mois minimum (trois sièges à CHF 15 chacun), plus ce que votre équipe utilise réellement, mutualisé",
           "<b>Invitez et retirez des personnes vous-même</b> — sans projet informatique",
@@ -752,7 +752,7 @@
           "<b>Le travail reste à l'entreprise</b> — les projets appartiennent à l'organisation, les conversations personnelles restent personnelles",
           "<b>Un départ propre</b> — l'accès est coupé immédiatement, et le compte personnel de la personne reste intact"
         ],
-        "footnote": "La connexion unique et les politiques d'administration arrivent ensuite. C'est un accès anticipé — parlez-nous de votre équipe ci-dessous et nous vous intégrerons au fur et à mesure du déploiement."
+        "footnote": "La connexion unique n'est pas incluse. Les politiques d'administration sont déjà disponibles. Parlez-nous de votre équipe ci-dessous ; nous accompagnons personnellement les partenaires pilotes sélectionnés."
       },
       "form": {
         "heading": "Posez-nous vos questions",

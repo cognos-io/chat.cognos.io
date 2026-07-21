@@ -30,6 +30,9 @@ type fakeOrgPaddleClient struct {
 	seatQuantity            int
 	seatMode                string
 	seatError               error
+	seatQuantities          []int
+	seatCallStarted         chan struct{}
+	seatCallRelease         chan struct{}
 	cancelledSubscriptionID string
 	cancelError             error
 }
@@ -84,12 +87,23 @@ func (f *fakeOrgPaddleClient) UpdateSubscriptionQuantity(
 	prorationBillingMode string,
 ) error {
 	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.seatSubscriptionID = subscriptionID
 	f.seatPriceID = priceID
 	f.seatQuantity = quantity
 	f.seatMode = prorationBillingMode
-	return f.seatError
+	f.seatQuantities = append(f.seatQuantities, quantity)
+	started := f.seatCallStarted
+	release := f.seatCallRelease
+	err := f.seatError
+	f.mu.Unlock()
+
+	if started != nil {
+		started <- struct{}{}
+	}
+	if release != nil {
+		<-release
+	}
+	return err
 }
 
 func TestOrgBillingCheckoutUsesActiveMemberCount(t *testing.T) {

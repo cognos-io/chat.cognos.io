@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
 
@@ -62,6 +64,8 @@ type PaddleWebhookParams struct {
 // domain handler. Handler failures return 500 so Paddle retries — domain
 // handlers are written to be safe to run repeatedly.
 func PaddleWebhook(params PaddleWebhookParams) func(e *core.RequestEvent) error {
+	eventLocks := newKeyedMutex()
+
 	return func(e *core.RequestEvent) error {
 		rawBody, err := io.ReadAll(e.Request.Body)
 		if err != nil {
@@ -79,23 +83,24 @@ func PaddleWebhook(params PaddleWebhookParams) func(e *core.RequestEvent) error 
 		if err != nil || event.EventID == "" {
 			return apis.NewBadRequestError("Invalid webhook payload", err)
 		}
+		unlockEvent := eventLocks.lock(event.EventID)
+		defer unlockEvent()
 
-		// Re-delivery is a no-op.
-		if existing, _ := e.App.FindFirstRecordByData(
+		// Successfully processed events are immutable duplicates. Failed events
+		// are retried against their existing audit row so a transient Paddle or
+		// database failure cannot permanently strand billing reconciliation.
+		record, _ := e.App.FindFirstRecordByData(
 			paddleEventsCollection, "paddle_event_id", event.EventID,
-		); existing != nil {
+		)
+		if record != nil && !record.GetDateTime("processed_at").IsZero() {
 			return e.JSON(http.StatusOK, map[string]string{"status": "duplicate"})
 		}
 
-		record, err := recordPaddleEvent(e.App, event, rawBody)
-		if err != nil {
-			// A concurrent delivery may have won the unique index → treat as dup.
-			if existing, _ := e.App.FindFirstRecordByData(
-				paddleEventsCollection, "paddle_event_id", event.EventID,
-			); existing != nil {
-				return e.JSON(http.StatusOK, map[string]string{"status": "duplicate"})
+		if record == nil {
+			record, err = recordPaddleEvent(e.App, event, rawBody)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to record event", err)
 			}
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to record event", err)
 		}
 
 		if dispatchErr := dispatchPaddleEvent(e.Request.Context(), e.App, params, event); dispatchErr != nil {
@@ -109,6 +114,7 @@ func PaddleWebhook(params PaddleWebhookParams) func(e *core.RequestEvent) error 
 		}
 
 		record.Set("processed_at", nowRFC3339())
+		record.Set("processing_error", "")
 		_ = e.App.Save(record)
 		return e.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	}
@@ -164,7 +170,7 @@ func dispatchPaddleEvent(
 		cd := extractCustomData(event.Data)
 		subject := resolveWebhookSubject(app, cd.UserID, cd.OrgID, sub.CustomerID, sub.ID)
 		if subject.Kind == billing.SubjectOrg {
-			return activateOrgSubscription(app, params, sub, subject.ID)
+			return activateOrgSubscription(ctx, app, params, sub, subject.ID)
 		}
 		return activateSubscription(app, params, sub)
 	case "subscription.updated":
@@ -787,6 +793,7 @@ func upsertUserBilling(app core.App, userID string, mutate func(*core.Record)) e
 // snapshots the Paddle subscription + cycle. Idempotent: re-delivery re-applies
 // the same values.
 func activateOrgSubscription(
+	ctx context.Context,
 	app core.App,
 	params PaddleWebhookParams,
 	sub paddle.SubscriptionData,
@@ -815,6 +822,10 @@ func activateOrgSubscription(
 	seatQty := billing.MinOrgSeatQuantity
 	if len(sub.Items) > 0 {
 		seatQty = billing.ClampOrgSeatQuantity(int64(sub.Items[0].Quantity))
+	}
+	seatQty, err := reconcileOrgSeatUnderbilling(ctx, app, params, sub, orgID, seatQty)
+	if err != nil {
+		return err
 	}
 
 	record, err := app.FindFirstRecordByData(orgBillingColl, "organisation", orgID)
@@ -902,8 +913,69 @@ func updateOrgSubscription(
 	if !rolledOver && len(sub.Items) > 0 {
 		record.Set("seat_quantity", billing.ClampOrgSeatQuantity(int64(sub.Items[0].Quantity)))
 	}
+	reconciledSeatQty, err := reconcileOrgSeatUnderbilling(
+		ctx,
+		app,
+		params,
+		sub,
+		orgID,
+		int64(record.GetInt("seat_quantity")),
+	)
+	if err != nil {
+		return err
+	}
+	if reconciledSeatQty > int64(record.GetInt("seat_quantity")) {
+		record.Set("seat_quantity", reconciledSeatQty)
+		if pendingSeatQty > 0 && pendingSeatQty < reconciledSeatQty {
+			record.Set("pending_seat_quantity", reconciledSeatQty)
+		}
+	}
 
 	return app.Save(record)
+}
+
+// reconcileOrgSeatUnderbilling repairs stale Paddle quantities after members
+// join while an Organisation is inactive or past due. Seat removals remain a
+// next-cycle operation (spec decision #3), so this guard only raises quantity.
+func reconcileOrgSeatUnderbilling(
+	ctx context.Context,
+	app core.App,
+	params PaddleWebhookParams,
+	sub paddle.SubscriptionData,
+	orgID string,
+	reportedSeatQty int64,
+) (int64, error) {
+	if len(sub.Items) == 0 {
+		return reportedSeatQty, nil
+	}
+
+	members, err := organisations.NewPocketBaseRepo(app).ListMembers(orgID)
+	if err != nil {
+		return reportedSeatQty, fmt.Errorf("list active Organisation members: %w", err)
+	}
+	desiredSeatQty := billing.BilledOrgSeatQuantity(int64(len(members)))
+	paddleSeatQty := billing.ClampOrgSeatQuantity(int64(sub.Items[0].Quantity))
+	if desiredSeatQty <= paddleSeatQty {
+		return reportedSeatQty, nil
+	}
+
+	seatUpdater, ok := params.Client.(paddle.SeatQuantityUpdater)
+	if !ok || seatUpdater == nil {
+		return reportedSeatQty, fmt.Errorf("Paddle Seat quantity updater is unavailable")
+	}
+	if sub.ID == "" || sub.PriceID() == "" {
+		return reportedSeatQty, fmt.Errorf("Paddle subscription or Seat price is missing")
+	}
+	if err := seatUpdater.UpdateSubscriptionQuantity(
+		ctx,
+		sub.ID,
+		sub.PriceID(),
+		int(desiredSeatQty),
+		"prorated_immediately",
+	); err != nil {
+		return reportedSeatQty, fmt.Errorf("reconcile Organisation Seats in Paddle: %w", err)
+	}
+	return desiredSeatQty, nil
 }
 
 // cancelOrgSubscription drops the org to inactive once Paddle reports the
