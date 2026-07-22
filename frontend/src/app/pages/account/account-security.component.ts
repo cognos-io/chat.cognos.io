@@ -138,7 +138,7 @@ import { VaultService } from '@app/services/vault.service';
           <cog-button
             card-actions
             appearance="default"
-            icon="logout"
+            icon="monitor-smartphone"
             [disabled]="revokingOtherSessions()"
             (click)="signOutOtherDevices()"
           >
@@ -289,7 +289,7 @@ export class AccountSecurityComponent {
         this._toast.notify({
           title: this._transloco.translate('settings.security.sessions.successToast'),
           tone: 'success',
-          icon: 'logout',
+          icon: 'check',
         });
       },
       error: () => {
