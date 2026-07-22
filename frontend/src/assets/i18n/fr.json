@@ -305,6 +305,11 @@
       "title": "Nous n'avons pas pu prélever votre dernier paiement",
       "updateCard": "Mettre à jour la carte"
     },
+    "paygSoftAlert": {
+      "body": "Vous avez atteint votre minimum mensuel de {{ min }}. La consommation au-delà est ajoutée automatiquement à votre prochaine facture — vous pouvez continuer à discuter.",
+      "gotIt": "Compris",
+      "title": "Vous avez atteint votre minimum mensuel"
+    },
     "plan": {
       "actions": {
         "org.dissolved": "Organisation dissoute",

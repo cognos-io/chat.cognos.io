@@ -305,6 +305,11 @@
       "title": "Wir konnten deine letzte Zahlung nicht einziehen",
       "updateCard": "Karte aktualisieren"
     },
+    "paygSoftAlert": {
+      "body": "Du hast dein monatliches Minimum von {{ min }} erreicht. Verbrauch darüber wird automatisch deiner nächsten Rechnung hinzugefügt — du kannst weiter chatten.",
+      "gotIt": "Verstanden",
+      "title": "Du hast dein monatliches Minimum erreicht"
+    },
     "plan": {
       "actions": {
         "org.dissolved": "Organisation aufgelöst",

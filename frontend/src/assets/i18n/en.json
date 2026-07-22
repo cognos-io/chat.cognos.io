@@ -305,6 +305,11 @@
       "title": "We couldn't take your last payment",
       "updateCard": "Update card"
     },
+    "paygSoftAlert": {
+      "body": "You've reached your {{ min }} monthly minimum. Usage above that is added to your next invoice automatically — you can keep chatting.",
+      "gotIt": "Got it",
+      "title": "You've reached your monthly minimum"
+    },
     "plan": {
       "actions": {
         "org.dissolved": "Organisation dissolved",

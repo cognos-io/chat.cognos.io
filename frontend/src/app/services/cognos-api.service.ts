@@ -975,6 +975,15 @@ export class CognosApiService {
     });
   }
 
+  // Acknowledge the one-per-cycle PAYG soft alert (OP-014). Idempotent 204.
+  ackPaygSoftAlert(): Observable<void> {
+    return this._http.post<void>(
+      `${this._baseUrl}/api/v1/billing/payg-soft-alert/ack`,
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
   cancelSubscription(): Observable<unknown> {
     return this._http.post(
       `${this._baseUrl}/api/v1/billing/cancel`,

@@ -27,7 +27,8 @@ XSS report.
 
 Closed in this engineering pass (removed from the queue): OP-006 registration rate limit, OP-007
 sign out other devices, OP-008 TOTP seed encryption keyring, OP-010 auth error focus + marketing
-catalogue-key parity, OP-036 property-test coverage refresh.
+catalogue-key parity, OP-014 PAYG one-per-cycle soft alert (hard breaker + founder max beta
+exposure deferred pending real spend data), OP-036 property-test coverage refresh.
 
 ## Operations and billing
 
@@ -35,7 +36,7 @@ catalogue-key parity, OP-036 property-test coverage refresh.
 | ------ | ----------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | OP-011 | P0 external | Plausible sites, goals, funnels and a content-free live smoke are not evidenced. | Keep analytics and its CSP allowance off until the [dashboard checklist](./operations/analytics-dashboard.md) passes.                                                                          |
 | OP-013 | P1          | Organisation dissolution can succeed in Paddle and then fail locally.            | Before self-serve Teams, replace the synchronous flow with the persisted retryable state machine in the [billing runbook](./billing-ops-runbook.md#6-organisation-dissolution-reconciliation). |
-| OP-014 | P1          | PAYG has no one-per-cycle soft alert or founder-approved maximum beta exposure.  | Add the soft warning first; decide a hard circuit breaker only from real spend and support data.                                                                                               |
+| OP-037 | P2          | PAYG has no hard circuit breaker or founder-approved maximum beta exposure.      | Decide thresholds only from real spend and support data after the soft alert (closed OP-014) has run in beta.                                                                                  |
 
 Operational execution steps remain in their runbooks; do not duplicate every checkbox here.
 

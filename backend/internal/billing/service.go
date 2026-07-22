@@ -74,10 +74,19 @@ type State struct {
 	CycleEndAt            time.Time // renewal / next-charge boundary
 	RefundEligibleUntilAt time.Time
 	PastDue               bool // a renewal payment failed; Paddle is dunning
+	// SoftAlertCycleStartAt is the cycle start the Account last acknowledged
+	// the PAYG soft warning for (OP-014). Empty means never acknowledged.
+	SoftAlertCycleStartAt time.Time
 }
 
 type StateRepo interface {
 	StateForUser(userID string) (State, error)
+}
+
+// SoftAlertAckRepo records that the Account acknowledged the PAYG soft
+// warning for the current cycle (OP-014).
+type SoftAlertAckRepo interface {
+	AckPAYGSoftAlert(userID string) error
 }
 
 type AccessRestriction struct {

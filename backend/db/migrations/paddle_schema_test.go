@@ -61,6 +61,7 @@ func TestPaddleBillingSchema(t *testing.T) {
 			"paddle_subscription_id", "paddle_price_id",
 			"paddle_cycle_start_at", "paddle_cycle_end_at",
 			"refund_eligible_until_at",
+			"payg_soft_alert_cycle_start_at",
 		)
 		assertNoFields(t, c,
 			"polar_subscription_id", "polar_product_id",

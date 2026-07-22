@@ -34,6 +34,10 @@
           <app-billing-past-due-banner />
         }
 
+        @if (isPayg()) {
+          <app-billing-payg-soft-alert-banner />
+        }
+
         <div class="pb__actions">
           @switch (status()) {
             @case ('past_due') {

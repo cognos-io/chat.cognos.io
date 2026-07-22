@@ -60,6 +60,7 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 		CycleEndAt:            record.GetDateTime("paddle_cycle_end_at").Time().UTC(),
 		RefundEligibleUntilAt: record.GetDateTime("refund_eligible_until_at").Time().UTC(),
 		PastDue:               record.GetBool("past_due"),
+		SoftAlertCycleStartAt: record.GetDateTime("payg_soft_alert_cycle_start_at").Time().UTC(),
 	}, nil
 }
 
@@ -279,4 +280,36 @@ func (r *PocketBaseRepo) billingRecordsForUser(app core.App, userID string, limi
 		0,
 		dbx.Params{"user_id": userID},
 	)
+}
+
+// AckPAYGSoftAlert stamps payg_soft_alert_cycle_start_at with the Account's
+// current paddle cycle start so the soft warning stays quiet for this cycle.
+// Idempotent: re-acking the same cycle is a no-op. Returns ErrStateNotFound
+// when there is no billing row.
+func (r *PocketBaseRepo) AckPAYGSoftAlert(userID string) error {
+	records, err := r.billingRecordsForUser(r.app, userID, 2)
+	if err != nil {
+		return err
+	}
+	if len(records) == 0 {
+		return ErrStateNotFound
+	}
+	if len(records) > 1 {
+		return fmt.Errorf("multiple billing states found for user %q", userID)
+	}
+
+	record := records[0]
+	cycleStart := record.GetDateTime("paddle_cycle_start_at").Time().UTC()
+	if cycleStart.IsZero() {
+		// No cycle window yet (e.g. trial) — nothing to acknowledge.
+		return nil
+	}
+
+	already := record.GetDateTime("payg_soft_alert_cycle_start_at").Time().UTC()
+	if already.Equal(cycleStart) {
+		return nil
+	}
+
+	record.Set("payg_soft_alert_cycle_start_at", cycleStart)
+	return r.app.Save(record)
 }

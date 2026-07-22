@@ -305,6 +305,11 @@
       "title": "Non siamo riusciti ad addebitare il tuo ultimo pagamento",
       "updateCard": "Aggiorna carta"
     },
+    "paygSoftAlert": {
+      "body": "Hai raggiunto il tuo minimo mensile di {{ min }}. L'uso oltre viene aggiunto automaticamente alla prossima fattura — puoi continuare a chattare.",
+      "gotIt": "Ho capito",
+      "title": "Hai raggiunto il tuo minimo mensile"
+    },
     "plan": {
       "actions": {
         "org.dissolved": "Organizzazione sciolta",

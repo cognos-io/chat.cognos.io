@@ -305,6 +305,11 @@
       "title": "No pudimos cobrar tu último pago",
       "updateCard": "Actualizar tarjeta"
     },
+    "paygSoftAlert": {
+      "body": "Has alcanzado tu mínimo mensual de {{ min }}. El uso por encima se añade automáticamente a tu próxima factura — puedes seguir chateando.",
+      "gotIt": "Entendido",
+      "title": "Has alcanzado tu mínimo mensual"
+    },
     "plan": {
       "actions": {
         "org.dissolved": "Organización disuelta",

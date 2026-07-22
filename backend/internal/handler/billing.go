@@ -223,16 +223,28 @@ type billingUsageModel struct {
 	CostCHF float64 `json:"cost_chf"`
 }
 
+// billingPaygSoftAlert is the one-per-cycle PAYG heads-up (OP-014). Present
+// only on PAYG plans. show=true means the UI should surface the warning;
+// Completions are never gated on this field.
+type billingPaygSoftAlert struct {
+	Show         bool    `json:"show"`
+	UsageCHF     float64 `json:"usage_chf"`
+	MinCommitCHF float64 `json:"min_commit_chf"`
+	OverageCHF   float64 `json:"overage_chf"`
+}
+
 type billingUsageResponse struct {
-	PeriodStart  string              `json:"period_start"`
-	MessageCount int64               `json:"message_count"`
-	ByModel      []billingUsageModel `json:"by_model"`
+	PeriodStart   string                `json:"period_start"`
+	MessageCount  int64                 `json:"message_count"`
+	ByModel       []billingUsageModel   `json:"by_model"`
+	PaygSoftAlert *billingPaygSoftAlert `json:"payg_soft_alert,omitempty"`
 }
 
 type BillingUsageParams struct {
-	Logger    *slog.Logger
-	StateRepo billing.StateRepo
-	UsageRepo billing.UsageRepo
+	Logger          *slog.Logger
+	StateRepo       billing.StateRepo
+	UsageRepo       billing.UsageRepo
+	MinCommitRappen int64
 }
 
 // BillingUsage returns the user's per-model usage for the current billing
@@ -271,6 +283,27 @@ func BillingUsage(params BillingUsageParams) func(e *core.RequestEvent) error {
 			})
 		}
 
+		if state, stateErr := params.StateRepo.StateForUser(owner.ID); stateErr == nil && state.PlanType == billing.PlanTypePayG {
+			minCommit := params.MinCommitRappen
+			if minCommit <= 0 {
+				minCommit = billing.DefaultPAYGMinCommitRappen
+			}
+			usageRappen := billing.CeilRappenFromMicro(summary.TotalCostMicroRappen())
+			alert := billing.EvaluatePAYGSoftAlert(
+				state.PlanType,
+				usageRappen,
+				minCommit,
+				state.CycleStartAt,
+				state.SoftAlertCycleStartAt,
+			)
+			response.PaygSoftAlert = &billingPaygSoftAlert{
+				Show:         alert.Show,
+				UsageCHF:     float64(alert.UsageRappen) / 100,
+				MinCommitCHF: float64(alert.MinCommitRappen) / 100,
+				OverageCHF:   float64(alert.OverageRappen) / 100,
+			}
+		}
+
 		return e.JSON(http.StatusOK, response)
 	}
 }
@@ -288,4 +321,36 @@ func usagePeriodStart(repo billing.StateRepo, userID string) time.Time {
 		}
 	}
 	return time.Now().UTC().AddDate(0, 0, -30)
+}
+
+type BillingPaygSoftAlertAckParams struct {
+	Logger *slog.Logger
+	Repo   billing.SoftAlertAckRepo
+}
+
+// BillingPaygSoftAlertAck records that the Account saw the one-per-cycle PAYG
+// soft warning for the current billing cycle (OP-014). Idempotent. Never
+// affects access — Completions stay open regardless.
+func BillingPaygSoftAlertAck(params BillingPaygSoftAlertAckParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+		if params.Repo == nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Billing is unavailable", nil)
+		}
+
+		if err := params.Repo.AckPAYGSoftAlert(owner.ID); err != nil {
+			if errors.Is(err, billing.ErrStateNotFound) {
+				return apis.NewNotFoundError("Billing state not found", err)
+			}
+			if params.Logger != nil {
+				params.Logger.Error("payg soft alert ack failed", "err", err)
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to acknowledge soft alert", err)
+		}
+
+		return e.NoContent(http.StatusNoContent)
+	}
 }

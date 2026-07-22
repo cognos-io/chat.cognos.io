@@ -121,10 +121,20 @@ export interface UsageModel {
   cost_chf: number;
 }
 
+// One-per-cycle PAYG heads-up when usage reaches the monthly minimum (OP-014).
+// Informational only — never gates Completions.
+export interface PaygSoftAlert {
+  show: boolean;
+  usage_chf: number;
+  min_commit_chf: number;
+  overage_chf: number;
+}
+
 export interface UsageResponse {
   period_start: string;
   message_count: number;
   by_model: UsageModel[];
+  payg_soft_alert?: PaygSoftAlert;
 }
 
 // CompletionBillingRestriction is the structured 402 body the `/complete`

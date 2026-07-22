@@ -100,6 +100,7 @@ test('PAYG usage headline shows spend in CHF, not a message count', async ({
         trial_seed_chf: 0,
         cycle_end_at: '2026-07-01T00:00:00Z',
         cancel_at_period_end: false,
+        payg_min_commit_chf: 15,
       },
     });
   });
@@ -114,6 +115,101 @@ test('PAYG usage headline shows spend in CHF, not a message count', async ({
   await expect(page.locator('.pb__usage-total')).toHaveText('CHF 6.80');
   await expect(page.getByText(/spent since/)).toBeVisible();
   await expect(page.getByText(/messages since/)).toHaveCount(0);
+});
+
+// OP-014: one-per-cycle soft alert when usage reaches the monthly minimum.
+test('PAYG soft alert shows when over the minimum and dismisses on Got it', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_payg_alert', 'paygalert@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'payg',
+        status: 'active',
+        interval: 'monthly',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        cycle_end_at: '2026-07-01T00:00:00Z',
+        cancel_at_period_end: false,
+        payg_min_commit_chf: 15,
+      },
+    });
+  });
+
+  let softAlertShow = true;
+  let ackPosted = false;
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({
+      json: {
+        period_start: '2026-06-01T00:00:00Z',
+        message_count: 12,
+        by_model: [{ model_id: 'eu-model', count: 12, cost_chf: 22.4 }],
+        payg_soft_alert: {
+          show: softAlertShow,
+          usage_chf: 22.4,
+          min_commit_chf: 15,
+          overage_chf: 7.4,
+        },
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/payg-soft-alert/ack`, async (route) => {
+    ackPosted = true;
+    softAlertShow = false;
+    await route.fulfill({ status: 204, body: '' });
+  });
+
+  await page.goto('/account/billing');
+
+  const banner = page.getByTestId('payg-soft-alert');
+  await expect(banner).toBeVisible();
+  await expect(banner.getByText("You've reached your monthly minimum")).toBeVisible();
+  await expect(page.getByText(/CHF 15\.00 monthly minimum/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Got it' }).click();
+  await expect.poll(() => ackPosted).toBe(true);
+  await expect(banner).toHaveCount(0);
+});
+
+test('PAYG soft alert stays hidden under the monthly minimum (rainy)', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_payg_quiet', 'paygquiet@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'payg',
+        status: 'active',
+        interval: 'monthly',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        cycle_end_at: '2026-07-01T00:00:00Z',
+        cancel_at_period_end: false,
+        payg_min_commit_chf: 15,
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({
+      json: {
+        period_start: '2026-06-01T00:00:00Z',
+        message_count: 3,
+        by_model: [{ model_id: 'eu-model', count: 3, cost_chf: 6.8 }],
+        payg_soft_alert: {
+          show: false,
+          usage_chf: 6.8,
+          min_commit_chf: 15,
+          overage_chf: 0,
+        },
+      },
+    });
+  });
+
+  await page.goto('/account/billing');
+  await expect(page.getByTestId('payg-soft-alert')).toHaveCount(0);
 });
 
 test('dashboard renders the saved card and Paddle invoices', async ({ page }) => {

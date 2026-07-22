@@ -21,17 +21,18 @@ flowchart LR
 
 Customer-facing endpoints:
 
-| Method | Path                                | Behaviour                       |
-| ------ | ----------------------------------- | ------------------------------- |
-| `GET`  | `/api/v1/billing`                   | Current Plan and subscription   |
-| `GET`  | `/api/v1/billing/usage`             | Usage summary                   |
-| `POST` | `/api/v1/billing/checkout`          | Start Paddle checkout           |
-| `POST` | `/api/v1/billing/change-plan`       | Change an existing subscription |
-| `POST` | `/api/v1/billing/cancel`            | Cancel at Paddle                |
-| `POST` | `/api/v1/billing/resume`            | Resume a cancelled subscription |
-| `POST` | `/api/v1/billing/portal`            | Open Paddle customer portal     |
-| `GET`  | `/api/v1/billing/invoices`          | List invoices                   |
-| `GET`  | `/api/v1/billing/invoices/{id}/pdf` | Fetch invoice PDF link          |
+| Method | Path                                  | Behaviour                            |
+| ------ | ------------------------------------- | ------------------------------------ |
+| `GET`  | `/api/v1/billing`                     | Current Plan and subscription        |
+| `GET`  | `/api/v1/billing/usage`               | Usage summary (+ PAYG soft alert)    |
+| `POST` | `/api/v1/billing/payg-soft-alert/ack` | Acknowledge one-per-cycle soft alert |
+| `POST` | `/api/v1/billing/checkout`            | Start Paddle checkout                |
+| `POST` | `/api/v1/billing/change-plan`         | Change an existing subscription      |
+| `POST` | `/api/v1/billing/cancel`              | Cancel at Paddle                     |
+| `POST` | `/api/v1/billing/resume`              | Resume a cancelled subscription      |
+| `POST` | `/api/v1/billing/portal`              | Open Paddle customer portal          |
+| `GET`  | `/api/v1/billing/invoices`            | List invoices                        |
+| `GET`  | `/api/v1/billing/invoices/{id}/pdf`   | Fetch invoice PDF link               |
 
 The unauthenticated `/webhooks/paddle` route is gated by HMAC signature
 verification and is not rate-limited, so Paddle retries are not dropped.

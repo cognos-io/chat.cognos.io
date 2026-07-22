@@ -305,6 +305,11 @@
       "title": "Não conseguimos cobrar o teu último pagamento",
       "updateCard": "Atualizar cartão"
     },
+    "paygSoftAlert": {
+      "body": "Atingiste o teu mínimo mensal de {{ min }}. O consumo acima é adicionado automaticamente à tua próxima fatura — podes continuar a conversar.",
+      "gotIt": "Compreendi",
+      "title": "Atingiste o teu mínimo mensal"
+    },
     "plan": {
       "actions": {
         "org.dissolved": "Organização dissolvida",

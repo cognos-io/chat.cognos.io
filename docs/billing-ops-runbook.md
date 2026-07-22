@@ -101,7 +101,10 @@ not exist in the sandbox.
   commit up front each cycle; at cycle rollover (`subscription.updated`) we sum
   the closing cycle's ledger usage and, if it exceeds CHF 15, post a one-time
   overage charge (`overage_<cycle_id>` idempotency key) billed on the next
-  renewal. Each closed cycle is a row in `payg_cycle_summaries`.
+  renewal. Each closed cycle is a row in `payg_cycle_summaries`. When cycle
+  usage reaches the minimum, Accounts see a one-per-cycle soft warning on Plan
+  & billing (ack stamps `payg_soft_alert_cycle_start_at`); Completions are
+  never blocked by this alert. A hard spend breaker remains deferred (OP-037).
 - **Unlimited** never bills per request; usage is recorded (`amount_rappen=0`,
   cost in `user_cost_rappen`) for fair-use only.
 - **Organisation** bills `max(N × CHF 15, pooled usage)` per cycle where

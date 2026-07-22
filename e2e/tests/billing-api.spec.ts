@@ -48,6 +48,16 @@ test.describe('billing status API', () => {
     }
   });
 
+  test('unauthenticated callers cannot acknowledge the PAYG soft alert', async () => {
+    const api = await newAnonymousApi();
+    try {
+      const res = await api.post('/api/v1/billing/payg-soft-alert/ack');
+      expect(res.status()).toBe(401);
+    } finally {
+      await api.dispose();
+    }
+  });
+
   test('newly registered user lands on a recognised plan with a CHF balance', async () => {
     // PocketBase user-create hook auto-provisions a billing row for every
     // new user. The exact plan and balance are operator-configurable, but

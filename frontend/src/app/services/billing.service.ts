@@ -16,6 +16,7 @@ import {
   CheckoutResponse,
   CompletionBillingRestriction,
   OrgCompletionBillingRestriction,
+  PaygSoftAlert,
 } from '@app/interfaces/billing';
 import { Analytics } from '@app/services/analytics/analytics';
 import { AuthService } from '@app/services/auth.service';
@@ -73,6 +74,8 @@ export class BillingService {
   private readonly _state = signal<BillingState | null>(null);
   // This cycle's PAYG usage total (CHF); null until fetched for a PAYG plan.
   private readonly _paygUsageChf = signal<number | null>(null);
+  // One-per-cycle soft alert when usage reaches the minimum (OP-014).
+  private readonly _paygSoftAlert = signal<PaygSoftAlert | null>(null);
   private readonly _checkoutPending = signal(false);
   private readonly _activating = signal(false);
   private readonly _activationSlow = signal(false);
@@ -112,6 +115,10 @@ export class BillingService {
   );
   // This cycle's metered usage in CHF; null until the usage endpoint responds.
   readonly paygUsageChf = computed(() => this._paygUsageChf());
+  readonly paygSoftAlert = computed(() => this._paygSoftAlert());
+
+  // True when the Account should see the one-per-cycle PAYG soft warning.
+  readonly showPaygSoftAlert = computed(() => this._paygSoftAlert()?.show === true);
   // Usage beyond the minimum — the part that will appear as an extra line on
   // the next invoice. Zero while usage is still covered by the minimum.
   readonly paygOverageChf = computed(() =>
@@ -176,6 +183,9 @@ export class BillingService {
         // the post-completion reconcile).
         if (res.plan_type === 'payg') {
           this._refreshPaygUsage();
+        } else {
+          this._paygUsageChf.set(null);
+          this._paygSoftAlert.set(null);
         }
       }),
     );
@@ -185,12 +195,35 @@ export class BillingService {
   // leave the last known figure — the card is informational, never a gate.
   private _refreshPaygUsage(): void {
     this._api.getBillingUsage().subscribe({
-      next: (usage) =>
-        this._paygUsageChf.set(
-          usage.by_model.reduce((sum, row) => sum + row.cost_chf, 0),
-        ),
+      next: (usage) => this.applyPaygUsage(usage),
       error: () => {
         /* keep the previous total */
+      },
+    });
+  }
+
+  // applyPaygUsage lets the billing dashboard push a freshly-fetched usage
+  // payload into the shared signals (soft alert + cycle total) without a
+  // second round-trip.
+  applyPaygUsage(usage: {
+    by_model: { cost_chf: number }[];
+    payg_soft_alert?: PaygSoftAlert | null;
+  }): void {
+    this._paygUsageChf.set(usage.by_model.reduce((sum, row) => sum + row.cost_chf, 0));
+    this._paygSoftAlert.set(usage.payg_soft_alert ?? null);
+  }
+
+  // Acknowledge the PAYG soft alert for this billing cycle. Optimistically
+  // clears the banner; a failed ack restores show on the next usage refresh.
+  ackPaygSoftAlert(): void {
+    const current = this._paygSoftAlert();
+    if (!current?.show) {
+      return;
+    }
+    this._paygSoftAlert.set({ ...current, show: false });
+    this._api.ackPaygSoftAlert().subscribe({
+      error: () => {
+        this._paygSoftAlert.set(current);
       },
     });
   }

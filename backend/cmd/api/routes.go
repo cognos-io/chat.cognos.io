@@ -139,11 +139,11 @@ func addPocketBaseRoutes(
 		mfaIssuer = "Cognos"
 	}
 	mfaParams := handler.MFAParams{
-		App:    app,
-		Store:  mfaStore,
+		App:     app,
+		Store:   mfaStore,
 		Keyring: mfaKeyring,
-		Issuer: mfaIssuer,
-		Logger: logger,
+		Issuer:  mfaIssuer,
+		Logger:  logger,
 	}
 	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
 	// never drop Paddle's retries. Bad signatures are rejected before any write.
@@ -184,14 +184,28 @@ func addPocketBaseRoutes(
 	e.Router.GET(
 		"/api/v1/billing/usage",
 		handler.BillingUsage(handler.BillingUsageParams{
-			Logger:    logger,
-			StateRepo: billingStateRepo,
-			UsageRepo: billingUsageRepo,
+			Logger:          logger,
+			StateRepo:       billingStateRepo,
+			UsageRepo:       billingUsageRepo,
+			MinCommitRappen: paddleMinCommitRappen,
 		}),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
 	)
+
+	if softAlertAck, ok := billingUsageRepo.(billing.SoftAlertAckRepo); ok {
+		e.Router.POST(
+			"/api/v1/billing/payg-soft-alert/ack",
+			handler.BillingPaygSoftAlertAck(handler.BillingPaygSoftAlertAckParams{
+				Logger: logger,
+				Repo:   softAlertAck,
+			}),
+		).Bind(
+			apis.RequireAuth(),
+			rateLimiterMiddleware(app),
+		)
+	}
 
 	e.Router.POST(
 		"/api/v1/billing/cancel",

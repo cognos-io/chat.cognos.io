@@ -22,6 +22,7 @@ import {
 
 import { BILLING_PRICES } from '@app/billing/pricing';
 import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
+import { BillingPaygSoftAlertBannerComponent } from '@app/components/billing/billing-payg-soft-alert-banner/billing-payg-soft-alert-banner.component';
 import { SwitchPlanModalComponent } from '@app/components/billing/switch-plan-modal/switch-plan-modal.component';
 import { PaddleLogoComponent } from '@app/components/paddle-logo/paddle-logo.component';
 import {
@@ -56,6 +57,7 @@ interface UsageBar {
     CognosProgressComponent,
     PaddleLogoComponent,
     BillingPastDueBannerComponent,
+    BillingPaygSoftAlertBannerComponent,
     SwitchPlanModalComponent,
     TranslocoModule,
   ],
@@ -106,7 +108,13 @@ export class PlanBillingComponent {
     this._api
       .getBillingUsage()
       .pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe({ next: (res) => this.usage.set(res), error: () => undefined });
+      .subscribe({
+        next: (res) => {
+          this.usage.set(res);
+          this._billing.applyPaygUsage(res);
+        },
+        error: () => undefined,
+      });
     this._api
       .getBillingInvoices()
       .pipe(takeUntilDestroyed(this._destroyRef))
