@@ -1,0 +1,16 @@
+---
+// Prefixed locales: /de/docs/<slug>, /fr/docs/<slug>, …
+import DocsPage from '../../../components/DocsPage.astro';
+import { docSlugs } from '../../../lib/docs';
+import { nonDefaultLocales, type Lang } from '../../../i18n/ui';
+
+export function getStaticPaths() {
+  return nonDefaultLocales.flatMap((lang) =>
+    docSlugs.map((slug) => ({ params: { lang, slug } })),
+  );
+}
+
+const { lang, slug } = Astro.params as { lang: Lang; slug: string };
+---
+
+<DocsPage lang={lang} slug={slug} />

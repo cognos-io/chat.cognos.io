@@ -1,0 +1,13 @@
+---
+// Default locale (English) doc articles, served unprefixed at /docs/<slug>.
+import DocsPage from '../../components/DocsPage.astro';
+import { docSlugs } from '../../lib/docs';
+
+export function getStaticPaths() {
+  return docSlugs.map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params as { slug: string };
+---
+
+<DocsPage lang="en" slug={slug} />

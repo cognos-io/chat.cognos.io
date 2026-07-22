@@ -1,0 +1,51 @@
+---
+import Icon from './Icon.astro';
+import { docGroups } from '../lib/docs';
+import { localizedPath, type Lang, type Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+  lang: Lang;
+  /** Slug of the page being viewed, or 'index' for the docs home. */
+  current: string;
+}
+const { t, lang, current } = Astro.props;
+const docsHome = localizedPath(lang, '/docs');
+---
+
+<nav class="docs-nav" aria-label={t('docs.meta.navLabel')}>
+  <a
+    class:list={['docs-nav__home', { 'docs-nav__link--current': current === 'index' }]}
+    href={docsHome}
+    aria-current={current === 'index' ? 'page' : undefined}
+  >
+    <Icon name="BookOpen" size={16} />
+    {t('docs.meta.home')}
+  </a>
+
+  {
+    docGroups.map((group) => (
+      <div class="docs-nav__group">
+        <p class="docs-nav__group-label">
+          <span class="docs-nav__group-icon" aria-hidden="true">
+            <Icon name={group.icon as any} size={15} />
+          </span>
+          {t(`docs.nav.${group.id}`)}
+        </p>
+        <ul class="docs-nav__list">
+          {group.pages.map((slug) => (
+            <li>
+              <a
+                class:list={['docs-nav__link', { 'docs-nav__link--current': slug === current }]}
+                href={localizedPath(lang, `/docs/${slug}`)}
+                aria-current={slug === current ? 'page' : undefined}
+              >
+                {t(`docs.pages.${slug}.navTitle`)}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))
+  }
+</nav>

@@ -1,0 +1,128 @@
+---
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import Icon from './Icon.astro';
+import { localizeHtml, type DocsBlock } from '../lib/docs';
+import type { Lang } from '../i18n/ui';
+
+interface Props {
+  block: DocsBlock;
+  lang: Lang;
+}
+const { block, lang } = Astro.props;
+/** Localize internal links in trusted HTML before rendering with set:html. */
+const h = (html: string) => localizeHtml(html, lang);
+
+// A figure renders only once its screenshot exists under public/ — so a page
+// stays clean (no broken image) until the screenshot has been captured.
+const publicDir = fileURLToPath(new URL('../../public', import.meta.url));
+const figureReady =
+  'figure' in block &&
+  (/^https?:/.test(block.figure.src) || existsSync(publicDir + block.figure.src));
+
+// Callout variants map to a tint + a leading icon. `security` is the strongest,
+// reserved for "you can lose your data" warnings around the Account Key.
+const noteIcons: Record<string, string> = {
+  tip: 'Lightbulb',
+  info: 'Info',
+  warning: 'TriangleAlert',
+  security: 'ShieldAlert',
+};
+---
+
+{'p' in block && <p set:html={h(block.p)} />}
+
+{'h3' in block && <h3 set:html={h(block.h3)} />}
+
+{
+  'ul' in block && (
+    <ul>
+      {block.ul.map((item) => (
+        <li set:html={h(item)} />
+      ))}
+    </ul>
+  )
+}
+
+{
+  'steps' in block && (
+    <ol class="docs-steps">
+      {block.steps.map((step) => (
+        <li class="docs-step">
+          <p class="docs-step__title" set:html={h(step.title)} />
+          {step.body && <p class="docs-step__body" set:html={h(step.body)} />}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+{
+  'note' in block &&
+    (() => {
+      const variant = block.note.variant ?? 'tip';
+      return (
+        <aside class:list={['docs-note', `docs-note--${variant}`]}>
+          <span class="docs-note__icon" aria-hidden="true">
+            <Icon name={noteIcons[variant] as any} size={18} />
+          </span>
+          <div class="docs-note__body">
+            {block.note.title && <p class="docs-note__title" set:html={h(block.note.title)} />}
+            <p set:html={h(block.note.body)} />
+          </div>
+        </aside>
+      );
+    })()
+}
+
+{
+  'figure' in block && figureReady && (
+    <figure class="docs-figure">
+      <img src={block.figure.src} alt={block.figure.alt} loading="lazy" decoding="async" />
+      {block.figure.caption && <figcaption set:html={block.figure.caption} />}
+    </figure>
+  )
+}
+
+{
+  'table' in block && (
+    <div class="text-page__table-wrap">
+      <table class="text-page__table">
+        <thead>
+          <tr>
+            {block.table.head.map((cell) => (
+              <th scope="col" set:html={cell} />
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {block.table.rows.map((row) => (
+            <tr>
+              {row.map((cell) => (
+                <td set:html={cell} />
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+{
+  'cards' in block && (
+    <div class="docs-cards">
+      {block.cards.map((card) => (
+        <a class="docs-card" href={card.to}>
+          {card.icon && (
+            <span class="docs-card__icon" aria-hidden="true">
+              <Icon name={card.icon as any} size={20} />
+            </span>
+          )}
+          <span class="docs-card__title" set:html={card.title} />
+          <span class="docs-card__body" set:html={card.body} />
+        </a>
+      ))}
+    </div>
+  )
+}

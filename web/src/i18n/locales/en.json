@@ -1966,5 +1966,2152 @@
   },
   "a11y": {
     "skipToContent": "Skip to main content"
+  },
+  "docs": {
+    "meta": {
+      "eyebrow": "Documentation",
+      "home": "Help home",
+      "navLabel": "Documentation",
+      "browse": "Browse documentation",
+      "breadcrumb": "Breadcrumb",
+      "tocLabel": "On this page",
+      "onThisPage": "On this page",
+      "updatedLabel": "Updated",
+      "relatedLabel": "Keep reading",
+      "needLabel": "Before you start",
+      "pagerLabel": "Page navigation",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "nav": {
+      "gettingStarted": "Getting started",
+      "chatting": "Chatting",
+      "privacyTools": "Privacy tools",
+      "organising": "Organising",
+      "accountSecurity": "Account & security",
+      "billing": "Plans & billing",
+      "organisations": "Organisations"
+    },
+    "home": {
+      "metaTitle": "Help & documentation — Cognos",
+      "metaDescription": "Learn how to use Cognos: create an account, save your Account Key, chat privately, and manage your data. Clear, step-by-step guides.",
+      "title": "Cognos help & documentation",
+      "lead": "Everything you need to get set up and chat privately — from your first account to the details of how your data stays yours.",
+      "sections": [
+        {
+          "heading": "New here? Start with these",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "to": "/docs/what-is-cognos",
+                  "icon": "Sparkles",
+                  "title": "What is Cognos?",
+                  "body": "The one-page explanation of how it keeps your chats private."
+                },
+                {
+                  "to": "/docs/create-account",
+                  "icon": "UserPlus",
+                  "title": "Create your account",
+                  "body": "Sign up and save your Account Key in a couple of minutes."
+                },
+                {
+                  "to": "/docs/your-first-chat",
+                  "icon": "MessageSquarePlus",
+                  "title": "Your first chat",
+                  "body": "Send your first message and pick a model."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Browse by topic",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "to": "/docs/what-is-cognos",
+                  "icon": "Rocket",
+                  "title": "Getting started",
+                  "body": "Accounts, your Account Key, the Emergency Kit, signing in."
+                },
+                {
+                  "to": "/docs/your-first-chat",
+                  "icon": "MessagesSquare",
+                  "title": "Chatting",
+                  "body": "Models, privacy tiers, personas, reasoning, web search."
+                },
+                {
+                  "to": "/docs/redaction",
+                  "icon": "EyeOff",
+                  "title": "Privacy tools",
+                  "body": "Hiding sensitive details, attachments, documents, images."
+                },
+                {
+                  "to": "/docs/projects",
+                  "icon": "FolderTree",
+                  "title": "Organising",
+                  "body": "Projects, bookmarks, search, importing, sharing."
+                },
+                {
+                  "to": "/docs/multi-factor-authentication",
+                  "icon": "ShieldCheck",
+                  "title": "Account & security",
+                  "body": "Two-factor login, recovery codes, your privacy, deletion."
+                },
+                {
+                  "to": "/docs/plans-and-pricing",
+                  "icon": "CreditCard",
+                  "title": "Plans & billing",
+                  "body": "Trial credit, Pay-As-You-Go and Unlimited plans."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "pages": {
+      "what-is-cognos": {
+        "navTitle": "What is Cognos?",
+        "metaTitle": "What is Cognos? — Cognos Docs",
+        "metaDescription": "Cognos is AI chat that keeps your saved conversations in a form we can't read. Here's how that works, in plain language.",
+        "title": "What is Cognos?",
+        "lead": "Cognos is AI chat that keeps your saved conversations in a form we can't read — only you can unlock them.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "The short version",
+            "blocks": [
+              {
+                "p": "You chat with leading AI models, and your saved messages are locked away on our servers in a form we cannot read. They are unlocked only on your device, with a key that only you hold — your <a href=\"/docs/account-key\">Account Key</a>."
+              },
+              {
+                "p": "Three parts work together, and each is trusted with as little as possible:"
+              },
+              {
+                "ul": [
+                  "<b>Your device</b> holds the keys. Your chats are unlocked and read here, and nowhere else.",
+                  "<b>Our servers</b> store your chats locked and pass your message to the AI. They never keep a copy we can read.",
+                  "<b>The approved AI provider</b> sees your message only while it writes an answer. We ask providers not to train on it."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Want the deeper explanation? See the <a href=\"/security\">Security overview</a> and <a href=\"/privacy\">Privacy Policy</a>."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "What Cognos can and can't see",
+            "blocks": [
+              {
+                "ul": [
+                  "<b>We can't read</b> the content of your saved conversations, attachments, or bookmarks.",
+                  "<b>We can see</b> some metadata needed to run the service — when a message was saved, and what a request cost.",
+                  "<b>The AI provider</b> does see your message while answering it. That is true of any AI assistant; Cognos limits where that happens with <a href=\"/docs/privacy-tiers\">privacy tiers</a>."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "Private storage, not invisible chat",
+                  "body": "\"Private\" means we keep no copy we can read. It does not mean your message is hidden from the AI that answers it — it can't answer what it can't see."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "How the pieces fit",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "to": "/docs/account-key",
+                    "icon": "KeyRound",
+                    "title": "Your Account Key",
+                    "body": "The one secret that unlocks your data."
+                  },
+                  {
+                    "to": "/docs/privacy-tiers",
+                    "icon": "MapPin",
+                    "title": "Privacy tiers",
+                    "body": "Choose where your messages may be handled."
+                  },
+                  {
+                    "to": "/docs/redaction",
+                    "icon": "EyeOff",
+                    "title": "Redaction",
+                    "body": "Hide sensitive details before they're sent."
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "related": ["create-account", "account-key", "privacy-tiers"]
+      },
+      "create-account": {
+        "navTitle": "Create your account",
+        "metaTitle": "Create your account — Cognos Docs",
+        "metaDescription": "Sign up for Cognos with an email and password, then save your Account Key. A step-by-step guide that takes a couple of minutes.",
+        "title": "Create your account",
+        "lead": "Sign up with an email and a password, then save your Account Key. The whole thing takes a couple of minutes.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "needs": [
+          "An email address you can check now",
+          "A password of at least 12 characters",
+          "Somewhere safe to keep a small text file (a password manager is ideal)"
+        ],
+        "sections": [
+          {
+            "heading": "Sign up",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the sign-up page",
+                    "body": "Go to <a href=\"https://app.cognos.io/auth/register\">the Cognos sign-up page</a> and you'll see <b>Create your Cognos account</b>."
+                  },
+                  {
+                    "title": "Enter your email and a password",
+                    "body": "Use at least 12 characters. Your password only signs you in — it never unlocks your data, and you can reset it later by email."
+                  },
+                  {
+                    "title": "Select Create account",
+                    "body": "You're signed in straight away, and Cognos generates your <a href=\"/docs/account-key\">Account Key</a>."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/create-account-register.png",
+                  "alt": "The Cognos sign-up form with email and password fields and a Create account button.",
+                  "caption": "The sign-up page at app.cognos.io/auth/register."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Save your Account Key",
+            "blocks": [
+              {
+                "p": "Right after signup, Cognos shows a screen titled <b>Secure your encrypted backup</b>. This is where you save your <a href=\"/docs/account-key\">Account Key</a> as an <a href=\"/docs/emergency-kit\">Emergency Kit</a> — don't skip it."
+              },
+              {
+                "note": {
+                  "variant": "security",
+                  "title": "This is the only key to your data",
+                  "body": "The Account Key is the only thing that can decrypt your chats. Cognos never stores it, so if you lose it your data can't be recovered. Save it before you continue."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Verify your email",
+            "blocks": [
+              {
+                "p": "Cognos emails you a confirmation link. You can read and manage your account before confirming, but you can't send messages to the AI until your email is verified."
+              },
+              {
+                "p": "Once verified, your <a href=\"/docs/trial-credit\">trial credit</a> is ready and you can start <a href=\"/docs/your-first-chat\">your first chat</a>."
+              }
+            ]
+          }
+        ],
+        "related": ["account-key", "emergency-kit", "signing-in"]
+      },
+      "account-key": {
+        "navTitle": "Your Account Key",
+        "metaTitle": "Your Account Key — Cognos Docs",
+        "metaDescription": "The Account Key is the single secret that unlocks your encrypted data in Cognos. What it is, how it differs from your password, and why it can't be reset.",
+        "title": "Your Account Key",
+        "lead": "The Account Key is the single secret that unlocks your encrypted data. Cognos never stores it, so keep it safe.",
+        "time": "4 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "What the Account Key is",
+            "blocks": [
+              {
+                "p": "When you sign up, Cognos generates one long, random Account Key for your account. It's what unlocks your data on any device."
+              },
+              {
+                "ul": [
+                  "Generated once, at signup — there's only ever one.",
+                  "Shown to you once, in the <a href=\"/docs/emergency-kit\">Emergency Kit</a>.",
+                  "Never stored by Cognos in a form we can read.",
+                  "Needed to <a href=\"/docs/unlock-and-lock\">unlock</a> your data on a new device."
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Account Key vs password",
+            "blocks": [
+              {
+                "p": "They do different jobs. Mixing them up is the most common source of confusion:"
+              },
+              {
+                "table": {
+                  "head": ["", "Account password", "Account Key"],
+                  "rows": [
+                    ["Job", "Signs you in", "Unlocks your data"],
+                    ["Reset by email?", "Yes", "No — never"],
+                    ["Touches your chats?", "No", "Yes — it's the key"],
+                    [
+                      "If you lose it",
+                      "<a href=\"/docs/resetting-your-password\">Reset it</a> and carry on",
+                      "Your data can't be recovered"
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "heading": "You can't change or reset it",
+            "blocks": [
+              {
+                "note": {
+                  "variant": "security",
+                  "title": "There is no \"forgot Account Key\" option",
+                  "body": "The Account Key is fixed for the life of your account — there's no change or reset, and support can't recover it. If you lose it, you can still sign in and <a href=\"/docs/deleting-your-account\">delete your account</a>, but your existing chats stay locked forever."
+                }
+              },
+              {
+                "p": "Save it during signup — that's the one reliable moment. In that same first session you may still re-open it from <a href=\"https://app.cognos.io/account/security\">Security & keys</a>, but once the session ends Cognos genuinely can't show it again. So don't treat that as a way to put it off — save the Emergency Kit straight away."
+              }
+            ]
+          },
+          {
+            "heading": "Keep it safe",
+            "blocks": [
+              {
+                "ul": [
+                  "Store the <a href=\"/docs/emergency-kit\">Emergency Kit</a> in a password manager or on an encrypted drive.",
+                  "Don't paste it into a shared note, chat, or unprotected cloud document.",
+                  "Anyone who has your Account Key can decrypt your data — treat it like the key to a safe."
+                ]
+              }
+            ]
+          }
+        ],
+        "related": ["emergency-kit", "unlock-and-lock", "your-privacy"]
+      },
+      "emergency-kit": {
+        "navTitle": "Emergency Kit",
+        "metaTitle": "The Emergency Kit — Cognos Docs",
+        "metaDescription": "The Emergency Kit is the text file that holds your Cognos Account Key. How to save it, where to keep it, and what happens if you lose it.",
+        "title": "The Emergency Kit",
+        "lead": "The Emergency Kit is the text file that holds your Account Key. Save it somewhere safe the moment you sign up.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "What's in it",
+            "blocks": [
+              {
+                "p": "The Emergency Kit is a plain text file named <code>cognos-emergency-kit.txt</code>. It holds your <a href=\"/docs/account-key\">Account Key</a>, the email on your account, and a short note on what to do with it."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "It's not a separate secret — it's just the delivery format for your Account Key."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Save it at signup",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "On the \"Secure your encrypted backup\" screen, save the key",
+                    "body": "Select <b>Download Emergency Kit</b> to save the file, or <b>Copy Account Key</b> to paste it into your password manager."
+                  },
+                  {
+                    "title": "Tick the confirmation box",
+                    "body": "It confirms you've saved the key and understand it can't be recovered if lost."
+                  },
+                  {
+                    "title": "Select Create encrypted backup",
+                    "body": "Cognos sets up your encrypted backup and takes you into the app."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/emergency-kit-dialog.png",
+                  "alt": "The Secure your encrypted backup screen showing the Account Key, Copy and Download buttons, and a confirmation checkbox.",
+                  "caption": "Save the Emergency Kit before continuing — this screen appears only once."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Where to keep it",
+            "blocks": [
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "A password manager is the easiest safe home for it. An encrypted USB drive or a printed copy in a secure place also work."
+                }
+              },
+              {
+                "p": "Avoid shared drives, plain email to yourself, or unprotected cloud notes — anyone who reads the file can unlock your data."
+              }
+            ]
+          },
+          {
+            "heading": "If you lose it",
+            "blocks": [
+              {
+                "note": {
+                  "variant": "security",
+                  "body": "Without the Account Key, your saved chats can't be recovered — not by you, not by Cognos. There's no reset. See <a href=\"/docs/account-key\">Your Account Key</a> for why."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["account-key", "signing-in", "your-privacy"]
+      },
+      "signing-in": {
+        "navTitle": "Signing in",
+        "metaTitle": "Signing in — Cognos Docs",
+        "metaDescription": "Log in to Cognos with your email and password. On a new device you'll also enter your Account Key to unlock your data.",
+        "title": "Signing in",
+        "lead": "Log in with your email and password. On a new device, you'll also enter your Account Key to unlock your data.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Log in",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the login page",
+                    "body": "Go to <a href=\"https://app.cognos.io/auth/login\">the Cognos login page</a>."
+                  },
+                  {
+                    "title": "Enter your email and password",
+                    "body": "Then select <b>Log in</b>."
+                  },
+                  {
+                    "title": "Enter your code if two-factor is on",
+                    "body": "If you've turned on <a href=\"/docs/multi-factor-authentication\">two-factor authentication</a>, type the 6-digit code from your authenticator app."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Unlock on a new device",
+            "blocks": [
+              {
+                "p": "The first time you sign in on a new device or browser, Cognos asks for your Account Key on a screen titled <b>Unlock backup</b>. Enter it to unlock your chats. See <a href=\"/docs/unlock-and-lock\">Unlock & lock</a> for details."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Can't find your Account Key? Look for the <code>cognos-emergency-kit.txt</code> file you saved at signup. If it's gone, see <a href=\"/docs/emergency-kit\">the Emergency Kit</a>."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Staying signed in",
+            "blocks": [
+              {
+                "p": "On a device you've already unlocked, refreshing or reopening the app won't ask for your Account Key again. <a href=\"/docs/sessions-and-logout\">Logging out</a> ends that and signs you out everywhere."
+              }
+            ]
+          }
+        ],
+        "related": ["unlock-and-lock", "multi-factor-authentication", "account-key"]
+      },
+      "unlock-and-lock": {
+        "navTitle": "Unlock & lock",
+        "metaTitle": "Unlock and lock — Cognos Docs",
+        "metaDescription": "Unlock opens your encrypted data on a device with your Account Key. Lock hides it again without signing you out. How they differ from logging out.",
+        "title": "Unlock & lock",
+        "lead": "Unlocking opens your data on a device with your Account Key. Locking hides it again — without signing you out.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Unlock",
+            "blocks": [
+              {
+                "p": "Your data stays locked on each device until you enter your <a href=\"/docs/account-key\">Account Key</a>. Unlocking loads the keys into your browser so it can decrypt and show your chats. You unlock once per device."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Unlocking does some deliberate cryptographic work, so it can take a second or two on an older device — that's normal, not a freeze."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Lock",
+            "blocks": [
+              {
+                "p": "Select <b>Lock</b> in the sidebar to clear your unlocked data from this device — handy on a shared or public computer. You stay signed in; to carry on, unlock again with your Account Key. No password needed."
+              }
+            ]
+          },
+          {
+            "heading": "Lock vs log out",
+            "blocks": [
+              {
+                "table": {
+                  "head": ["", "Lock", "Log out"],
+                  "rows": [
+                    ["Still signed in?", "Yes", "No"],
+                    [
+                      "To get back in",
+                      "Your Account Key",
+                      "Your password, then your Account Key"
+                    ],
+                    ["Affects other devices?", "No", "Yes — signs them out too"]
+                  ]
+                }
+              },
+              {
+                "p": "See <a href=\"/docs/sessions-and-logout\">Sessions & logging out</a> for what logging out does across your devices."
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "sessions-and-logout", "account-key"]
+      },
+      "your-first-chat": {
+        "navTitle": "Your first chat",
+        "metaTitle": "Your first chat — Cognos Docs",
+        "metaDescription": "Send your first message in Cognos, pick a model, and see how your conversation is saved and encrypted automatically.",
+        "title": "Your first chat",
+        "lead": "Type a message, pick a model if you like, and send. Your conversation is saved and encrypted automatically.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Send a message",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Start a new chat",
+                    "body": "Select <b>New chat</b> in the sidebar."
+                  },
+                  {
+                    "title": "Type in the message box",
+                    "body": "It's the box at the bottom that says <b>Message with Cognos</b>."
+                  },
+                  {
+                    "title": "Send it",
+                    "body": "Select the send button, or press <code>Ctrl/Cmd + Enter</code>."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/first-chat-composer.png",
+                  "alt": "The Cognos chat with the message box at the bottom and the model picker above it.",
+                  "caption": "The message box, with the model picker just above it."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "What gets saved",
+            "blocks": [
+              {
+                "p": "Your conversation is saved and <a href=\"/docs/your-privacy\">encrypted</a> as you go. The list of chat titles is decrypted only on your device, so the sidebar loads quickly and privately."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Don't want it saved? Turn on a <a href=\"/docs/temporary-conversations\">temporary conversation</a> before you start."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Try a different model",
+            "blocks": [
+              {
+                "p": "Above the message box you can <a href=\"/docs/choosing-a-model\">choose a different model</a> — some are faster, some are better at reasoning, some can search the web or make images."
+              }
+            ]
+          }
+        ],
+        "related": ["choosing-a-model", "personas", "temporary-conversations"]
+      },
+      "choosing-a-model": {
+        "navTitle": "Choosing a model",
+        "metaTitle": "Choosing a model — Cognos Docs",
+        "metaDescription": "Cognos offers many AI models. Pick one by name or filter by what you need — speed, reasoning, web search, or images.",
+        "title": "Choosing a model",
+        "lead": "Cognos offers many models. Pick one by name, or filter by what you need — speed, reasoning, web search, or images.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Pick a model",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the model picker",
+                    "body": "Select the model name shown above the message box."
+                  },
+                  {
+                    "title": "Find one",
+                    "body": "Browse <b>Pinned</b>, <b>Recent</b> and <b>Recommended</b>, search by name, or use the quick filters (Fast, Powerful, Reasoning, Web search, Image, Vision, and more)."
+                  },
+                  {
+                    "title": "Select it",
+                    "body": "Your choice sticks for new messages and follows you across devices."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/model-picker.png",
+                  "alt": "The model picker showing pinned, recent and recommended models with quick filters.",
+                  "caption": "The model picker, with quick filters along the top."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Model vs provider",
+            "blocks": [
+              {
+                "p": "The <b>model</b> is the choice you make. The <b>provider</b> is the company that actually runs it and sees your message while it answers. Cognos records the provider on each answer — you can check it any time in the <a href=\"/docs/your-privacy\">per-answer privacy details</a>."
+              }
+            ]
+          },
+          {
+            "heading": "What a model can and can't do",
+            "blocks": [
+              {
+                "ul": [
+                  "The picker only enables what a model actually supports — an image-only model can't hold a text chat, for example.",
+                  "<a href=\"/docs/web-search\">Web search</a> is quietly skipped on models that can't do it, rather than blocking your message.",
+                  "Your <a href=\"/docs/privacy-tiers\">privacy tier</a> limits which models you can use. Models above your tier appear greyed out so you can see what a higher tier would unlock."
+                ]
+              }
+            ]
+          }
+        ],
+        "related": ["privacy-tiers", "web-search", "reasoning"]
+      },
+      "privacy-tiers": {
+        "navTitle": "Privacy tiers",
+        "metaTitle": "Privacy tiers — Cognos Docs",
+        "metaDescription": "Your privacy tier sets how far your messages may travel to be answered. It changes which models you can use — and nothing else.",
+        "title": "Privacy tiers",
+        "lead": "Your privacy tier sets the furthest your messages may travel to be answered. It changes which models you can use — and nothing else.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "The three tiers",
+            "blocks": [
+              {
+                "table": {
+                  "head": ["Tier", "Your messages are handled…"],
+                  "rows": [
+                    [
+                      "<b>Switzerland only</b>",
+                      "On Swiss soil only — the strictest option."
+                    ],
+                    [
+                      "<b>Europe + Switzerland + UK</b>",
+                      "Within the EU/EEA, the UK and Switzerland."
+                    ],
+                    [
+                      "<b>Global</b>",
+                      "In vetted data centres worldwide — unlocks every model."
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Choose your tier",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open your account settings",
+                    "body": "Go to <a href=\"https://app.cognos.io/account\">Account</a> and find the <b>Data processing</b> card."
+                  },
+                  {
+                    "title": "Pick a tier",
+                    "body": "Select one of the three cards. It saves immediately and the model list updates."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/privacy-tiers.png",
+                  "alt": "The Data processing card with three privacy tier cards: Switzerland only, Europe, and Global.",
+                  "caption": "The Data processing card on your Account page."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "What it does and doesn't change",
+            "blocks": [
+              {
+                "ul": [
+                  "<b>Changes:</b> which models you're allowed to use.",
+                  "<b>Doesn't change:</b> how your chats are stored — they're always kept in a form we can't read, whatever tier you choose."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "The tier is only about where a live answer is produced. Your saved conversations are encrypted the same way at every tier."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["choosing-a-model", "your-privacy", "redaction"]
+      },
+      "personas": {
+        "navTitle": "Personas",
+        "metaTitle": "Personas — Cognos Docs",
+        "metaDescription": "A persona is a reusable instruction set that shapes how the AI replies — a tone, a role, a format. Use a built-in one or create your own.",
+        "title": "Personas",
+        "lead": "A persona is a reusable instruction set that shapes how the AI replies — a tone, a role, or a format. It's not a separate bot.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Use a persona",
+            "blocks": [
+              {
+                "p": "Cognos ships a set of built-in personas. Switch persona from the chip in the message box, or open the <a href=\"https://app.cognos.io/personas\">Personas page</a> to browse them all."
+              }
+            ]
+          },
+          {
+            "heading": "Create your own",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open Personas and select New persona",
+                    "body": "From the <a href=\"https://app.cognos.io/personas\">Personas page</a>."
+                  },
+                  {
+                    "title": "Describe it",
+                    "body": "Give it a name, a description, and the instructions the AI should follow. Add a colour and icon if you like."
+                  },
+                  {
+                    "title": "Optionally make it your default",
+                    "body": "Turn on <b>Use as default</b> so it applies to new chats."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/personas.png",
+                  "alt": "The Personas page showing pinned, recent and official personas in a grid.",
+                  "caption": "Your personas, including the built-in \"Official\" ones."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "Your custom personas are private and <a href=\"/docs/your-privacy\">encrypted</a>.",
+                  "Your default persona follows you across devices.",
+                  "If a persona is deleted or can't be loaded, chat still works — it just falls back to no persona.",
+                  "Personas are personal to your account; there's no shared persona."
+                ]
+              }
+            ]
+          }
+        ],
+        "related": ["your-first-chat", "account-memory", "choosing-a-model"]
+      },
+      "reasoning": {
+        "navTitle": "Reasoning",
+        "metaTitle": "Reasoning — Cognos Docs",
+        "metaDescription": "Some models can show their thinking before the final answer. See how to view reasoning and set how much effort a model spends.",
+        "title": "Reasoning",
+        "lead": "Some models can show their thinking before the final answer — and you control how much effort they spend.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Show the thinking",
+            "blocks": [
+              {
+                "p": "On models that support it, each answer has a <b>Show reasoning</b> toggle. The thinking streams live, then tucks away once the answer arrives. It's <a href=\"/docs/your-privacy\">encrypted</a> like the rest of your message and never logged."
+              }
+            ]
+          },
+          {
+            "heading": "Set the effort",
+            "blocks": [
+              {
+                "p": "The <b>Reasoning effort</b> control in the message box lets you dial a capable model from off up to high. More effort can take longer and <a href=\"/docs/plans-and-pricing\">cost more</a>; the exact levels depend on the model."
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Reasoning is a transparency aid, not proof — it can be incomplete or restate your prompt. Judge the answer, not the thinking."
+                }
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Reasoning text isn't included when you export a conversation yet."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["choosing-a-model", "plans-and-pricing"]
+      },
+      "web-search": {
+        "navTitle": "Web search",
+        "metaTitle": "Web search — Cognos Docs",
+        "metaDescription": "On some models, the AI can look things up on the web while answering and cite its sources. How to turn it on and what it costs.",
+        "title": "Web search",
+        "lead": "On some models, the AI can look things up on the web while it answers, and cite its sources.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Turn it on",
+            "blocks": [
+              {
+                "p": "Open the <b>Tools</b> menu in the message box and enable <b>Web search</b>. If the model you picked can't search, the option says so and is simply skipped."
+              }
+            ]
+          },
+          {
+            "heading": "What happens",
+            "blocks": [
+              {
+                "ul": [
+                  "Your question may be sent to a search engine by the AI provider to find sources.",
+                  "The results and citations are <a href=\"/docs/your-privacy\">encrypted</a> like the rest of your message, and shown inline as clickable sources.",
+                  "Each search that runs adds a small flat fee on top of the usual cost — see <a href=\"/docs/plans-and-pricing\">plans & pricing</a>."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Cognos doesn't run the search itself — the AI provider does. Web search works only on models that support it (currently certain Europe-hosted ones); your <a href=\"/docs/privacy-tiers\">privacy tier</a> doesn't change that."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["choosing-a-model", "privacy-tiers", "plans-and-pricing"]
+      },
+      "temporary-conversations": {
+        "navTitle": "Temporary conversations",
+        "metaTitle": "Temporary conversations — Cognos Docs",
+        "metaDescription": "A temporary conversation is never saved — messages stay in your browser until you close it. When to use one and how it differs from disappearing messages.",
+        "title": "Temporary conversations",
+        "lead": "A temporary conversation is never saved. Messages stay in your browser until you close it.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Start one",
+            "blocks": [
+              {
+                "p": "On a new, unsaved chat, turn on the <b>Temporary chat</b> toggle. Nothing is written as a saved Conversation — the messages live only in this browser."
+              }
+            ]
+          },
+          {
+            "heading": "When to use it",
+            "blocks": [
+              {
+                "ul": [
+                  "Quick, throwaway questions you don't need to keep.",
+                  "Working on a shared or public computer."
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Temporary vs disappearing vs auto-delete",
+            "blocks": [
+              {
+                "table": {
+                  "head": ["", "Saved?", "Goes away…"],
+                  "rows": [
+                    ["<b>Temporary conversation</b>", "No", "When you close the chat"],
+                    [
+                      "<a href=\"/docs/disappearing-messages\">Disappearing messages</a>",
+                      "Yes",
+                      "Each message, on a timer"
+                    ],
+                    [
+                      "<a href=\"/docs/disappearing-messages\">Auto-delete</a>",
+                      "Yes",
+                      "The whole chat, after inactivity"
+                    ]
+                  ]
+                }
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Temporary chats don't appear in your history or <a href=\"/docs/searching-conversations\">search</a>, and aren't summarised."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["disappearing-messages", "your-first-chat", "your-privacy"]
+      },
+      "disappearing-messages": {
+        "navTitle": "Disappearing & auto-delete",
+        "metaTitle": "Disappearing messages & auto-delete — Cognos Docs",
+        "metaDescription": "Set messages to expire on a timer, or a whole conversation to auto-delete after a period of inactivity. Both are permanent.",
+        "title": "Messages that delete themselves",
+        "lead": "Set messages to expire on a timer, or a whole conversation to delete itself after a period of inactivity.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Disappearing messages",
+            "blocks": [
+              {
+                "p": "When you create a chat, you can set its messages to expire after <b>24 hours, 7 days, 90 days, or 180 days</b>. Each message is deleted permanently once its timer runs out."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "A file you attached stays in your <a href=\"/docs/attachments\">Library</a> even after the message that used it disappears."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Auto-delete a conversation",
+            "blocks": [
+              {
+                "p": "In a saved chat, open the <b>⋯</b> menu and choose <b>Auto-delete</b> to remove the whole conversation after a period of inactivity (Account default, Never, 7 days, or 30 days). Set the account-wide default under <a href=\"https://app.cognos.io/account\">Account</a>."
+              },
+              {
+                "p": "The countdown is based on the chat's last activity — tightening it later won't retroactively delete an old-but-recently-used chat."
+              }
+            ]
+          },
+          {
+            "heading": "Both are permanent",
+            "blocks": [
+              {
+                "note": {
+                  "variant": "security",
+                  "body": "Deleted content can't be recovered — not by you, not by Cognos. There's no backup and no undo."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["temporary-conversations", "your-privacy", "attachments"]
+      },
+      "redaction": {
+        "navTitle": "Redaction",
+        "metaTitle": "Redaction: hiding sensitive details — Cognos Docs",
+        "metaDescription": "Cognos can spot sensitive details in your message — like an IBAN or email — and hide them from the AI before you send. How it works and how to review it.",
+        "title": "Redaction",
+        "lead": "Cognos can spot sensitive details in your message — an IBAN, an email, a card number — and hide them before the AI ever sees them.",
+        "time": "4 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "How it works",
+            "blocks": [
+              {
+                "p": "Detection runs <b>in your browser</b> before anything is sent. Each sensitive value is swapped for a placeholder like <code>[[PII_IBAN_Q7K9M2]]</code>. The AI provider and the saved message only ever see the placeholder — you still see the real value."
+              }
+            ]
+          },
+          {
+            "heading": "Choose a mode",
+            "blocks": [
+              {
+                "p": "On <a href=\"https://app.cognos.io/account\">your Account page</a>, the <b>PII redaction</b> card offers <b>Off</b>, <b>Simple</b> (fast, the default) and <b>Better</b> (slower, catches more). Both run entirely on your device."
+              }
+            ]
+          },
+          {
+            "heading": "Review before you send",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Watch the summary",
+                    "body": "The message box shows how many sensitive values it will hide."
+                  },
+                  {
+                    "title": "Check what's highlighted",
+                    "body": "Select <b>Show what will be redacted</b> to see each detected value."
+                  },
+                  {
+                    "title": "Adjust if needed",
+                    "body": "Deselect an item to send it as-is, or mark <b>Never redact this</b> for a value you always want left alone."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/redaction-composer.png",
+                  "alt": "The message box showing detected sensitive values highlighted before sending.",
+                  "caption": "Detected values are highlighted so you can review them before sending."
+                }
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Detection leans towards caution and may miss something rather than mangle normal text. Always review the highlights before you send."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Revealing values later",
+            "blocks": [
+              {
+                "p": "Select a placeholder in a sent message to open <b>Personal information redacted</b>, which compares what you see with what the model saw. Only someone holding the redaction key can reveal the real value — by default, that's just you."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "When you <a href=\"/docs/sharing-conversations\">share a conversation</a>, a redacted-only link keeps values hidden; an include-sensitive link lets recipients reveal them. Choose carefully."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["sharing-conversations", "account-memory", "your-privacy"]
+      },
+      "attachments": {
+        "navTitle": "Attachments & Library",
+        "metaTitle": "Attachments and your Library — Cognos Docs",
+        "metaDescription": "Attach files to a message in Cognos. They're encrypted in your browser and stored in your personal Library to reuse across chats.",
+        "title": "Attachments & your Library",
+        "lead": "Attach files to a message. They're encrypted in your browser and kept in your personal Library, ready to reuse across chats.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Attach a file",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the Tools menu",
+                    "body": "In the message box, open <b>Tools</b> → <b>Attachments</b>."
+                  },
+                  {
+                    "title": "Upload or reuse",
+                    "body": "Choose <b>Upload</b> for a new file, or <b>From library</b> to reuse one. Unsupported file types are turned away rather than half-uploaded."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Your Library",
+            "blocks": [
+              {
+                "p": "Files belong to <b>you</b>, not to the chat — a conversation only points at a file. Manage them at <a href=\"https://app.cognos.io/account/library\">File library</a>: rename, download, or remove."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/library.png",
+                  "alt": "The File library page showing uploaded files in a grid.",
+                  "caption": "Your File library, reusable across every chat."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "Files are processed, <a href=\"/docs/redaction\">redacted</a> and encrypted in your browser before upload.",
+                  "Remove a file and past messages show \"File removed\" rather than losing history.",
+                  "Scanned PDFs get text extraction on your device (English, first version).",
+                  "Size and per-account storage limits apply."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Attachments are always personal — even inside a shared <a href=\"/docs/projects\">Project</a>, others can't open your files."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["redaction", "generating-documents", "projects"]
+      },
+      "generating-documents": {
+        "navTitle": "Generating documents",
+        "metaTitle": "Generating documents — Cognos Docs",
+        "metaDescription": "Turn any answer into a real Word, PDF, or Markdown file — built in your browser, never on Cognos servers.",
+        "title": "Generating documents",
+        "lead": "Turn any answer into a real Word, PDF, or Markdown file — built in your browser, never on our servers.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Download an answer",
+            "blocks": [
+              {
+                "p": "Use the download option on any assistant reply and pick a format — Word, PDF, or Markdown. The file is built on your device; the bytes never touch Cognos servers."
+              }
+            ]
+          },
+          {
+            "heading": "Ask for a document",
+            "blocks": [
+              {
+                "p": "You can also ask the model to write one (\"draft this as a PDF brief\"). It appears as a document card you can download or save to your <a href=\"/docs/attachments\">Library</a>. Ask for changes and it re-emits the whole updated file."
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "Generated files carry no personal author details — just \"Cognos\" — and dates are rounded to the day.",
+                  "Generated spreadsheets can't \"phone home\" — network formulas are disabled and shown as plain text.",
+                  "Turning off <b>Create documents</b> for a chat removes the feature there entirely."
+                ]
+              }
+            ]
+          }
+        ],
+        "related": ["generating-images", "attachments"]
+      },
+      "generating-images": {
+        "navTitle": "Generating images",
+        "metaTitle": "Generating images — Cognos Docs",
+        "metaDescription": "Describe an image and a capable model creates it. The result is encrypted like any other message.",
+        "title": "Generating images",
+        "lead": "Describe an image and a capable model will create it. The result is encrypted like any other message.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Create an image",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Enable image generation",
+                    "body": "Turn on <b>Generate image</b> in the message box."
+                  },
+                  {
+                    "title": "Describe what you want",
+                    "body": "Write your prompt and send."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "The model may reply with a clarifying question instead of an image — that's normal, not an error.",
+                  "Select <b>regenerate</b> to make an alternative version alongside the original.",
+                  "A chat containing images exports as a <code>.zip</code> (text-only chats export as <code>.json</code>).",
+                  "Image generation is billed per image — see <a href=\"/docs/plans-and-pricing\">plans & pricing</a>."
+                ]
+              }
+            ]
+          }
+        ],
+        "related": ["generating-documents", "choosing-a-model", "plans-and-pricing"]
+      },
+      "projects": {
+        "navTitle": "Projects",
+        "metaTitle": "Projects — Cognos Docs",
+        "metaDescription": "A Project groups related conversations in one place. Personal projects are just for you; Organisation projects are shared with your team.",
+        "title": "Projects",
+        "lead": "A Project groups related conversations in one place. Personal projects are just for you; Organisation projects are shared with a team.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Create a project",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open Projects",
+                    "body": "Go to <a href=\"https://app.cognos.io/account/projects\">Projects</a> and select <b>New project</b>."
+                  },
+                  {
+                    "title": "Set it up",
+                    "body": "Give it a name, and optionally an icon, colour, and a default model."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Personal vs Organisation projects",
+            "blocks": [
+              {
+                "ul": [
+                  "<b>Personal project</b> — just you. It can't be shared with other people.",
+                  "<b>Organisation project</b> — shared with <a href=\"/docs/organisation-projects\">members of your Organisation</a>, each with a role of Viewer, Editor, or Admin."
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Move chats in and out",
+            "blocks": [
+              {
+                "p": "From a chat's <b>⋯</b> menu, choose <b>Move to project</b> or <b>Remove from project</b>. You need to be an Admin of both the chat and the project."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "<a href=\"/docs/attachments\">Attachments</a> stay personal even inside a shared project — members can't open each other's files."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["organisation-projects", "bookmarks", "sharing-conversations"]
+      },
+      "bookmarks": {
+        "navTitle": "Bookmarks",
+        "metaTitle": "Bookmarks — Cognos Docs",
+        "metaDescription": "Highlight any part of a message and save it. Your bookmarks are private to you, even in a shared conversation.",
+        "title": "Bookmarks",
+        "lead": "Highlight any part of a message and save it. Your bookmarks are private to you — even in a shared chat.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Save a bookmark",
+            "blocks": [
+              {
+                "p": "Select some text in a message, then choose <b>Save to bookmarks</b>. Cognos keeps the quote plus a little surrounding context so it can find the spot again."
+              }
+            ]
+          },
+          {
+            "heading": "Find them",
+            "blocks": [
+              {
+                "p": "Open <a href=\"https://app.cognos.io/account/bookmarks\">Bookmarks</a> to see them all, and select one to jump back to the exact spot in its conversation."
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "Bookmarks are <a href=\"/docs/your-privacy\">encrypted</a> and readable only by you — even if the chat is shared, others never see them.",
+                  "If a message has changed too much to find the exact quote, the bookmark still lists — it just won't highlight a spot."
+                ]
+              }
+            ]
+          }
+        ],
+        "related": ["searching-conversations", "your-privacy"]
+      },
+      "searching-conversations": {
+        "navTitle": "Searching your chats",
+        "metaTitle": "Searching your conversations — Cognos Docs",
+        "metaDescription": "Search your chats from the sidebar. It runs entirely on your device — nothing you search for ever leaves your browser.",
+        "title": "Searching your chats",
+        "lead": "Search your conversations from the sidebar. It all runs on your device — nothing you search for leaves your browser.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Search",
+            "blocks": [
+              {
+                "p": "Use the <b>Search</b> box in the sidebar (three characters or more). It matches conversation titles instantly and searches recent message content too, with title matches ranked first."
+              }
+            ]
+          },
+          {
+            "heading": "Private by design",
+            "blocks": [
+              {
+                "p": "The search index is built and used only on your device — nothing you type is sent to us or logged. The index is cleared whenever you <a href=\"/docs/unlock-and-lock\">lock</a>, <a href=\"/docs/sessions-and-logout\">log out</a>, or switch accounts."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "This is different from <a href=\"/docs/web-search\">web search</a>, which asks the AI to look things up online."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["bookmarks", "web-search"]
+      },
+      "importing-conversations": {
+        "navTitle": "Importing conversations",
+        "metaTitle": "Importing conversations — Cognos Docs",
+        "metaDescription": "Bring your ChatGPT or Claude conversations into Cognos. Your export is read and encrypted in your browser — the raw file isn't uploaded.",
+        "title": "Importing conversations",
+        "lead": "Bring your ChatGPT or Claude conversations into Cognos. Your export is read and encrypted in your browser.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Import your export",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the import page",
+                    "body": "Go to <a href=\"https://app.cognos.io/import\">Import</a>."
+                  },
+                  {
+                    "title": "Pick your source",
+                    "body": "Choose ChatGPT or Claude and follow the on-screen steps to select the export file you downloaded from them."
+                  },
+                  {
+                    "title": "Review, then confirm",
+                    "body": "Check the preview counts so you know exactly what will come across, then confirm."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "Reading and encrypting happen in your browser — the raw export isn't uploaded to us.",
+                  "Up to 10,000 messages per conversation.",
+                  "Branching threads are split into clearly labelled separate conversations, never guessed or merged.",
+                  "Re-importing the same file is safe — it won't create duplicates.",
+                  "Imported chats arrive as standalone conversations; move them into a <a href=\"/docs/projects\">Project</a> afterwards if you like."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Unsupported content (PDFs, images, tool records) is left out by design — the preview counts show what will and won't come across."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["your-first-chat", "projects"]
+      },
+      "sharing-conversations": {
+        "navTitle": "Sharing a conversation",
+        "metaTitle": "Sharing a conversation — Cognos Docs",
+        "metaDescription": "Publish a read-only link to a conversation that anyone can open — with or without the sensitive details revealed.",
+        "title": "Sharing a conversation",
+        "lead": "Publish a read-only link to a conversation that anyone can open — with or without the sensitive details revealed.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Share a link",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the conversation and select Share",
+                    "body": "The <b>Share</b> button is in the chat header."
+                  },
+                  {
+                    "title": "Choose what to include",
+                    "body": "Decide whether to keep sensitive values hidden or let recipients reveal them (see below)."
+                  },
+                  {
+                    "title": "Copy the link",
+                    "body": "Send it however you like. Select <b>Stop sharing</b> any time to revoke it."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/share-dialog.png",
+                  "alt": "The Share conversation dialog with a public link and a toggle for including sensitive values.",
+                  "caption": "The Share dialog, with the option to include or hide sensitive values."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Two modes",
+            "blocks": [
+              {
+                "table": {
+                  "head": ["Mode", "What recipients see"],
+                  "rows": [
+                    [
+                      "<b>Redacted-only</b> (default)",
+                      "Sensitive values stay hidden as placeholders."
+                    ],
+                    [
+                      "<b>Include-sensitive</b>",
+                      "Recipients can reveal the real values without signing in."
+                    ]
+                  ]
+                }
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Include-sensitive means anyone with the link can see the real <a href=\"/docs/redaction\">redacted</a> values. Use redacted-only unless you truly mean to share them."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "How a shared link stays private",
+            "blocks": [
+              {
+                "p": "The key that unlocks a shared conversation lives inside the link itself (after the <code>#</code>), which browsers never send to our servers — so we can't read a shared conversation from our logs. Revoking a share breaks the link immediately, without affecting the conversation."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "A public share is read-only and grants no membership. Collaborating with named people happens through <a href=\"/docs/organisation-projects\">Organisation projects</a>."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["redaction", "projects", "organisation-projects"]
+      },
+      "multi-factor-authentication": {
+        "navTitle": "Two-factor login",
+        "metaTitle": "Two-factor authentication — Cognos Docs",
+        "metaDescription": "Add a second step to sign-in: a 6-digit code from an authenticator app. It protects your login — your Account Key still protects your data.",
+        "title": "Two-factor authentication",
+        "lead": "Add a second step to signing in — a 6-digit code from an authenticator app. It protects your login, not your data.",
+        "time": "4 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Turn it on",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open Security & keys",
+                    "body": "Go to <a href=\"https://app.cognos.io/account/security\">Security & keys</a> and select <b>Enable two-factor authentication</b>."
+                  },
+                  {
+                    "title": "Confirm your password",
+                    "body": "Then scan the QR code with an authenticator app, or type the setup key by hand."
+                  },
+                  {
+                    "title": "Enter a code to confirm",
+                    "body": "Type the 6-digit code from the app and select <b>Verify and enable</b>."
+                  },
+                  {
+                    "title": "Save your recovery codes",
+                    "body": "Store the <a href=\"/docs/recovery-codes\">recovery codes</a> you're shown — they're your way back in if you lose the app."
+                  }
+                ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mfa-setup.png",
+                  "alt": "The two-factor setup screen showing a QR code and a field to enter a 6-digit code.",
+                  "caption": "Scan the QR code, then confirm with a 6-digit code."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Signing in with it",
+            "blocks": [
+              {
+                "p": "After your password, you'll enter the current 6-digit code. Ticking <b>Remember this device for 30 days</b> skips the code on that device for a while."
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "Authenticator app only — Cognos doesn't send codes by email.",
+                  "Trusted devices are cleared when you log out, disable two-factor, regenerate recovery codes, or change your password.",
+                  "Two-factor guards your login. Your data is still unlocked by your <a href=\"/docs/account-key\">Account Key</a>."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "security",
+                  "body": "There's no two-factor reset. If you lose both your authenticator app and all your <a href=\"/docs/recovery-codes\">recovery codes</a>, you won't be able to sign in — so keep those codes safe."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["recovery-codes", "signing-in", "account-key"]
+      },
+      "recovery-codes": {
+        "navTitle": "Recovery codes",
+        "metaTitle": "Recovery codes — Cognos Docs",
+        "metaDescription": "Recovery codes are one-time backup codes that get you in if you lose your authenticator app. How to save, use, and regenerate them.",
+        "title": "Recovery codes",
+        "lead": "Recovery codes are one-time backup codes that get you in if you lose your authenticator app.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Save them",
+            "blocks": [
+              {
+                "p": "When you enable <a href=\"/docs/multi-factor-authentication\">two-factor authentication</a>, Cognos shows 10 recovery codes <b>once</b>. Copy or download them and store them safely — they can't be shown again."
+              }
+            ]
+          },
+          {
+            "heading": "Use one",
+            "blocks": [
+              {
+                "p": "On the code screen at sign-in, choose <b>Use a recovery code instead</b> and enter one. Each code works exactly once."
+              }
+            ]
+          },
+          {
+            "heading": "Regenerate",
+            "blocks": [
+              {
+                "p": "From <a href=\"https://app.cognos.io/account/security\">Security & keys</a> you can regenerate the set (it needs your password and a current code). This cancels the old codes and signs out trusted devices."
+              },
+              {
+                "note": {
+                  "variant": "security",
+                  "body": "Lose your authenticator app and all your recovery codes and there's no way back in — there's no support reset. This protects login only; your data is governed by your <a href=\"/docs/account-key\">Account Key</a>."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["multi-factor-authentication", "account-key"]
+      },
+      "resetting-your-password": {
+        "navTitle": "Resetting your password",
+        "metaTitle": "Resetting your password — Cognos Docs",
+        "metaDescription": "Forgot your password? Reset it by email. This never affects your encrypted chats or your Account Key.",
+        "title": "Resetting your password",
+        "lead": "Forgot your password? Reset it by email. This never affects your encrypted chats or your Account Key.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Reset it",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the reset page",
+                    "body": "Go to <a href=\"https://app.cognos.io/auth/forgot-password\">Reset your password</a> and enter your email."
+                  },
+                  {
+                    "title": "Open the emailed link",
+                    "body": "It takes you to a page to choose a new password."
+                  },
+                  {
+                    "title": "Choose a new password",
+                    "body": "Set it and you're done."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "Your chats are untouched",
+                  "body": "Your password only signs you in. Resetting it never re-encrypts or touches your conversations, and it doesn't change your <a href=\"/docs/account-key\">Account Key</a>."
+                }
+              },
+              {
+                "p": "If you have <a href=\"/docs/multi-factor-authentication\">two-factor authentication</a> on, a password reset doesn't bypass it — you'll still need your code."
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "account-key", "multi-factor-authentication"]
+      },
+      "your-privacy": {
+        "navTitle": "Your privacy",
+        "metaTitle": "Your privacy — Cognos Docs",
+        "metaDescription": "A plain-language summary of what Cognos can and can't see, and the controls that keep your conversations yours.",
+        "title": "Your privacy",
+        "lead": "A plain-language summary of what Cognos can and can't see — and the controls that keep it that way.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "What we can't see",
+            "blocks": [
+              {
+                "p": "The content of your saved conversations, <a href=\"/docs/attachments\">attachments</a>, <a href=\"/docs/bookmarks\">bookmarks</a> and <a href=\"/docs/account-memory\">memory</a> is kept in a form we can't read. It's unlocked only on your device, with your <a href=\"/docs/account-key\">Account Key</a>."
+              }
+            ]
+          },
+          {
+            "heading": "What we can see",
+            "blocks": [
+              {
+                "ul": [
+                  "Metadata needed to run the service — when a message was saved, and what a request cost.",
+                  "The AI <a href=\"/docs/choosing-a-model\">provider</a> that answered each message (recorded on the answer)."
+                ]
+              },
+              {
+                "p": "The AI provider does see your message while it answers — that's how any AI assistant works. <a href=\"/docs/privacy-tiers\">Privacy tiers</a> control where that happens."
+              }
+            ]
+          },
+          {
+            "heading": "Check any answer",
+            "blocks": [
+              {
+                "p": "The <b>Security</b> button on a conversation shows, for each answer, which model and provider handled it and where — so you can verify it matches your settings."
+              }
+            ]
+          },
+          {
+            "heading": "Your controls",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "to": "/docs/privacy-tiers",
+                    "icon": "MapPin",
+                    "title": "Privacy tiers",
+                    "body": "Limit where messages may be handled."
+                  },
+                  {
+                    "to": "/docs/redaction",
+                    "icon": "EyeOff",
+                    "title": "Redaction",
+                    "body": "Hide sensitive details before sending."
+                  },
+                  {
+                    "to": "/docs/disappearing-messages",
+                    "icon": "Clock",
+                    "title": "Auto-delete",
+                    "body": "Make content delete itself."
+                  },
+                  {
+                    "to": "/docs/account-memory",
+                    "icon": "Brain",
+                    "title": "Memory",
+                    "body": "Decide what the AI remembers — privately, or shared in a project."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Full detail lives on the <a href=\"/security\">Security overview</a> and <a href=\"/privacy\">Privacy Policy</a>."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["privacy-tiers", "redaction", "account-memory"]
+      },
+      "account-memory": {
+        "navTitle": "Memory",
+        "metaTitle": "Memory — Cognos Docs",
+        "metaDescription": "Memory lets the AI remember facts and preferences you choose — across your chats, or within a project. It's opt-in and encrypted.",
+        "title": "Memory",
+        "lead": "Memory lets the AI remember facts and preferences you choose — across your chats, or within a project.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "What it is",
+            "blocks": [
+              {
+                "p": "You can store facts, preferences and instructions for the AI to reuse. Memory can be <b>account-level</b> (private to you, used across your chats) or <b>project-level</b> (shared with the people in that <a href=\"/docs/projects\">Project</a>)."
+              }
+            ]
+          },
+          {
+            "heading": "Manage it",
+            "blocks": [
+              {
+                "p": "Turn personal memory on or off and edit entries at <a href=\"https://app.cognos.io/account/memory\">Memory</a>. It's <a href=\"/docs/your-privacy\">encrypted</a>, and <a href=\"/docs/redaction\">redaction</a> is applied before memory is sent with a request."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Memory is opt-in — Cognos doesn't build a picture of you unless you add one. Editing or deleting an entry only affects future messages."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["personas", "redaction", "your-privacy"]
+      },
+      "sessions-and-logout": {
+        "navTitle": "Sessions & logging out",
+        "metaTitle": "Sessions and logging out — Cognos Docs",
+        "metaDescription": "Logging out of Cognos ends your session everywhere and clears your unlocked data. What it does, and how to sign out other devices.",
+        "title": "Sessions & logging out",
+        "lead": "Logging out ends your session everywhere and clears your unlocked data. Here's exactly what it does.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Log out",
+            "blocks": [
+              {
+                "p": "The <b>Log out</b> button in the sidebar signs out every device at once, clears the convenience unlock cache, and forgets any devices you'd told to remember your two-factor code."
+              }
+            ]
+          },
+          {
+            "heading": "Sign out other devices",
+            "blocks": [
+              {
+                "p": "To end other sessions without logging yourself out here, use <b>Sign out other devices</b> on <a href=\"https://app.cognos.io/account/security\">Security & keys</a>."
+              }
+            ]
+          },
+          {
+            "heading": "After logging out",
+            "blocks": [
+              {
+                "p": "To get back in you'll need your password, then your <a href=\"/docs/account-key\">Account Key</a> to <a href=\"/docs/unlock-and-lock\">unlock</a> again."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Just want to hide your data on this device without signing out? Use <a href=\"/docs/unlock-and-lock\">Lock</a> instead."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["unlock-and-lock", "signing-in", "multi-factor-authentication"]
+      },
+      "deleting-your-account": {
+        "navTitle": "Deleting your account",
+        "metaTitle": "Deleting your account — Cognos Docs",
+        "metaDescription": "Permanently delete your Cognos account and all your personal data. What to do first, what's removed, and what's kept.",
+        "title": "Deleting your account",
+        "lead": "You can permanently delete your account and all your personal data. This can't be undone.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Before you start",
+            "blocks": [
+              {
+                "ul": [
+                  "Cancel any paid <a href=\"/docs/managing-your-subscription\">subscription</a> first.",
+                  "If you own an <a href=\"/docs/organisations-overview\">Organisation</a>, transfer it or dissolve it first."
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Delete your account",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open the Danger zone",
+                    "body": "It's at the bottom of <a href=\"https://app.cognos.io/account\">your Account page</a>."
+                  },
+                  {
+                    "title": "Confirm it's you",
+                    "body": "Type <code>DELETE</code>, enter your password, and (if two-factor is on) a current code."
+                  },
+                  {
+                    "title": "Confirm",
+                    "body": "Your personal data is removed."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "What's removed and what's kept",
+            "blocks": [
+              {
+                "ul": [
+                  "<b>Removed:</b> your conversations, messages, personas, bookmarks, library files, memory, redaction mappings and two-factor records.",
+                  "<b>Kept:</b> Organisation-owned projects you created stay with the Organisation; some financial records may be retained (detached from you) for legal reasons."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "There's also <b>Delete all chats</b>, which clears your conversations but keeps your account. Losing your <a href=\"/docs/account-key\">Account Key</a> isn't a route to deletion — you can still sign in and delete."
+                }
+              },
+              {
+                "note": {
+                  "variant": "security",
+                  "body": "Deletion is permanent — there's no recovery."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["managing-your-subscription", "your-privacy", "account-key"]
+      },
+      "plans-and-pricing": {
+        "navTitle": "Plans & pricing",
+        "metaTitle": "Plans & pricing — Cognos Docs",
+        "metaDescription": "Start with free trial credit, then choose Pay-As-You-Go or Unlimited. How Cognos prices usage, and where to pick a plan.",
+        "title": "Plans & pricing",
+        "lead": "Start with free trial credit, then choose Pay-As-You-Go or Unlimited. Payments run through Paddle.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "The plans",
+            "blocks": [
+              {
+                "table": {
+                  "head": ["Plan", "How it works"],
+                  "rows": [
+                    [
+                      "<a href=\"/docs/trial-credit\">Trial credit</a>",
+                      "A free starting balance. When it's used up, your account is read-only until you pick a plan."
+                    ],
+                    [
+                      "<b>Pay-As-You-Go</b>",
+                      "You pay for what you use, with a CHF 15 monthly minimum."
+                    ],
+                    [
+                      "<b>Unlimited</b>",
+                      "A flat CHF 150 a month (or CHF 1'500 a year) under fair use."
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "heading": "How usage is priced",
+            "blocks": [
+              {
+                "p": "On Pay-As-You-Go, your cost for a message is the AI provider's cost plus a 22% margin, converted to Swiss francs. Each <a href=\"/docs/web-search\">web search</a> that runs adds a small flat fee."
+              }
+            ]
+          },
+          {
+            "heading": "Choose a plan",
+            "blocks": [
+              {
+                "p": "Pick or switch a plan from <a href=\"https://app.cognos.io/pricing\">the pricing page</a> or <a href=\"https://app.cognos.io/account/billing\">your billing settings</a>."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/pricing.png",
+                  "alt": "The pricing page showing Pay-As-You-Go and Unlimited plan cards.",
+                  "caption": "The Pay-As-You-Go and Unlimited plans."
+                }
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Your trial chats stay fully readable even after the credit runs out — you just can't send new messages until you pick a plan."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["trial-credit", "managing-your-subscription"]
+      },
+      "trial-credit": {
+        "navTitle": "Trial credit",
+        "metaTitle": "Trial credit — Cognos Docs",
+        "metaDescription": "Every new Cognos account starts with a small amount of free credit so you can try it before choosing a plan.",
+        "title": "Trial credit",
+        "lead": "Every new account starts with a small amount of free credit, so you can try Cognos before choosing a plan.",
+        "time": "1 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "What you get",
+            "blocks": [
+              {
+                "p": "A small starting balance lands on your account automatically at <a href=\"/docs/create-account\">signup</a>. You can spend it once your email is verified, and the amount left is shown in the sidebar."
+              }
+            ]
+          },
+          {
+            "heading": "When it runs out",
+            "blocks": [
+              {
+                "p": "Your account becomes read-only: your existing chats stay fully readable, but you'll need a <a href=\"/docs/plans-and-pricing\">plan</a> to send new messages."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "There's no Organisation trial — <a href=\"/docs/seats-and-billing\">Organisation work</a> is billed from the start."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["plans-and-pricing", "create-account"]
+      },
+      "managing-your-subscription": {
+        "navTitle": "Managing billing",
+        "metaTitle": "Managing your subscription — Cognos Docs",
+        "metaDescription": "View usage, download invoices, switch plans, or cancel — all from your billing settings. Payments are handled by Paddle.",
+        "title": "Managing your subscription",
+        "lead": "View usage, download invoices, switch plans, or cancel — all from your billing settings.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Where to go",
+            "blocks": [
+              {
+                "p": "<a href=\"https://app.cognos.io/account/billing\">Plan & billing</a> shows your current plan, usage this period, payment method, and invoice history with PDF downloads. Payments and the payment portal are handled by Paddle."
+              }
+            ]
+          },
+          {
+            "heading": "Change or cancel",
+            "blocks": [
+              {
+                "p": "Switch between Pay-As-You-Go and Unlimited, or cancel, from the same page."
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "A quick check before each message makes sure you can cover it, so you're never charged for something you can't afford.",
+                  "That check uses a worst-case estimate — the real charge is usually smaller, and the difference stays in your favour."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Cancel any subscription before <a href=\"/docs/deleting-your-account\">deleting your account</a>."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["plans-and-pricing", "trial-credit"]
+      },
+      "organisations-overview": {
+        "navTitle": "Organisations overview",
+        "metaTitle": "Organisations — Cognos Docs",
+        "metaDescription": "An Organisation is a billing and admin boundary for a team. It pays for shared work and keeps conversation content private from admins.",
+        "title": "Organisations",
+        "lead": "An Organisation is a billing and admin boundary for a team. It pays for shared work — and keeps content private, even from admins.",
+        "time": "4 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "What an Organisation is",
+            "blocks": [
+              {
+                "p": "An Organisation groups people through memberships, owns shared <a href=\"/docs/organisation-projects\">Projects</a>, and pays one pooled bill. There are three roles:"
+              },
+              {
+                "ul": [
+                  "<b>Owner</b> — billing and dissolving the Organisation.",
+                  "<b>Admin</b> — members, seats, policy, and the usage dashboard.",
+                  "<b>Member</b> — works in the projects they're added to."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Organisations are available to selected design partners today."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Invite people",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Create an invite",
+                    "body": "In Settings → Team, create an invite and copy the link (it's shown once)."
+                  },
+                  {
+                    "title": "Send it your way",
+                    "body": "Share the link however you like — Cognos doesn't email it for you."
+                  },
+                  {
+                    "title": "They accept, you add them",
+                    "body": "The invitee signs up if needed, then opens the link to join. An Admin then adds them to specific projects."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Invite links are single-use and expire after 14 days. Lost a link? Revoke it and issue a new one."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "What admins can and can't see",
+            "blocks": [
+              {
+                "note": {
+                  "variant": "security",
+                  "title": "Metadata only — never content",
+                  "body": "Admins see usage metadata: seats, per-member cost, and model mix. They never see message content, conversation titles, or memory."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["seats-and-billing", "organisation-projects", "projects"]
+      },
+      "seats-and-billing": {
+        "navTitle": "Seats & billing",
+        "metaTitle": "Organisation seats & billing — Cognos Docs",
+        "metaDescription": "Organisations pay one bill: CHF 15 per seat per month, with a three-seat (CHF 45) minimum. How pooled usage and overage work.",
+        "title": "Seats & billing",
+        "lead": "Organisations pay one bill: CHF 15 per seat per month, with a three-seat (CHF 45) minimum.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Seats",
+            "blocks": [
+              {
+                "p": "Every active membership takes one seat, billed at CHF 15 per seat per month. An Organisation is always billed for at least three seats (CHF 45 a month), even with fewer active people."
+              }
+            ]
+          },
+          {
+            "heading": "Pooled usage",
+            "blocks": [
+              {
+                "p": "All members' work in Organisation projects pools into one bill. Usage above the combined seat floor is billed as a single overage line at the end of the cycle. Organisation work always bills the Organisation — never a member's personal balance."
+              }
+            ]
+          },
+          {
+            "heading": "Good to know",
+            "blocks": [
+              {
+                "ul": [
+                  "There's no Organisation trial — billing starts from day one.",
+                  "Removing a seat mid-cycle isn't refunded; the count drops at the next cycle, and never below three.",
+                  "If Organisation billing lapses, its <a href=\"/docs/organisation-projects\">projects</a> go read-only for everyone until it's resolved."
+                ]
+              }
+            ]
+          }
+        ],
+        "related": [
+          "organisations-overview",
+          "organisation-projects",
+          "plans-and-pricing"
+        ]
+      },
+      "organisation-projects": {
+        "navTitle": "Organisation projects",
+        "metaTitle": "Organisation projects — Cognos Docs",
+        "metaDescription": "Organisation projects are shared workspaces owned by the organisation. Work in them is billed to the organisation.",
+        "title": "Organisation projects",
+        "lead": "Organisation projects are shared workspaces owned by the Organisation. Work in them is billed to the Organisation.",
+        "time": "3 min read",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Access",
+            "blocks": [
+              {
+                "p": "Only active members can be added to an Organisation project, each as a Viewer, Editor, or Admin. Organisation Admins are Admins on every Organisation project automatically. The mechanics are the same as personal <a href=\"/docs/projects\">Projects</a>."
+              }
+            ]
+          },
+          {
+            "heading": "Billing & lapses",
+            "blocks": [
+              {
+                "p": "Every message in an Organisation project bills the <a href=\"/docs/seats-and-billing\">Organisation</a>, not the person typing. If Organisation billing lapses, its projects become read-only for everyone until it's fixed."
+              }
+            ]
+          },
+          {
+            "heading": "When someone leaves",
+            "blocks": [
+              {
+                "p": "Offboarding cuts a person's access first, then a key rotation locks them out of future messages. Their personal account and personal data are untouched."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "<a href=\"/docs/attachments\">Attachments</a> are personal even here — members can't open each other's files, and shared file libraries aren't available yet."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["organisations-overview", "seats-and-billing", "projects"]
+      }
+    }
   }
 }

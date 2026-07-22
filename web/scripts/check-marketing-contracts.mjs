@@ -132,6 +132,16 @@ const optionalUntilTranslated = new Set([
   'pages.terms.sections[]',
 ]);
 
+/** Key subtrees translated incrementally, English-only until native copy lands.
+ * The documentation catalogue (`docs.*`) ships English first and is translated
+ * page-by-page; `useTranslations().raw` falls back to English for any key a
+ * locale has not yet filled in. Same rationale as the legal bodies above — a
+ * locale may omit these keys (never stub them as empty arrays, which are truthy
+ * and would block the English fallback). */
+const optionalKeyPrefixes = ['docs.'];
+const isOptionalKey = (key) =>
+  optionalUntilTranslated.has(key) || optionalKeyPrefixes.some((prefix) => key.startsWith(prefix));
+
 const englishCatalogue = JSON.parse(
   await readFile(new URL('en.json', localeDirectory), 'utf8'),
 );
@@ -145,10 +155,8 @@ for (const locale of locales) {
     await readFile(new URL(`${locale}.json`, localeDirectory), 'utf8'),
   );
   const keys = collectKeys(catalogue).sort();
-  const missing = englishKeys.filter(
-    (key) => !keys.includes(key) && !optionalUntilTranslated.has(key),
-  );
-  const extra = keys.filter((key) => !englishKeys.includes(key));
+  const missing = englishKeys.filter((key) => !keys.includes(key) && !isOptionalKey(key));
+  const extra = keys.filter((key) => !englishKeys.includes(key) && !isOptionalKey(key));
   if (missing.length > 0 || extra.length > 0) {
     throw new Error(
       `${locale}: catalogue key tree must match en.json` +

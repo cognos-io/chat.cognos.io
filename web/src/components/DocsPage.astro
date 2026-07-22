@@ -1,0 +1,193 @@
+---
+import '../styles/docs.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import Icon from './Icon.astro';
+import DocsSidebar from './DocsSidebar.astro';
+import DocsBlock from './DocsBlock.astro';
+import { docGroupOf, docNeighbours, localizeHtml, type DocsSection } from '../lib/docs';
+import { localizedPath, useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** Page slug, or 'index' for the docs home. */
+  slug: string;
+}
+const { lang, slug } = Astro.props;
+const t = useTranslations(lang);
+
+const isHome = slug === 'index';
+const base = isHome ? 'docs.home' : `docs.pages.${slug}`;
+const path = isHome ? '/docs' : `/docs/${slug}`;
+
+const sections = t.raw<DocsSection[]>(`${base}.sections`) ?? [];
+const needs = t.raw<string[]>(`${base}.needs`) ?? [];
+const relatedSlugs = t.raw<string[]>(`${base}.related`) ?? [];
+
+const time = t(`${base}.time`);
+const hasTime = time !== `${base}.time`;
+const updated = t(`${base}.updated`);
+const hasUpdated = updated !== `${base}.updated`;
+
+const group = docGroupOf(slug);
+const eyebrow = isHome ? t('docs.meta.eyebrow') : group ? t(`docs.nav.${group.id}`) : '';
+
+const { prev, next } = isHome ? { prev: null, next: null } : docNeighbours(slug);
+
+// In-page "on this page" anchors, mirroring the section ids rendered below.
+const tocItems = sections.map((section, index) => ({
+  label: section.heading,
+  href: `#section-${index + 1}`,
+}));
+
+const relatedCards = relatedSlugs.map((rel) => ({
+  to: localizedPath(lang, `/docs/${rel}`),
+  title: t(`docs.pages.${rel}.navTitle`),
+  body: t(`docs.pages.${rel}.lead`),
+}));
+---
+
+<BaseLayout
+  lang={lang}
+  title={t(`${base}.metaTitle`)}
+  description={t(`${base}.metaDescription`)}
+  path={path}
+>
+  <Navbar t={t} lang={lang} path={path} />
+
+  <div class="docs-shell wrap">
+    <details class="docs-sidebar-toggle">
+      <summary>
+        <Icon name="Menu" size={16} />
+        {t('docs.meta.browse')}
+      </summary>
+      <DocsSidebar t={t} lang={lang} current={slug} />
+    </details>
+
+    <aside class="docs-sidebar" aria-label={t('docs.meta.navLabel')}>
+      <DocsSidebar t={t} lang={lang} current={slug} />
+    </aside>
+
+    <main id="main-content" class="docs-main">
+      <article class="docs-article">
+        <header class="docs-article__head">
+          <nav class="docs-breadcrumb" aria-label={t('docs.meta.breadcrumb')}>
+            <a href={localizedPath(lang, '/docs')}>{t('docs.meta.home')}</a>
+            {eyebrow && <><span aria-hidden="true">/</span><span>{eyebrow}</span></>}
+          </nav>
+          <h1 class="docs-article__title">{t(`${base}.title`)}</h1>
+          <p class="docs-article__lead">{t(`${base}.lead`)}</p>
+
+          {
+            (hasTime || hasUpdated) && (
+              <p class="docs-article__meta">
+                {hasTime && (
+                  <span>
+                    <Icon name="Clock" size={13} /> {time}
+                  </span>
+                )}
+                {hasUpdated && (
+                  <span>
+                    <Icon name="CalendarClock" size={13} /> {t('docs.meta.updatedLabel')} {updated}
+                  </span>
+                )}
+              </p>
+            )
+          }
+        </header>
+
+        {
+          needs.length > 0 && (
+            <aside class="docs-note docs-note--info docs-needs">
+              <span class="docs-note__icon" aria-hidden="true">
+                <Icon name="ListChecks" size={18} />
+              </span>
+              <div class="docs-note__body">
+                <p class="docs-note__title">{t('docs.meta.needLabel')}</p>
+                <ul>
+                  {needs.map((item) => (
+                    <li set:html={localizeHtml(item, lang)} />
+                  ))}
+                </ul>
+              </div>
+            </aside>
+          )
+        }
+
+        <div class="text-page__body docs-body">
+          {
+            sections.map((section, index) => (
+              <section id={`section-${index + 1}`}>
+                <h2>
+                  {!isHome && <span class="text-page__section-number">{index + 1}</span>}
+                  {section.heading}
+                </h2>
+                {section.blocks.map((block) => (
+                  <DocsBlock block={block} lang={lang} />
+                ))}
+              </section>
+            ))
+          }
+        </div>
+
+        {
+          relatedCards.length > 0 && (
+            <section class="docs-related">
+              <h2>{t('docs.meta.relatedLabel')}</h2>
+              <div class="docs-cards">
+                {relatedCards.map((card) => (
+                  <a class="docs-card" href={card.to}>
+                    <span class="docs-card__title">{card.title}</span>
+                    <span class="docs-card__body">{card.body}</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )
+        }
+
+        {
+          (prev || next) && (
+            <nav class="docs-pager" aria-label={t('docs.meta.pagerLabel')}>
+              {prev ? (
+                <a class="docs-pager__link docs-pager__link--prev" href={localizedPath(lang, `/docs/${prev}`)}>
+                  <span class="docs-pager__dir"><Icon name="ArrowLeft" size={14} /> {t('docs.meta.prev')}</span>
+                  <span class="docs-pager__title">{t(`docs.pages.${prev}.navTitle`)}</span>
+                </a>
+              ) : (
+                <span />
+              )}
+              {next && (
+                <a class="docs-pager__link docs-pager__link--next" href={localizedPath(lang, `/docs/${next}`)}>
+                  <span class="docs-pager__dir">{t('docs.meta.next')} <Icon name="ArrowRight" size={14} /></span>
+                  <span class="docs-pager__title">{t(`docs.pages.${next}.navTitle`)}</span>
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </article>
+
+      {
+        tocItems.length > 1 && (
+          <aside class="docs-toc" aria-label={t('docs.meta.tocLabel')}>
+            <div class="docs-toc__inner">
+              <p class="docs-toc__label">{t('docs.meta.onThisPage')}</p>
+              <nav class="docs-toc__nav">
+                {tocItems.map((item, index) => (
+                  <a class="docs-toc__link" href={item.href}>
+                    <span>{index + 1}</span>
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </aside>
+        )
+      }
+    </main>
+  </div>
+
+  <Footer t={t} lang={lang} path={path} />
+</BaseLayout>
