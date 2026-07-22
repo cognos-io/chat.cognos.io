@@ -25,3 +25,7 @@ The backend:
 No partial import survives a failed transaction. Imports are standalone Conversations; moving them
 to a Project is a separate [Conversation Project membership](./conversation-project-membership.md)
 operation.
+
+Synthetic current-shape fixtures live under
+`frontend/src/app/import/fixtures/` (OP-034). Refresh them when OpenAI or Anthropic change export
+shapes, then re-run `import-parser.spec.ts` and the conversation-import browser suites.

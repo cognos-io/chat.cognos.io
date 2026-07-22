@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { makeTestAccount } from './fixtures';
 import {
@@ -12,6 +14,15 @@ import {
   submitRegister,
 } from './helpers';
 import { pinWorkerHasNoNetworkConsoleOrPersistence } from './import-worker-pins';
+
+const claudeFixturePath = resolve(
+  __dirname,
+  '../../frontend/src/app/import/fixtures/claude-conversations.json',
+);
+const chatgptFixturePath = resolve(
+  __dirname,
+  '../../frontend/src/app/import/fixtures/chatgpt-conversations.json',
+);
 
 test('import worker has no network, console or persistence capability', async () => {
   await pinWorkerHasNoNetworkConsoleOrPersistence();
@@ -47,27 +58,10 @@ test('imports a Claude export locally and sends only ciphertext to Cognos', asyn
   await expect(page.getByRole('heading', { name: 'Export from Claude' })).toBeVisible();
 
   const privateMarker = 'SYNTHETIC-LOCAL-IMPORT-MARKER-b1946ac9';
-  const exportJson = JSON.stringify([
-    {
-      uuid: 'synthetic-conversation',
-      name: 'Synthetic private planning',
-      created_at: '2026-01-02T10:00:00Z',
-      chat_messages: [
-        {
-          uuid: 'synthetic-user-message',
-          sender: 'human',
-          text: privateMarker,
-          created_at: '2026-01-02T10:00:00Z',
-        },
-        {
-          uuid: 'synthetic-assistant-message',
-          sender: 'assistant',
-          text: 'Synthetic imported answer',
-          created_at: '2026-01-02T10:00:01Z',
-        },
-      ],
-    },
-  ]);
+  // OP-034: current-shape Claude fixture (text + content blocks). Import only
+  // the first conversation so the ciphertext-only assertion stays focused.
+  const claudeExport = JSON.parse(readFileSync(claudeFixturePath, 'utf8')) as unknown[];
+  const exportJson = JSON.stringify([claudeExport[0]]);
   await page.getByLabel('Choose your export file').setInputFiles({
     name: 'claude-export.json',
     mimeType: 'application/json',
@@ -85,4 +79,36 @@ test('imports a Claude export locally and sends only ciphertext to Cognos', asyn
   expect(requestBodies.join('\n')).not.toContain(privateMarker);
   expect(apiPaths).toContain('/api/v1/conversation-imports');
   expect(apiPaths.some((path) => path.includes('/complete'))).toBe(false);
+});
+
+test('imports a ChatGPT export fixture and splits sibling branches (OP-034)', async ({
+  page,
+}) => {
+  const account = makeTestAccount();
+  await gotoRegister(page);
+  await fillRegisterForm(page, account);
+  await submitRegister(page, account);
+  await expectAccountKeyDialogForNewUser(page);
+  await captureGeneratedAccountKey(page);
+  await copyAccountKey(page);
+  await acknowledgeAccountKey(page);
+  await createEncryptedBackup(page);
+
+  await page.getByRole('link', { name: 'Bring existing Conversations' }).click();
+  await page.getByRole('button', { name: 'ChatGPT' }).click();
+
+  const chatgptExport = readFileSync(chatgptFixturePath);
+  await page.getByLabel('Choose your export file').setInputFiles({
+    name: 'conversations.json',
+    mimeType: 'application/json',
+    buffer: chatgptExport,
+  });
+
+  await expect(
+    page.getByRole('heading', { name: 'Review before importing' }),
+  ).toBeVisible();
+  // Linear + two branch Conversations from the current-shape fixture.
+  await expect(page.getByText('Synthetic planning chat')).toBeVisible();
+  await expect(page.getByText('Synthetic research fork (1)')).toBeVisible();
+  await expect(page.getByText('Synthetic research fork (2)')).toBeVisible();
 });

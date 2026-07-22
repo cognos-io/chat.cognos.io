@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import {
   composer,
@@ -245,37 +247,19 @@ test.describe('persona walkthrough: Luca — privacy upgrader / Claude import', 
     page,
   }) => {
     test.setTimeout(180_000);
-    const forkExport = JSON.stringify([
-      {
-        id: 'luca-fork',
-        title: 'Research fork',
-        create_time: 1_700_000_000,
-        mapping: {
-          root: { parent: null, message: null },
-          user: {
-            parent: 'root',
-            message: {
-              author: { role: 'user' },
-              content: { content_type: 'text', parts: ['Which research direction?'] },
-            },
-          },
-          assistantA: {
-            parent: 'user',
-            message: {
-              author: { role: 'assistant' },
-              content: { content_type: 'text', parts: ['Direction A insight'] },
-            },
-          },
-          assistantB: {
-            parent: 'user',
-            message: {
-              author: { role: 'assistant' },
-              content: { content_type: 'text', parts: ['Direction B insight'] },
-            },
-          },
-        },
-      },
-    ]);
+    const forkExport = readFileSync(
+      resolve(
+        __dirname,
+        '../../frontend/src/app/import/fixtures/chatgpt-conversations.json',
+      ),
+      'utf8',
+    );
+    // Fixture includes a linear chat + the research fork — keep only the fork
+    // conversation for this branch-label assertion.
+    const parsed = JSON.parse(forkExport) as { title?: string }[];
+    const forkOnly = JSON.stringify(
+      parsed.filter((c) => c.title === 'Synthetic research fork'),
+    );
 
     await provisionUnlockedAccount(page);
     await page.getByRole('link', { name: 'Bring existing Conversations' }).click();
@@ -283,7 +267,7 @@ test.describe('persona walkthrough: Luca — privacy upgrader / Claude import', 
     await page.getByLabel('Choose your export file').setInputFiles({
       name: 'luca-fork.json',
       mimeType: 'application/json',
-      buffer: Buffer.from(forkExport),
+      buffer: Buffer.from(forkOnly),
     });
 
     await expect(
@@ -292,8 +276,8 @@ test.describe('persona walkthrough: Luca — privacy upgrader / Claude import', 
     await expect(
       page.getByText('2 Conversations and 4 Messages are ready to review.'),
     ).toBeVisible();
-    await expect(page.getByText('Research fork (1)')).toBeVisible();
-    await expect(page.getByText('Research fork (2)')).toBeVisible();
+    await expect(page.getByText('Synthetic research fork (1)')).toBeVisible();
+    await expect(page.getByText('Synthetic research fork (2)')).toBeVisible();
     await expectNoRawI18nKeys(page, 'chatgpt branch split preview');
   });
 

@@ -1,0 +1,99 @@
+[
+  {
+    "uuid": "synth-claude-linear-001",
+    "name": "Synthetic private planning",
+    "summary": "",
+    "created_at": "2026-02-14T10:04:22.000Z",
+    "updated_at": "2026-02-14T10:22:41.000Z",
+    "account": { "uuid": "synth-account-001" },
+    "chat_messages": [
+      {
+        "uuid": "synth-claude-user-1",
+        "text": "SYNTHETIC-LOCAL-IMPORT-MARKER-b1946ac9",
+        "content": [
+          {
+            "type": "text",
+            "text": "SYNTHETIC-LOCAL-IMPORT-MARKER-b1946ac9"
+          }
+        ],
+        "sender": "human",
+        "index": 0,
+        "created_at": "2026-02-14T10:04:22.000Z",
+        "updated_at": "2026-02-14T10:04:22.000Z",
+        "truncated": false,
+        "attachments": [],
+        "files": [],
+        "files_v2": [],
+        "sync_sources": [],
+        "parent_message_uuid": null
+      },
+      {
+        "uuid": "synth-claude-assistant-1",
+        "text": "Synthetic imported answer",
+        "content": [
+          {
+            "type": "text",
+            "text": "Synthetic imported answer"
+          }
+        ],
+        "sender": "assistant",
+        "index": 1,
+        "created_at": "2026-02-14T10:04:35.000Z",
+        "updated_at": "2026-02-14T10:04:35.000Z",
+        "truncated": false,
+        "stop_reason": "end_turn",
+        "attachments": [],
+        "files": [],
+        "files_v2": [],
+        "sync_sources": [],
+        "parent_message_uuid": "synth-claude-user-1"
+      }
+    ]
+  },
+  {
+    "uuid": "synth-claude-content-only-001",
+    "name": "Synthetic content-block conversation",
+    "created_at": "2026-03-01T09:00:00.000Z",
+    "updated_at": "2026-03-01T09:01:00.000Z",
+    "model": "claude-sonnet-4-20250514",
+    "project_uuid": null,
+    "chat_messages": [
+      {
+        "uuid": "synth-claude-content-user",
+        "text": "",
+        "content": [
+          {
+            "type": "text",
+            "text": "Content-block only question"
+          }
+        ],
+        "sender": "human",
+        "created_at": "2026-03-01T09:00:00.000Z",
+        "attachments": [{ "file_name": "notes.txt" }],
+        "files": [],
+        "files_v2": [],
+        "parent_message_uuid": null
+      },
+      {
+        "uuid": "synth-claude-content-assistant",
+        "text": "",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "internal scratch — must not surface"
+          },
+          {
+            "type": "text",
+            "text": "Content-block only answer"
+          }
+        ],
+        "sender": "assistant",
+        "created_at": "2026-03-01T09:00:30.000Z",
+        "attachments": [],
+        "files": [],
+        "files_v2": [],
+        "parent_message_uuid": "synth-claude-content-user"
+      }
+    ]
+  }
+]

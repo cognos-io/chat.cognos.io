@@ -1,8 +1,63 @@
 import fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 
+import chatgptFixture from './fixtures/chatgpt-conversations.json';
+import claudeFixture from './fixtures/claude-conversations.json';
 import { parseImportJson } from './import-parser';
 
 describe('parseImportJson', () => {
+  it('maps a current-shape ChatGPT fixture (linear + tool hop)', () => {
+    const preview = parseImportJson('chatgpt', JSON.stringify(chatgptFixture));
+    const linear = preview.conversations.find((c) =>
+      c.title.includes('Synthetic planning'),
+    );
+    expect(linear).toBeDefined();
+    expect(linear!.messages.map(({ role, text }) => ({ role, text }))).toEqual([
+      { role: 'user', text: 'Synthetic question about a weekend itinerary' },
+      { role: 'assistant', text: 'Synthetic answer with a calm itinerary outline' },
+    ]);
+    expect(preview.totals.tools).toBeGreaterThanOrEqual(1);
+  });
+
+  it('splits ChatGPT sibling branches from the current-shape fixture', () => {
+    const preview = parseImportJson('chatgpt', JSON.stringify(chatgptFixture));
+    const branches = preview.conversations.filter((c) =>
+      c.title.startsWith('Synthetic research fork'),
+    );
+    expect(branches).toHaveLength(2);
+    expect(branches.map((c) => c.title).sort()).toEqual([
+      'Synthetic research fork (1)',
+      'Synthetic research fork (2)',
+    ]);
+    expect(preview.totals.ambiguousBranches).toBeGreaterThanOrEqual(1);
+  });
+
+  it('maps a current-shape Claude fixture with text + content blocks', () => {
+    const preview = parseImportJson('claude', JSON.stringify(claudeFixture));
+    const linear = preview.conversations.find(
+      (c) => c.title === 'Synthetic private planning',
+    );
+    expect(linear).toBeDefined();
+    expect(linear!.messages).toHaveLength(2);
+    expect(linear!.messages[0].text).toContain('SYNTHETIC-LOCAL-IMPORT-MARKER');
+    expect(linear!.messages[1].text).toBe('Synthetic imported answer');
+  });
+
+  it('falls back to Claude content blocks when text is empty', () => {
+    const preview = parseImportJson('claude', JSON.stringify(claudeFixture));
+    const contentOnly = preview.conversations.find(
+      (c) => c.title === 'Synthetic content-block conversation',
+    );
+    expect(contentOnly).toBeDefined();
+    expect(contentOnly!.messages.map(({ role, text }) => ({ role, text }))).toEqual([
+      { role: 'user', text: 'Content-block only question' },
+      { role: 'assistant', text: 'Content-block only answer' },
+    ]);
+    // Thinking blocks must never surface as message text.
+    expect(contentOnly!.messages[1].text).not.toContain('internal scratch');
+    expect(contentOnly!.warnings.attachments).toBe(1);
+  });
+
   it('maps a linear ChatGPT graph and excludes tool content visibly', () => {
     const preview = parseImportJson(
       'chatgpt',

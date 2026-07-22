@@ -180,10 +180,16 @@ function parseClaude(value: unknown): ImportedConversation[] {
       if (Array.isArray(raw['attachments']))
         warnings.attachments += raw['attachments'].length;
       if (Array.isArray(raw['files'])) warnings.attachments += raw['files'].length;
+      if (Array.isArray(raw['files_v2']))
+        warnings.attachments += raw['files_v2'].length;
       const sender = raw['sender'];
       const role =
         sender === 'human' ? 'user' : sender === 'assistant' ? 'assistant' : null;
-      const text = safeText(raw['text']).trim();
+      // Prefer the rendered `text` field; fall back to content blocks when
+      // newer Claude exports leave `text` empty (OP-034 current-shape fixtures).
+      const text = (
+        safeText(raw['text']).trim() || claudeContentText(raw['content'])
+      ).trim();
       if (!role || !text) {
         warnings.unsupported += 1;
         continue;
@@ -263,6 +269,20 @@ function safeIso(value: unknown): string | undefined {
 
 function safeText(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+// Claude exports increasingly ship a `content` block array alongside (or
+// instead of) the rendered `text` field. Only surface human-visible text
+// blocks — never thinking / tool_use scratch.
+function claudeContentText(value: unknown): string {
+  if (!Array.isArray(value)) return '';
+  const parts: string[] = [];
+  for (const block of value) {
+    if (!isRecord(block) || block['type'] !== 'text') continue;
+    const text = safeText(block['text']).trim();
+    if (text) parts.push(text);
+  }
+  return parts.join('\n');
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

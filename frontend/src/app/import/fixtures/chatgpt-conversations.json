@@ -1,0 +1,144 @@
+[
+  {
+    "id": "synth-chatgpt-linear-001",
+    "conversation_id": "synth-chatgpt-linear-001",
+    "title": "Synthetic planning chat",
+    "create_time": 1736209400,
+    "update_time": 1736209800,
+    "current_node": "msg-assistant-1",
+    "default_model_slug": "gpt-4o",
+    "mapping": {
+      "client-created-root": {
+        "id": "client-created-root",
+        "message": {
+          "id": "client-created-root",
+          "author": { "role": "system", "name": null, "metadata": {} },
+          "create_time": null,
+          "content": { "content_type": "text", "parts": [""] },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 0,
+          "metadata": {},
+          "recipient": "all"
+        },
+        "parent": null,
+        "children": ["msg-user-1"]
+      },
+      "msg-user-1": {
+        "id": "msg-user-1",
+        "message": {
+          "id": "msg-user-1",
+          "author": { "role": "user", "name": null, "metadata": {} },
+          "create_time": 1736209410.12,
+          "content": {
+            "content_type": "text",
+            "parts": ["Synthetic question about a weekend itinerary"]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1,
+          "metadata": {},
+          "recipient": "all"
+        },
+        "parent": "client-created-root",
+        "children": ["msg-tool-1"]
+      },
+      "msg-tool-1": {
+        "id": "msg-tool-1",
+        "message": {
+          "id": "msg-tool-1",
+          "author": { "role": "tool", "name": "browser", "metadata": {} },
+          "create_time": 1736209411.01,
+          "content": {
+            "content_type": "text",
+            "parts": ["hidden tool browse result"]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1,
+          "metadata": {},
+          "recipient": "all"
+        },
+        "parent": "msg-user-1",
+        "children": ["msg-assistant-1"]
+      },
+      "msg-assistant-1": {
+        "id": "msg-assistant-1",
+        "message": {
+          "id": "msg-assistant-1",
+          "author": { "role": "assistant", "name": null, "metadata": {} },
+          "create_time": 1736209420.5,
+          "content": {
+            "content_type": "text",
+            "parts": ["Synthetic answer with a calm itinerary outline"]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1,
+          "metadata": { "model_slug": "gpt-4o" },
+          "recipient": "all"
+        },
+        "parent": "msg-tool-1",
+        "children": []
+      }
+    }
+  },
+  {
+    "id": "synth-chatgpt-branch-001",
+    "conversation_id": "synth-chatgpt-branch-001",
+    "title": "Synthetic research fork",
+    "create_time": 1736210000,
+    "update_time": 1736210500,
+    "current_node": "msg-assistant-b",
+    "mapping": {
+      "root": {
+        "id": "root",
+        "message": null,
+        "parent": null,
+        "children": ["msg-user"]
+      },
+      "msg-user": {
+        "id": "msg-user",
+        "message": {
+          "id": "msg-user",
+          "author": { "role": "user" },
+          "create_time": 1736210010,
+          "content": {
+            "content_type": "text",
+            "parts": ["Which research direction?"]
+          }
+        },
+        "parent": "root",
+        "children": ["msg-assistant-a", "msg-assistant-b"]
+      },
+      "msg-assistant-a": {
+        "id": "msg-assistant-a",
+        "message": {
+          "id": "msg-assistant-a",
+          "author": { "role": "assistant" },
+          "create_time": 1736210020,
+          "content": {
+            "content_type": "text",
+            "parts": ["Direction A insight"]
+          }
+        },
+        "parent": "msg-user",
+        "children": []
+      },
+      "msg-assistant-b": {
+        "id": "msg-assistant-b",
+        "message": {
+          "id": "msg-assistant-b",
+          "author": { "role": "assistant" },
+          "create_time": 1736210030,
+          "content": {
+            "content_type": "text",
+            "parts": ["Direction B insight"]
+          }
+        },
+        "parent": "msg-user",
+        "children": []
+      }
+    }
+  }
+]

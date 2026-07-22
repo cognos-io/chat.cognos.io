@@ -28,7 +28,8 @@ XSS report.
 Closed in this engineering pass (removed from the queue): OP-006 registration rate limit, OP-007
 sign out other devices, OP-008 TOTP seed encryption keyring, OP-010 auth error focus + marketing
 catalogue-key parity, OP-014 PAYG one-per-cycle soft alert (hard breaker + founder max beta
-exposure deferred pending real spend data), OP-036 property-test coverage refresh.
+exposure deferred pending real spend data), OP-034 ChatGPT/Claude import fixtures, OP-036
+property-test coverage refresh.
 
 ## Operations and billing
 
@@ -83,7 +84,6 @@ roadmap items. Drop them unless customer evidence brings them back.
 | OP-031 | P2                | Domain verification, SSO and SCIM are unbuilt.                                                      | Treat them as one Enterprise identity programme; require an Account-Key compatibility design before SSO/SCIM.         |
 | OP-032 | P2                | Analytics opt-out UI, self-hosting, proxying and revenue properties are optional enhancements.      | Keep the current privacy-preserving interface; revisit only after the production measurement loop works.              |
 | OP-033 | P2                | Standalone authenticated Conversation-sharing UI is absent although backend Participant APIs exist. | Build only if product research prefers it alongside Public shares and Team Projects.                                  |
-| OP-034 | P1 quality        | Conversation-import adapters need synthetic fixtures from current ChatGPT and Claude exports.       | Refresh fixtures, verify adapters, then run focused and full browser suites.                                          |
 | OP-035 | P2 infrastructure | Same-origin app/API serving and edge HTTP/2/3 behaviour are not verified.                           | Evaluate same-origin first because it removes connection overhead; treat protocol verification as secondary evidence. |
 
 Refund fulfilment remains operator-driven for beta. Keep the UI explicit that it submits a request;
