@@ -1628,6 +1628,14 @@
         "copiedToast": "Account Key copied",
         "downloadedToast": "Emergency Kit downloaded"
       },
+      "sessions": {
+        "heading": "Sign out other devices",
+        "description": "If you signed in elsewhere or think someone else has access, sign out every other device. You'll stay signed in here.",
+        "button": "Sign out other devices",
+        "signingOut": "Signing out…",
+        "successToast": "Other devices signed out",
+        "errorToast": "Couldn't sign out other devices. Please try again."
+      },
       "passwordHeading": "Password"
     },
     "bookmarks": {

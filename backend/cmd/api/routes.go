@@ -367,6 +367,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.POST(
+		"/api/v1/account/sessions/revoke-others",
+		handler.AccountSessionsRevokeOthers(app, mfaStore),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	// MFA login completion. Unauthenticated by design: the caller holds an
 	// mfaSessionId (proof the password factor passed), not a token yet. Rate
 	// limited by IP; brute-force is further bounded by the per-session burn and

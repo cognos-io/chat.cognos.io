@@ -1628,6 +1628,14 @@
         "copiedToast": "Clave de cuenta copiada",
         "downloadedToast": "Kit de emergencia descargado"
       },
+      "sessions": {
+        "heading": "Cerrar sesión en otros dispositivos",
+        "description": "Si iniciaste sesión en otro sitio o crees que alguien más tiene acceso, cierra la sesión en todos los demás dispositivos. Seguirás conectado aquí.",
+        "button": "Cerrar sesión en otros dispositivos",
+        "signingOut": "Cerrando sesión…",
+        "successToast": "Sesión cerrada en otros dispositivos",
+        "errorToast": "No se pudo cerrar la sesión en otros dispositivos. Inténtalo de nuevo."
+      },
       "passwordHeading": "Contraseña"
     },
     "bookmarks": {

@@ -28,6 +28,7 @@ import { normalizeAccountRetention } from '@app/utils/retention';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { Analytics } from './analytics/analytics';
+import { CognosApiService } from './cognos-api.service';
 import { ErrorService } from './error.service';
 import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
@@ -41,11 +42,7 @@ import { TrustedUnlockService } from './trusted-unlock.service';
 const UNVERIFIED_REFRESH_INTERVAL_MS = 5_000;
 
 export type LoginStatus =
-  | 'pending'
-  | 'authenticating'
-  | 'mfa_required'
-  | 'success'
-  | 'error';
+  'pending' | 'authenticating' | 'mfa_required' | 'success' | 'error';
 
 export type AuthUser = AuthModel | null | undefined;
 
@@ -83,6 +80,7 @@ export class AuthService implements OnDestroy {
   private readonly _transloco = inject(TranslocoService);
   private readonly _mfaService = inject(MfaService);
   private readonly _analytics = inject(Analytics);
+  private readonly _cognosApi = inject(CognosApiService);
 
   readonly login$ = new Subject<LoginRequest>();
   readonly logout$ = new Subject<boolean>();
@@ -566,6 +564,29 @@ export class AuthService implements OnDestroy {
       map((authData) => authData.record as AuthUser),
       catchError((error) => {
         console.error('Unable to change password', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /**
+   * Sign out every other device by rotating the auth token key. On success the
+   * issued token is saved into the authStore so this session stays signed in.
+   * Local MFA device trust is cleared to match the server revoke of trusted
+   * devices (other machines must complete a fresh second factor).
+   */
+  revokeOtherSessions(): Observable<AuthUser> {
+    return this._cognosApi.revokeOtherSessions().pipe(
+      tap((res) => {
+        this._pb.authStore.save(res.token, res.record);
+        const email = (res.record as { email?: string } | null)?.email;
+        if (email) {
+          this._mfaService.clearDeviceToken(email);
+        }
+      }),
+      map((res) => res.record as AuthUser),
+      catchError((error) => {
+        console.error('Unable to revoke other sessions', error);
         return throwError(() => error);
       }),
     );

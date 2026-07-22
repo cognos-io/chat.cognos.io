@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
-import PocketBase from 'pocketbase';
+import PocketBase, { AuthModel } from 'pocketbase';
 
 import { Observable, Subscriber, filter, from, last, map } from 'rxjs';
 
@@ -52,6 +52,11 @@ import {
 import { Citation, CitationAnchor } from '@app/utils/citations';
 
 import { environment } from '@environments/environment';
+
+export interface AuthTokenResponse {
+  token: string;
+  record: AuthModel;
+}
 
 export interface CompletionMessageRequest {
   role: 'user' | 'assistant' | 'system';
@@ -1512,6 +1517,15 @@ export class CognosApiService {
       headers: this.authHeaders(),
       body: { password, totpCode },
     });
+  }
+
+  /** Rotates the caller's auth token key, revoking every other session. */
+  revokeOtherSessions(): Observable<AuthTokenResponse> {
+    return this._http.post<AuthTokenResponse>(
+      `${this._baseUrl}/api/v1/account/sessions/revoke-others`,
+      {},
+      { headers: this.authHeaders() },
+    );
   }
 
   listConversationMessages(

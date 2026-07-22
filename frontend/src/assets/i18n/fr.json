@@ -1628,6 +1628,14 @@
         "copiedToast": "Clé de compte copiée",
         "downloadedToast": "Kit d'urgence téléchargé"
       },
+      "sessions": {
+        "heading": "Déconnecter les autres appareils",
+        "description": "Si vous vous êtes connecté ailleurs ou pensez qu'une autre personne a accès, déconnectez tous les autres appareils. Vous resterez connecté ici.",
+        "button": "Déconnecter les autres appareils",
+        "signingOut": "Déconnexion…",
+        "successToast": "Autres appareils déconnectés",
+        "errorToast": "Impossible de déconnecter les autres appareils. Veuillez réessayer."
+      },
       "passwordHeading": "Mot de passe"
     },
     "bookmarks": {

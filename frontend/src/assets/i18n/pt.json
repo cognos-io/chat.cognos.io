@@ -1628,6 +1628,14 @@
         "copiedToast": "Chave de Conta copiada",
         "downloadedToast": "Kit de Emergência transferido"
       },
+      "sessions": {
+        "heading": "Terminar sessão noutros dispositivos",
+        "description": "Se iniciaste sessão noutro sítio ou achas que outra pessoa tem acesso, termina a sessão em todos os outros dispositivos. Manténs-te com sessão iniciada aqui.",
+        "button": "Terminar sessão noutros dispositivos",
+        "signingOut": "A terminar sessão…",
+        "successToast": "Sessão terminada noutros dispositivos",
+        "errorToast": "Não foi possível terminar a sessão noutros dispositivos. Tenta novamente."
+      },
       "passwordHeading": "Palavra-passe"
     },
     "bookmarks": {

@@ -1628,6 +1628,14 @@
         "copiedToast": "Chiave dell'account copiata",
         "downloadedToast": "Kit di emergenza scaricato"
       },
+      "sessions": {
+        "heading": "Disconnetti altri dispositivi",
+        "description": "Se hai effettuato l'accesso altrove o pensi che qualcun altro abbia accesso, disconnetti tutti gli altri dispositivi. Resti connesso qui.",
+        "button": "Disconnetti altri dispositivi",
+        "signingOut": "Disconnessione…",
+        "successToast": "Altri dispositivi disconnessi",
+        "errorToast": "Impossibile disconnettere gli altri dispositivi. Riprova."
+      },
       "passwordHeading": "Password"
     },
     "bookmarks": {

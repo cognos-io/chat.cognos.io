@@ -1628,6 +1628,14 @@
         "copiedToast": "Account-Schlüssel kopiert",
         "downloadedToast": "Notfall-Kit heruntergeladen"
       },
+      "sessions": {
+        "heading": "Andere Geräte abmelden",
+        "description": "Wenn du dich woanders angemeldet hast oder jemand anderes Zugriff haben könnte, melde alle anderen Geräte ab. Auf diesem Gerät bleibst du angemeldet.",
+        "button": "Andere Geräte abmelden",
+        "signingOut": "Wird abgemeldet…",
+        "successToast": "Andere Geräte abgemeldet",
+        "errorToast": "Andere Geräte konnten nicht abgemeldet werden. Bitte versuche es erneut."
+      },
       "passwordHeading": "Passwort"
     },
     "bookmarks": {

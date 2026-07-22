@@ -61,7 +61,7 @@ var emailVerificationGatedRoutes = map[string]struct{}{
 // helper it doesn't understand), the test must fail loudly rather than pass
 // vacuously. Raise it as the surface grows; never lower it to "fix" a failure
 // without understanding why the count dropped.
-const minExpectedAPIv1Routes = 84
+const minExpectedAPIv1Routes = 86
 
 var routerHTTPMethods = map[string]string{
 	"GET":     http.MethodGet,

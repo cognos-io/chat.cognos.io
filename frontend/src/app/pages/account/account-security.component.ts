@@ -131,6 +131,25 @@ import { VaultService } from '@app/services/vault.service';
           </cog-button>
         </cog-card>
 
+        <cog-card
+          [heading]="t('settings.security.sessions.heading')"
+          [subtitle]="t('settings.security.sessions.description')"
+        >
+          <cog-button
+            card-actions
+            appearance="default"
+            icon="logout"
+            [disabled]="revokingOtherSessions()"
+            (click)="signOutOtherDevices()"
+          >
+            {{
+              revokingOtherSessions()
+                ? t('settings.security.sessions.signingOut')
+                : t('settings.security.sessions.button')
+            }}
+          </cog-button>
+        </cog-card>
+
         <!-- Two-factor authentication (relocated from the Account home). -->
         <app-mfa-settings />
       </app-settings-page>
@@ -177,6 +196,7 @@ export class AccountSecurityComponent {
   protected readonly newPassword = signal('');
   protected readonly changingPassword = signal(false);
   protected readonly passwordError = signal<string | null>(null);
+  protected readonly revokingOtherSessions = signal(false);
   protected readonly canChangePassword = computed(
     () =>
       !this.changingPassword() &&
@@ -253,6 +273,31 @@ export class AccountSecurityComponent {
         this.passwordError.set(
           this._transloco.translate('account.errors.passwordChange'),
         );
+      },
+    });
+  }
+
+  signOutOtherDevices(): void {
+    if (this.revokingOtherSessions()) {
+      return;
+    }
+
+    this.revokingOtherSessions.set(true);
+    this._auth.revokeOtherSessions().subscribe({
+      next: () => {
+        this.revokingOtherSessions.set(false);
+        this._toast.notify({
+          title: this._transloco.translate('settings.security.sessions.successToast'),
+          tone: 'success',
+          icon: 'logout',
+        });
+      },
+      error: () => {
+        this.revokingOtherSessions.set(false);
+        this._toast.notify({
+          title: this._transloco.translate('settings.security.sessions.errorToast'),
+          tone: 'danger',
+        });
       },
     });
   }
