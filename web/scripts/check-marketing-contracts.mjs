@@ -103,4 +103,73 @@ for (const locale of locales) {
   }
 }
 
-console.log('Marketing pricing and support contract checks passed.');
+/** Flatten nested object keys into dotted paths for catalogue-key parity.
+ * Arrays are compared as present/absent only (`path[]`).
+ *
+ * Privacy/terms body arrays (`facts`, `intro`, `sections`) may be absent in
+ * non-English catalogues on purpose: `useTranslations().raw` falls back to
+ * English until native-speaker / counsel copy lands (OP-015). Do not add empty
+ * `[]` stubs — empty arrays are truthy and block that fallback. */
+function collectKeys(value, prefix = '') {
+  if (Array.isArray(value)) {
+    return [prefix ? `${prefix}[]` : '[]'];
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.keys(value)
+      .sort()
+      .flatMap((key) => collectKeys(value[key], prefix ? `${prefix}.${key}` : key));
+  }
+  return [prefix];
+}
+
+/** Keys that may be English-only until OP-015 / counsel translation. */
+const optionalUntilTranslated = new Set([
+  'pages.privacy.facts[]',
+  'pages.privacy.intro[]',
+  'pages.privacy.sections[]',
+  'pages.terms.facts[]',
+  'pages.terms.intro[]',
+  'pages.terms.sections[]',
+]);
+
+const englishCatalogue = JSON.parse(
+  await readFile(new URL('en.json', localeDirectory), 'utf8'),
+);
+const englishKeys = collectKeys(englishCatalogue).sort();
+
+for (const locale of locales) {
+  if (locale === 'en') {
+    continue;
+  }
+  const catalogue = JSON.parse(
+    await readFile(new URL(`${locale}.json`, localeDirectory), 'utf8'),
+  );
+  const keys = collectKeys(catalogue).sort();
+  const missing = englishKeys.filter(
+    (key) => !keys.includes(key) && !optionalUntilTranslated.has(key),
+  );
+  const extra = keys.filter((key) => !englishKeys.includes(key));
+  if (missing.length > 0 || extra.length > 0) {
+    throw new Error(
+      `${locale}: catalogue key tree must match en.json` +
+        (missing.length ? `; missing ${missing.slice(0, 5).join(', ')}` : '') +
+        (extra.length ? `; extra ${extra.slice(0, 5).join(', ')}` : ''),
+    );
+  }
+
+  // Empty arrays are truthy and block useTranslations().raw English fallback.
+  for (const path of optionalUntilTranslated) {
+    const parts = path.replace(/\[\]$/, '').split('.');
+    let cursor = catalogue;
+    for (const part of parts) {
+      cursor = cursor?.[part];
+    }
+    if (Array.isArray(cursor) && cursor.length === 0) {
+      throw new Error(
+        `${locale}: ${path} must be omitted (not []) so English legal body fallback works until OP-015`,
+      );
+    }
+  }
+}
+
+console.log('Marketing pricing, support and catalogue-key parity checks passed.');

@@ -4,6 +4,7 @@
     "description": "Chat de IA privado con historial guardado de forma que no podemos leerlo. Cognos oculta los datos personales detectados antes del envío y usa proveedores de IA aprobados para responder en directo en la región que elijas."
   },
   "nav": {
+    "toggle": "Abrir menú",
     "how": "Cómo funciona",
     "compare": "Comparar",
     "features": "Funciones",
@@ -312,19 +313,24 @@
     "killer": "Esta página tampoco te está vigilando."
   },
   "pages": {
+    "tocLabel": "Índice",
     "privacy": {
       "metaTitle": "Privacidad — Cognos",
       "metaDescription": "Cómo trata Cognos tus datos. No guardamos ninguna copia legible de tus chats.",
       "eyebrow": "Privacidad",
       "title": "Política de privacidad",
-      "lead": "Cómo tratamos tu información — en lenguaje claro y con la privacidad por delante."
+      "lead": "Cómo tratamos tu información — en lenguaje claro y con la privacidad por delante.",
+      "effectiveLabel": "En vigor desde",
+      "effectiveDate": "10 de julio de 2026"
     },
     "terms": {
       "metaTitle": "Términos del servicio — Cognos",
       "metaDescription": "Los términos para usar Cognos.",
       "eyebrow": "Términos",
       "title": "Términos del servicio",
-      "lead": "El acuerdo entre tú y Cognos cuando usas el servicio."
+      "lead": "El acuerdo entre tú y Cognos cuando usas el servicio.",
+      "effectiveLabel": "En vigor desde",
+      "effectiveDate": "2 de julio de 2026"
     },
     "subprocessors": {
       "metaTitle": "Subencargados — Cognos",
@@ -829,5 +835,8 @@
       "lead": "Puede que el enlace sea antiguo o que la dirección esté mal escrita. No se ha perdido nada: aquí nunca hubo nada.",
       "cta": "Volver al inicio"
     }
+  },
+  "a11y": {
+    "skipToContent": "Saltar al contenido principal"
   }
 }

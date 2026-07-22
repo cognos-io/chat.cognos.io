@@ -25,6 +25,7 @@ func TestPocketBaseAuthRateLimitsAreConfigured(t *testing.T) {
 	for _, want := range []string{
 		"*:authRefresh",
 		"*:authWithPassword",
+		"users:create",
 		"*:requestVerification",
 		"*:requestPasswordReset",
 		"*:confirmPasswordReset",
@@ -36,10 +37,18 @@ func TestPocketBaseAuthRateLimitsAreConfigured(t *testing.T) {
 		}
 	}
 
-	// Password sign-in must stay tightly capped to slow brute-force guessing.
+	// Password sign-in and registration must stay tightly capped. Assert exact
+	// budgets so a Duration shrink or MaxRequests creep cannot pass silently.
 	for _, rule := range app.Settings().RateLimits.Rules {
-		if rule.Label == "*:authWithPassword" && rule.MaxRequests > 10 {
-			t.Fatalf("authWithPassword MaxRequests = %d, want <= 10", rule.MaxRequests)
+		switch rule.Label {
+		case "*:authWithPassword":
+			if rule.MaxRequests != 10 || rule.Duration != 300 {
+				t.Fatalf("authWithPassword = %d/%ds, want 10/300s", rule.MaxRequests, rule.Duration)
+			}
+		case "users:create":
+			if rule.MaxRequests != 5 || rule.Duration != 300 {
+				t.Fatalf("users:create = %d/%ds, want 5/300s", rule.MaxRequests, rule.Duration)
+			}
 		}
 	}
 }

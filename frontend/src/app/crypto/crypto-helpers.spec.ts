@@ -1,4 +1,6 @@
+import fc from 'fast-check';
 import nacl from 'tweetnacl';
+import { describe, expect, it } from 'vitest';
 
 import { hashBytes } from './hash';
 import { createSealedBox, openSealedBox } from './sealed-box';
@@ -27,6 +29,18 @@ describe('crypto helpers (worker-shared)', () => {
     it('produces a 32-byte key', () => {
       expect(randomSecretKey().length).toBe(32);
     });
+
+    // Property: secretBox/openSecretBox is a lossless round-trip for arbitrary
+    // byte payloads under a fresh key (crypto contract used by attachments).
+    it('round-trips arbitrary payloads under a fresh key', () => {
+      fc.assert(
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 256 }), (payload) => {
+          const key = randomSecretKey();
+          const opened = openSecretBox(secretBox(payload, key), key);
+          expect(opened).toEqual(payload);
+        }),
+      );
+    });
   });
 
   describe('sealed box', () => {
@@ -43,6 +57,19 @@ describe('crypto helpers (worker-shared)', () => {
       const sealed = createSealedBox(bytes('manifest json'), recipient.publicKey);
 
       expect(() => openSealedBox(sealed, stranger)).toThrow();
+    });
+
+    // Property: sealed boxes open only for the intended recipient key pair.
+    it('round-trips arbitrary payloads to the intended recipient only', () => {
+      fc.assert(
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 128 }), (payload) => {
+          const recipient = nacl.box.keyPair();
+          const stranger = nacl.box.keyPair();
+          const sealed = createSealedBox(payload, recipient.publicKey);
+          expect(openSealedBox(sealed, recipient)).toEqual(payload);
+          expect(() => openSealedBox(sealed, stranger)).toThrow();
+        }),
+      );
     });
   });
 

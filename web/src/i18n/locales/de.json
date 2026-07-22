@@ -4,6 +4,7 @@
     "description": "Privater KI-Chat mit verschlüsselt gespeichertem Verlauf. Cognos versteckt erkannte persönliche Angaben vor dem Senden und nutzt geprüfte KI-Anbieter für Live-Antworten in deiner gewählten Region."
   },
   "nav": {
+    "toggle": "Menü öffnen",
     "how": "So funktioniert's",
     "compare": "Vergleich",
     "features": "Funktionen",
@@ -312,19 +313,24 @@
     "killer": "Diese Seite beobachtet dich übrigens auch nicht."
   },
   "pages": {
+    "tocLabel": "Inhaltsverzeichnis",
     "privacy": {
       "metaTitle": "Datenschutz — Cognos",
       "metaDescription": "Wie Cognos mit deinen Daten umgeht. Wir behalten keine lesbare Kopie deiner Chats.",
       "eyebrow": "Datenschutz",
       "title": "Datenschutzerklärung",
-      "lead": "Wie wir mit deinen Daten umgehen — verständlich und mit Privatsphäre zuerst."
+      "lead": "Wie wir mit deinen Daten umgehen — verständlich und mit Privatsphäre zuerst.",
+      "effectiveLabel": "Gültig ab",
+      "effectiveDate": "10. Juli 2026"
     },
     "terms": {
       "metaTitle": "Nutzungsbedingungen — Cognos",
       "metaDescription": "Die Bedingungen für die Nutzung von Cognos.",
       "eyebrow": "Bedingungen",
       "title": "Nutzungsbedingungen",
-      "lead": "Die Vereinbarung zwischen dir und Cognos, wenn du den Dienst nutzt."
+      "lead": "Die Vereinbarung zwischen dir und Cognos, wenn du den Dienst nutzt.",
+      "effectiveLabel": "Gültig ab",
+      "effectiveDate": "2. Juli 2026"
     },
     "subprocessors": {
       "metaTitle": "Unterauftragsverarbeiter — Cognos",
@@ -823,5 +829,8 @@
       "lead": "Der Link ist vielleicht alt oder die Adresse vertippt. Es ist nichts verloren gegangen — hier war nie etwas.",
       "cta": "Zurück zur Startseite"
     }
+  },
+  "a11y": {
+    "skipToContent": "Zum Hauptinhalt springen"
   }
 }

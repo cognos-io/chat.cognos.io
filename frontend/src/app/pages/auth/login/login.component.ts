@@ -1,4 +1,13 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -91,7 +100,9 @@ import { AuthService } from '@services/auth.service';
             </cog-button>
 
             @if (mfaError()) {
-              <p class="auth-page__hint" role="alert">{{ mfaError() }}</p>
+              <p #mfaErrorAlert class="auth-page__hint" role="alert" tabindex="-1">
+                {{ mfaError() }}
+              </p>
             }
 
             <p class="auth-page__switch">
@@ -162,7 +173,9 @@ import { AuthService } from '@services/auth.service';
           </form>
 
           @if (authService.status() === 'error') {
-            <p class="auth-page__hint" role="alert">{{ t('auth.login.error') }}</p>
+            <p #submitError class="auth-page__hint" role="alert" tabindex="-1">
+              {{ t('auth.login.error') }}
+            </p>
           }
 
           <p class="auth-page__switch">
@@ -200,6 +213,8 @@ export class LoginComponent {
   private readonly _route = inject(ActivatedRoute);
   private readonly _transloco = inject(TranslocoService);
   private readonly _destroyRef = inject(DestroyRef);
+  private readonly _submitError = viewChild<ElementRef<HTMLElement>>('submitError');
+  private readonly _mfaErrorAlert = viewChild<ElementRef<HTMLElement>>('mfaErrorAlert');
 
   readonly loginForm = this._fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -218,6 +233,15 @@ export class LoginComponent {
   loading = computed(() => this.authService.status() === 'authenticating');
 
   constructor() {
+    // Move focus to the live region when password sign-in fails so assistive
+    // tech announces the actionable error (same pattern as register / forgot).
+    effect(() => {
+      if (this.authService.status() !== 'error') {
+        return;
+      }
+      setTimeout(() => this._submitError()?.nativeElement.focus());
+    });
+
     this.authService.user$
       .pipe(
         catchError(() => {
@@ -266,6 +290,7 @@ export class LoginComponent {
           this.mfaSubmitting.set(false);
           this.mfaError.set(this._transloco.translate('auth.mfa.invalid'));
           this.mfaForm.controls.code.reset('');
+          setTimeout(() => this._mfaErrorAlert()?.nativeElement.focus());
         },
         complete: () => this.mfaSubmitting.set(false),
       });

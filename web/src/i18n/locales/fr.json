@@ -4,6 +4,7 @@
     "description": "Chat IA privé avec historique enregistré sous une forme illisible pour nous. Cognos masque les informations personnelles détectées avant l'envoi et utilise des fournisseurs d'IA approuvés pour les réponses en direct dans la région choisie."
   },
   "nav": {
+    "toggle": "Ouvrir le menu",
     "how": "Comment ça marche",
     "compare": "Comparer",
     "features": "Fonctionnalités",
@@ -312,19 +313,24 @@
     "killer": "Cette page non plus ne vous surveille pas."
   },
   "pages": {
+    "tocLabel": "Table des matières",
     "privacy": {
       "metaTitle": "Confidentialité — Cognos",
       "metaDescription": "Comment Cognos traite vos données. Nous ne gardons aucune copie lisible de vos conversations.",
       "eyebrow": "Confidentialité",
       "title": "Politique de confidentialité",
-      "lead": "Comment nous traitons vos informations — en langage clair, la confidentialité d'abord."
+      "lead": "Comment nous traitons vos informations — en langage clair, la confidentialité d'abord.",
+      "effectiveLabel": "En vigueur depuis",
+      "effectiveDate": "10 juillet 2026"
     },
     "terms": {
       "metaTitle": "Conditions d'utilisation — Cognos",
       "metaDescription": "Les conditions d'utilisation de Cognos.",
       "eyebrow": "Conditions",
       "title": "Conditions d'utilisation",
-      "lead": "L'accord entre vous et Cognos lorsque vous utilisez le service."
+      "lead": "L'accord entre vous et Cognos lorsque vous utilisez le service.",
+      "effectiveLabel": "En vigueur depuis",
+      "effectiveDate": "2 juillet 2026"
     },
     "subprocessors": {
       "metaTitle": "Sous-traitants — Cognos",
@@ -823,5 +829,8 @@
       "lead": "Le lien est peut-être ancien, ou l'adresse mal saisie. Rien n'a été perdu — il n'y a jamais rien eu ici.",
       "cta": "Retour à l'accueil"
     }
+  },
+  "a11y": {
+    "skipToContent": "Aller au contenu principal"
   }
 }

@@ -25,6 +25,7 @@ Go properties cover:
 - Model catalogue and Requesty enrichment
 - MFA codes, TOTP windows and seed encryption
 - Conversation retention, Completion budgeting and configuration mapping
+- Compaction delimited-JSON parse (round-trip + garbage fails closed)
 
 TypeScript properties cover:
 
@@ -32,10 +33,11 @@ TypeScript properties cover:
 - Message schemas, citations and selected Message-service transformations
 - adoption state and Organisation billing restrictions
 - shared hover-intent geometry
+- crypto secret-box / sealed-box round trips (`frontend/src/app/crypto/crypto-helpers.spec.ts`)
+- Redaction apply/hydrate round trips (`frontend/src/app/redaction/redaction-hydration.spec.ts`)
 
 Search for `rapid.Check` and `fc.assert` for the executable inventory. Do not maintain a second
-line-by-line wish list here; missing high-risk candidates live in
-[OP-036](./open-points.md#testing-debt).
+line-by-line wish list here.
 
 ## Write a useful property
 

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import { Subject } from 'rxjs';
+import { Subject, throwError } from 'rxjs';
 
 import { ErrorService } from '@app/services/error.service';
 
@@ -19,6 +19,7 @@ describe('LoginComponent', () => {
 
   const status = signal<LoginStatus>('pending');
   const loginNext = vi.fn();
+  const completeMfa = vi.fn();
   const errorService = {
     alert: vi.fn(),
   };
@@ -26,6 +27,7 @@ describe('LoginComponent', () => {
   beforeEach(async () => {
     status.set('pending');
     loginNext.mockReset();
+    completeMfa.mockReset();
     errorService.alert.mockReset();
     user$ = new Subject<unknown>();
 
@@ -39,6 +41,8 @@ describe('LoginComponent', () => {
             status,
             user$,
             login$: { next: loginNext },
+            completeMfa,
+            resetMfaChallenge: vi.fn(),
           },
         },
         { provide: ErrorService, useValue: errorService },
@@ -55,6 +59,34 @@ describe('LoginComponent', () => {
   afterEach(() => {
     user$.complete();
     vi.restoreAllMocks();
+  });
+
+  it('shows and focuses an actionable error when password sign-in fails', async () => {
+    status.set('error');
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve));
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert.textContent).toContain('Check your email and password');
+    expect(document.activeElement).toBe(alert);
+  });
+
+  it('shows and focuses an actionable error when MFA verification fails', async () => {
+    status.set('mfa_required');
+    fixture.detectChanges();
+
+    completeMfa.mockReturnValue(throwError(() => ({ status: 401 })));
+    component.mfaForm.setValue({ code: '000000', rememberDevice: false });
+    component.onSubmitMfa();
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve));
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert).not.toBeNull();
+    expect(alert.textContent?.trim().length ?? 0).toBeGreaterThan(0);
+    expect(document.activeElement).toBe(alert);
   });
 
   it('renders register and forgot-password links', () => {

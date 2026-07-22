@@ -4,6 +4,7 @@
     "description": "Conversa de IA privada com histórico guardado de uma forma que não conseguimos ler. O Cognos esconde os dados pessoais detetados antes do envio e usa fornecedores de IA aprovados para respostas em direto na região que escolheres."
   },
   "nav": {
+    "toggle": "Abrir menu",
     "how": "Como funciona",
     "compare": "Comparar",
     "features": "Funcionalidades",
@@ -312,19 +313,24 @@
     "killer": "Esta página também não te está a vigiar."
   },
   "pages": {
+    "tocLabel": "Índice",
     "privacy": {
       "metaTitle": "Privacidade — Cognos",
       "metaDescription": "Como a Cognos trata os teus dados. Não guardamos nenhuma cópia legível das tuas conversas.",
       "eyebrow": "Privacidade",
       "title": "Política de privacidade",
-      "lead": "Como tratamos a tua informação — em linguagem clara e com a privacidade em primeiro lugar."
+      "lead": "Como tratamos a tua informação — em linguagem clara e com a privacidade em primeiro lugar.",
+      "effectiveLabel": "Em vigor desde",
+      "effectiveDate": "10 de julho de 2026"
     },
     "terms": {
       "metaTitle": "Termos de utilização — Cognos",
       "metaDescription": "Os termos para utilizar a Cognos.",
       "eyebrow": "Termos",
       "title": "Termos de utilização",
-      "lead": "O acordo entre ti e a Cognos quando utilizas o serviço."
+      "lead": "O acordo entre ti e a Cognos quando utilizas o serviço.",
+      "effectiveLabel": "Em vigor desde",
+      "effectiveDate": "2 de julho de 2026"
     },
     "subprocessors": {
       "metaTitle": "Subcontratantes — Cognos",
@@ -829,5 +835,8 @@
       "lead": "O link pode ser antigo, ou a morada estar mal escrita. Nada se perdeu — nunca houve aqui nada.",
       "cta": "Voltar à página inicial"
     }
+  },
+  "a11y": {
+    "skipToContent": "Saltar para o conteúdo principal"
   }
 }

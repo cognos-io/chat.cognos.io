@@ -21,27 +21,25 @@ decision, priority and owner belong here.
 
 ## Security and accessibility
 
-| ID     | Priority | Open point                                                                                                                 | Recommendation                                                                                                          |
-| ------ | -------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| OP-006 | P1       | Registration has no dedicated application-layer limiter.                                                                   | Add a tested IP and abuse throttle before open acquisition; keep neutral responses to avoid Account enumeration.        |
-| OP-007 | P1       | Individuals cannot list or revoke their own sessions.                                                                      | Add “sign out other devices” using auth token-key rotation; preserve the current Organisation-admin control separately. |
-| OP-008 | P1       | The TOTP seed encryption key has no versioned keyring.                                                                     | Add key versions and staged re-encryption before rotating the production key.                                           |
-| OP-009 | P1       | The encryption protocol has no independent penetration test or cryptographic review.                                       | Commission one before strong enterprise security claims; track findings in the [risk register](./security_findings.md). |
-| OP-010 | P1       | Some security errors lack alert/focus treatment, and marketing accessibility keys are not proven equal across six locales. | Add live-region/focus tests and a marketing catalogue-parity test in one accessibility hardening slice.                 |
+| ID     | Priority | Open point                                            | Recommendation                                                                                                          |
+| ------ | -------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| OP-007 | P1       | Individuals cannot list or revoke their own sessions. | Add “sign out other devices” using auth token-key rotation; preserve the current Organisation-admin control separately. |
+| OP-008 | P1       | The TOTP seed encryption key has no versioned keyring.| Add key versions and staged re-encryption before rotating the production key.                                           |
 
 The accepted PocketBase JWT-in-`localStorage` risk remains in
 [`security_findings.md`](./security_findings.md); revisit it before enterprise claims or after an
 XSS report.
+
+Closed in this engineering pass (removed from the queue): OP-006 registration rate limit,
+OP-010 auth error focus + marketing catalogue-key parity, OP-036 property-test coverage refresh.
 
 ## Operations and billing
 
 | ID     | Priority    | Open point                                                                       | Recommendation                                                                                                                                                                                 |
 | ------ | ----------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | OP-011 | P0 external | Plausible sites, goals, funnels and a content-free live smoke are not evidenced. | Keep analytics and its CSP allowance off until the [dashboard checklist](./operations/analytics-dashboard.md) passes.                                                                          |
-| OP-012 | P1          | Exact PAYG overage transaction timing is unknown until a live cycle completes.   | Keep the conservative `billed >= expected` check; after the first overage cycle, tighten reconciliation and alert on drift.                                                                    |
 | OP-013 | P1          | Organisation dissolution can succeed in Paddle and then fail locally.            | Before self-serve Teams, replace the synchronous flow with the persisted retryable state machine in the [billing runbook](./billing-ops-runbook.md#6-organisation-dissolution-reconciliation). |
 | OP-014 | P1          | PAYG has no one-per-cycle soft alert or founder-approved maximum beta exposure.  | Add the soft warning first; decide a hard circuit breaker only from real spend and support data.                                                                                               |
-| OP-015 | P1          | Non-English product catalogues have not had native-speaker review.               | Review de-CH, fr-CH, es-ES, pt-PT and it-CH; record sign-off in the [i18n guide](./i18n.md).                                                                                                   |
 
 Operational execution steps remain in their runbooks; do not duplicate every checkbox here.
 
@@ -62,7 +60,6 @@ separate items only when demand justifies displacing the work above.
 
 | ID     | Priority   | Open point                                                                                                                           | Recommendation                                                                                                                   |
 | ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| OP-021 | P1 quality | Generated DOCX, PDF and XLSX output needs a current Word, LibreOffice, Pages and Google Docs compatibility pass.                     | Run a synthetic manual matrix and retain dated results before calling exports polished.                                          |
 | OP-022 | P2         | The browser document tool loop and later sandboxed code/PPTX/Typst ideas are unbuilt.                                                | Prove live Requesty tool-call transport first. Keep sandboxed code and extra formats as separate, optional decisions.            |
 | OP-023 | P2         | Attachments are Account-owned; there is no shared Project file library.                                                              | Write a fresh scoped-file security proposal before building shared files; do not reuse the personal Library model implicitly.    |
 | OP-024 | P2         | Redaction still needs a first-run explainer, broader multilingual corpus, chunked large-input detection and optional local counters. | Ship the explainer and corpus quality first; add chunking before raising Attachment limits; keep counters local and counts-only. |
@@ -78,8 +75,6 @@ design before implementation.
 | OP-026 | P2       | Passkeys are not implemented, and their first-factor versus MFA role is undecided.                                                        | Decide role, relying-party/origin policy and recovery first. Passkeys must never replace the Account Key.                        |
 | OP-027 | P2       | Model-picker Auto mode is unbuilt.                                                                                                        | Defer until evidence shows Account holders cannot choose; any rules should be local, deterministic and explainable.              |
 | OP-028 | P2       | Custom or self-hosted Model endpoints are unbuilt.                                                                                        | Run discovery before design because this changes plaintext routing, trust, billing, network access and support boundaries.       |
-| OP-029 | P1       | Requesty has not confirmed whether Vertex grounding fees are billed, and some Provider-family web-search behaviour lacks live validation. | Keep the configured search floor; get written fee confirmation and run only the Provider-family spikes needed by actual routing. |
-| OP-030 | P1       | Gemini image transport/cost needs a gated live test; size, aspect and quality controls are absent.                                        | Validate transport and operator pricing before enabling the Model. Defer controls until demand is clear.                         |
 
 Infomaniak search, rich source previews, audio transcription and Project Personas are not approved
 roadmap items. Drop them unless customer evidence brings them back.
@@ -101,8 +96,21 @@ automate only when volume makes the operational path unreliable.
 
 | ID     | Priority | Open point                                                                                  | Recommendation                                                                                                                 |
 | ------ | -------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| OP-036 | P1       | Property-test planning is stale and may duplicate tests already present.                    | Re-scan current coverage; retain only missing high-risk compaction parser/coverage and TypeScript crypto/Redaction properties. |
 | OP-038 | P2       | Web-search system-message and conditional Vertex Claude paths are not fully live-validated. | Test only families enabled in the catalogue; fail closed for unknown offset/stream shapes.                                     |
+
+## Blocked external / manual
+
+These stay open until evidence outside this repository lands. Do not close them with code-only
+scaffolding.
+
+| ID     | Priority    | Open point                                                                                                                                | Blocker                                                                                                                                                        |
+| ------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OP-009 | P1 external | The encryption protocol has no independent penetration test or cryptographic review.                                                      | Commission a review; track findings in the [risk register](./security_findings.md) (SR-010).                                                                   |
+| OP-012 | P1 external | Exact PAYG overage transaction timing is unknown until a live cycle completes.                                                            | Complete the [first real overage-cycle gate](./billing-ops-runbook.md#11-first-real-payg-overage-cycle-gate); then tighten `reconciled` and add a drift alert. |
+| OP-015 | P1 external | Non-English product catalogues have not had native-speaker review; privacy/terms legal bodies still fall back to English.                 | Review de-CH, fr-CH, es-ES, pt-PT and it-CH (including legal page bodies); record sign-off in the [i18n guide](./i18n.md).                                     |
+| OP-021 | P1 quality  | Generated DOCX, PDF and XLSX output needs a current Word, LibreOffice, Pages and Google Docs compatibility pass.                          | Run a synthetic manual matrix and retain dated results before calling exports polished.                                                                        |
+| OP-029 | P1 external | Requesty has not confirmed whether Vertex grounding fees are billed, and some Provider-family web-search behaviour lacks live validation. | Written fee confirmation from Requesty; live spikes only for Provider families actually routed.                                                                |
+| OP-030 | P1 external | Gemini image transport/cost needs a gated live test; size, aspect and quality controls are absent.                                        | Validate transport and operator pricing before enabling the Model. Defer controls until demand is clear.                                                       |
 
 ## ADR candidates
 
