@@ -141,7 +141,7 @@
     "title": "Account",
     "toasts": {
       "accountDeleted": "Your account has been deleted",
-      "deleteAccountConflict": "Cancel your plan before deleting your account",
+      "deleteAccountConflict": "Resolve billing or Organisation ownership before deleting your account",
       "deleteAccountError": "Could not delete your account",
       "deleteAccountStepUpError": "Check your password and authenticator code, then try again",
       "deleteChatsError": "Could not delete chats",

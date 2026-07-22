@@ -141,7 +141,7 @@
     "title": "Conta",
     "toasts": {
       "accountDeleted": "A tua conta foi eliminada",
-      "deleteAccountConflict": "Cancela o teu plano antes de eliminares a tua conta",
+      "deleteAccountConflict": "Resolve a faturação ou a propriedade da Organização antes de eliminares a tua conta",
       "deleteAccountError": "Não foi possível eliminar a tua conta",
       "deleteAccountStepUpError": "Verifica a palavra-passe e o código do autenticador e tenta novamente",
       "deleteChatsError": "Não foi possível eliminar as conversas",

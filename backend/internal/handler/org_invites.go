@@ -19,7 +19,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 )
 
 // ---------------------------------------------------------------------------
@@ -383,102 +382,20 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 			return apis.NewForbiddenError("Admins cannot offboard the organisation owner.", nil)
 		}
 
-		projectIDs, err := orgRepo.OrgProjectIDs(org.ID)
+		affectedProjectIDs, err := collectOffboardProjects(app, orgRepo, org.ID, targetUserID)
 		if err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to resolve projects.", err)
-		}
-		affectedProjectIDs := make([]string, 0, len(projectIDs))
-		projectRepo := projectparticipants.NewPocketBaseRepo(app)
-		for _, projectID := range projectIDs {
-			participants, err := projectRepo.ListActive(projectID)
-			if err != nil {
-				return apis.NewApiError(http.StatusInternalServerError, "Failed to resolve Project access.", err)
-			}
-			targetHasAccess := false
-			remainingAdmin := false
-			for _, participant := range participants {
-				if participant.UserID == targetUserID {
-					targetHasAccess = true
-					continue
-				}
-				if participant.Role == projectparticipants.RoleAdmin {
-					remainingAdmin = true
-				}
-			}
-			if !targetHasAccess {
-				continue
-			}
-			if !remainingAdmin {
+			if errors.Is(err, errLastProjectAdmin) {
 				return apis.NewApiError(
 					http.StatusConflict,
 					"Assign another Project Admin before offboarding this member",
 					nil,
 				)
 			}
-			affectedProjectIDs = append(affectedProjectIDs, projectID)
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to resolve Project access.", err)
 		}
 
 		if err := app.RunInTransaction(func(txApp core.App) error {
-			membership, err := txApp.FindFirstRecordByFilter(
-				"org_memberships",
-				"organisation = {:org} && user = {:user} && removed_at = ''",
-				dbx.Params{"org": org.ID, "user": targetUserID},
-			)
-			if err != nil || membership == nil {
-				return errors.New("membership not found")
-			}
-			membership.Set("removed_at", time.Now().UTC())
-			if err := txApp.Save(membership); err != nil {
-				return err
-			}
-
-			for _, pid := range affectedProjectIDs {
-				participant, err := txApp.FindFirstRecordByFilter(
-					"project_participants",
-					"project = {:project} && user = {:user} && removed_at = ''",
-					dbx.Params{"project": pid, "user": targetUserID},
-				)
-				if err == nil && participant != nil {
-					participant.Set("removed_at", time.Now().UTC())
-					if err := txApp.Save(participant); err != nil {
-						return err
-					}
-					project, err := txApp.FindRecordById("projects", pid)
-					if err != nil {
-						return err
-					}
-					project.Set("rotation_pending", true)
-					if err := txApp.Save(project); err != nil {
-						return err
-					}
-				}
-			}
-
-			billingRecord, err := txApp.FindFirstRecordByFilter(
-				"org_billing",
-				"organisation = {:org}",
-				dbx.Params{"org": org.ID},
-			)
-			if err == nil && billingRecord != nil {
-				remaining, countErr := txApp.FindRecordsByFilter(
-					"org_memberships",
-					"organisation = {:org} && removed_at = ''",
-					"",
-					0,
-					0,
-					dbx.Params{"org": org.ID},
-				)
-				if countErr != nil {
-					return countErr
-				}
-				nextBilled := billing.BilledOrgSeatQuantity(int64(len(remaining)))
-				billingRecord.Set("pending_seat_quantity", int(nextBilled))
-				if err := txApp.Save(billingRecord); err != nil {
-					return err
-				}
-			}
-
-			return nil
+			return applyOffboardInTx(txApp, org.ID, targetUserID, affectedProjectIDs)
 		}); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to offboard member.", err)
 		}

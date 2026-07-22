@@ -141,7 +141,7 @@
     "title": "Compte",
     "toasts": {
       "accountDeleted": "Votre compte a été supprimé",
-      "deleteAccountConflict": "Résiliez votre abonnement avant de supprimer votre compte",
+      "deleteAccountConflict": "Réglez la facturation ou la propriété de l’Organisation avant de supprimer votre compte",
       "deleteAccountError": "Impossible de supprimer votre compte",
       "deleteAccountStepUpError": "Vérifiez votre mot de passe et votre code d’authentification, puis réessayez",
       "deleteChatsError": "Impossible de supprimer les conversations",

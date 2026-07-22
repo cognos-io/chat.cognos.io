@@ -12,18 +12,17 @@ Deletion is intentionally blocked while the Account has an active paid Plan. The
 Account holder must cancel or resolve billing first, so subscription ownership
 and payment obligations are not orphaned.
 
-> **Known P0 defect:** the current handler still assumes every Project is
-> personal. It deletes every Project whose `creator` is the caller, including an
-> Organisation-owned shared Project created by an ordinary member. An
-> Organisation Owner instead receives a generic failure from the required owner
-> relation. Treat Account deletion as unsafe for Accounts with Organisation
-> relationships until [OP-001](../open-points.md#op-001-account-deletion-and-organisation-data)
-> is fixed and tested.
+Organisation content is never deleted merely because the Account holder created
+it. An Organisation Owner receives `409` until ownership is transferred or the
+Organisation is dissolved. An ordinary member is offboarded first: membership and
+Project access are revoked, and affected Projects are marked for key rotation
+before the Account is erased.
 
 Deletion is a step-up operation. The request body must contain the current
 Account password. When authenticator-app MFA is enabled, it must also contain a
 current six-digit code. The server verifies both immediately before checking
-billing state and deleting data; a bearer token alone is insufficient.
+billing and Organisation state and deleting data; a bearer token alone is
+insufficient.
 
 ```mermaid
 flowchart LR
@@ -31,18 +30,24 @@ flowchart LR
   S -- no --> R[400 deletion refused]
   S -- yes --> B{paid plan active?}
   B -- yes --> C[409 billing must be resolved]
-  B -- no --> D[delete Account-owned product data]
+  B -- no --> O{Organisation Owner?}
+  O -- yes --> T[409 transfer or dissolve first]
+  O -- no --> M[offboard memberships and revoke Project access]
+  M --> D[delete Account-owned personal product data]
   D --> E[detach retained financial records]
   E --> F[204]
 ```
 
 Deleted product data includes encrypted Conversations, Messages, key material,
 Personas, Bookmarks, Library Attachments, memory, Redaction mappings, Vault
-sessions, and MFA records owned by the Account.
+sessions, and MFA records owned by the Account. Organisation Projects and their
+Conversations remain with the Organisation.
 
 Some records may be retained after deletion when required for billing, tax,
 fraud prevention, or legal compliance. Those financial records are detached from
-the deleted Account rather than keeping the Account active.
+the deleted Account rather than keeping the Account active. Organisation audit
+rows the Account acted in are retained the same way: the actor link is cleared,
+while action, target and time remain.
 
 Losing the Account Key is not an account-deletion path: the Account holder can
 still sign in and manage billing or delete the Account, but encrypted data is

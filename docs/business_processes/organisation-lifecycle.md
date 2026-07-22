@@ -33,4 +33,5 @@ Cognos unchanged. The inverse failure window is tracked as
 [OP-013](../open-points.md#operations-and-billing) until a persisted reconciler replaces this flow.
 
 Account deletion is not Organisation dissolution. An Owner must transfer ownership or dissolve the
-Organisation first; see [OP-001](../open-points.md#op-001-account-deletion-and-organisation-data).
+Organisation before their Account can be deleted; see
+[Account deletion](./account-delete.md).

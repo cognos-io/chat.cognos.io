@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 )
@@ -174,6 +176,247 @@ func TestAccountDeleteRetainsFinancialRecords(t *testing.T) {
 			}
 			if len(records) == 0 {
 				t.Fatal("user_billing record was removed; financial records must be retained")
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestAccountDeleteRefusesOrganisationOwner(t *testing.T) {
+	t.Parallel()
+
+	const orgID = "acctdelorgown01"
+
+	scenario := tests.ApiScenario{
+		Name:            "organisation owner cannot delete account until ownership is transferred or dissolved",
+		Method:          http.MethodDelete,
+		URL:             "/api/v1/account",
+		Body:            strings.NewReader(`{"password":"` + testUserPassword + `"}`),
+		ExpectedStatus:  http.StatusConflict,
+		ExpectedContent: []string{`Transfer ownership or dissolve your Organisation before deleting your account`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, orgID, "Owner Block AG", "test1@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if _, err := app.FindAuthRecordByEmail("users", "test1@example.com"); err != nil {
+				t.Fatalf("owner was deleted despite Organisation ownership: %v", err)
+			}
+			if _, err := app.FindRecordById("organisations", orgID); err != nil {
+				t.Fatalf("organisation %q was removed during refused account deletion: %v", orgID, err)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestAccountDeletePreservesOrganisationProjectCreatedByMember(t *testing.T) {
+	t.Parallel()
+
+	const (
+		orgID                  = "acctdelorgpj001"
+		orgProjectID           = "acctdelorgpj002"
+		orgConversationID      = "acctdelorgcv001"
+		personalProjectID      = "acctdelperspj01"
+		personalConversationID = "acctdelperscv01"
+	)
+
+	scenario := tests.ApiScenario{
+		Name:           "member account deletion keeps Organisation Projects and Conversations they created",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/account",
+		Body:           strings.NewReader(`{"password":"` + testUserPassword + `"}`),
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, orgID, "Survive AG", "test1@example.com")
+			seedOrgMembership(t, app, orgID, "test2@example.com", "member", false)
+			// Member created the shared Project — the P0 bug deleted these by creator.
+			seedOrgOwnedProject(t, app, orgProjectID, orgID, "test2@example.com")
+			owner, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users, test1) error = %v", err)
+			}
+			seedProjectParticipant(t, app, orgProjectID, owner.Id, "Admin")
+			seedProjectConversation(t, app, orgProjectID, orgConversationID, "test2@example.com")
+			seedOwnedProject(t, app, personalProjectID, "test2@example.com")
+			seedOwnedConversation(t, app, personalConversationID, "test2@example.com")
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if _, err := app.FindAuthRecordByEmail("users", "test2@example.com"); err == nil {
+				t.Fatal("member user record still exists after account deletion")
+			}
+			if _, err := app.FindRecordById("projects", orgProjectID); err != nil {
+				t.Fatalf("organisation project %q was deleted with the member account: %v", orgProjectID, err)
+			}
+			if _, err := app.FindRecordById("conversations", orgConversationID); err != nil {
+				t.Fatalf("organisation conversation %q was deleted with the member account: %v", orgConversationID, err)
+			}
+			if _, err := app.FindRecordById("projects", personalProjectID); err == nil {
+				t.Fatalf("personal project %q still exists after account deletion", personalProjectID)
+			}
+			if _, err := app.FindRecordById("conversations", personalConversationID); err == nil {
+				t.Fatalf("personal conversation %q still exists after account deletion", personalConversationID)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestAccountDeleteOffboardsOrdinaryOrganisationMember(t *testing.T) {
+	t.Parallel()
+
+	const (
+		orgID        = "acctdelorgmb001"
+		orgProjectID = "acctdelorgmbpj1"
+	)
+
+	scenario := tests.ApiScenario{
+		Name:           "ordinary member is offboarded with Project access revoked and rotation marked pending",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/account",
+		Body:           strings.NewReader(`{"password":"` + testUserPassword + `"}`),
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, orgID, "Offboard AG", "test1@example.com")
+			seedOrgMembership(t, app, orgID, "test2@example.com", "member", false)
+			seedOrgOwnedProject(t, app, orgProjectID, orgID, "test1@example.com")
+			member, err := app.FindAuthRecordByEmail("users", "test2@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users, test2) error = %v", err)
+			}
+			seedProjectParticipant(t, app, orgProjectID, member.Id, "Editor")
+			// Pin: invite-accept style audit rows (member as actor) must detach,
+			// not block Account deletion.
+			seedOrgAuditEvent(t, app, orgID, member.Id, "org.invite.accepted", member.Id, time.Now().UTC())
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if _, err := app.FindAuthRecordByEmail("users", "test2@example.com"); err == nil {
+				t.Fatal("member user record still exists after account deletion")
+			}
+
+			project, err := app.FindRecordById("projects", orgProjectID)
+			if err != nil {
+				t.Fatalf("organisation project %q missing after member deletion: %v", orgProjectID, err)
+			}
+			if !project.GetBool("rotation_pending") {
+				t.Fatal("organisation project rotation_pending = false, want true after member offboard")
+			}
+
+			// Membership and participation rows cascade off the deleted user;
+			// pin that no active membership/participant remains for the org project.
+			memberships, err := app.FindRecordsByFilter(
+				"org_memberships",
+				"organisation = {:org} && removed_at = ''",
+				"",
+				0,
+				0,
+				dbx.Params{"org": orgID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(org_memberships) error = %v", err)
+			}
+			if len(memberships) != 1 {
+				t.Fatalf("active org memberships = %d, want 1 (owner only)", len(memberships))
+			}
+
+			participants, err := app.FindRecordsByFilter(
+				"project_participants",
+				"project = {:project} && removed_at = ''",
+				"",
+				0,
+				0,
+				dbx.Params{"project": orgProjectID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(project_participants) error = %v", err)
+			}
+			if len(participants) != 1 {
+				t.Fatalf("active project participants = %d, want 1 (remaining Admin)", len(participants))
+			}
+
+			events, err := app.FindRecordsByFilter(
+				"org_audit_events",
+				"organisation = {:org} && action = {:action}",
+				"",
+				0,
+				0,
+				dbx.Params{"org": orgID, "action": "org.invite.accepted"},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(org_audit_events) error = %v", err)
+			}
+			if len(events) != 1 {
+				t.Fatalf("retained invite-accepted audit rows = %d, want 1", len(events))
+			}
+			if got := events[0].GetString("actor"); got != "" {
+				t.Fatalf("audit actor = %q, want empty (detached after Account deletion)", got)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestAccountDeleteRetainsFinancialRecordsWhileErasingPersonalData(t *testing.T) {
+	t.Parallel()
+
+	const (
+		orgID                  = "acctdelfinorg01"
+		orgProjectID           = "acctdelfinpj001"
+		personalConversationID = "acctdelfincv001"
+	)
+
+	scenario := tests.ApiScenario{
+		Name:           "personal data deletes while Organisation content and detached financial records survive",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/account",
+		Body:           strings.NewReader(`{"password":"` + testUserPassword + `"}`),
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, orgID, "Finance AG", "test1@example.com")
+			seedOrgMembership(t, app, orgID, "test2@example.com", "member", false)
+			seedOrgOwnedProject(t, app, orgProjectID, orgID, "test1@example.com")
+			member, err := app.FindAuthRecordByEmail("users", "test2@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users, test2) error = %v", err)
+			}
+			seedProjectParticipant(t, app, orgProjectID, member.Id, "Editor")
+			seedOwnedConversation(t, app, personalConversationID, "test2@example.com")
+			seedUserBilling(t, app, "test2@example.com", "inactive")
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if _, err := app.FindAuthRecordByEmail("users", "test2@example.com"); err == nil {
+				t.Fatal("user record still exists after account deletion")
+			}
+			if _, err := app.FindRecordById("conversations", personalConversationID); err == nil {
+				t.Fatalf("personal conversation %q still exists after account deletion", personalConversationID)
+			}
+			if _, err := app.FindRecordById("projects", orgProjectID); err != nil {
+				t.Fatalf("organisation project %q was deleted: %v", orgProjectID, err)
+			}
+			records, err := app.FindAllRecords("user_billing")
+			if err != nil {
+				t.Fatalf("FindAllRecords(user_billing) error = %v", err)
+			}
+			foundDetached := false
+			for _, record := range records {
+				if record.GetString("user_id") == "" {
+					foundDetached = true
+					break
+				}
+			}
+			if !foundDetached {
+				t.Fatal("expected a detached user_billing row after account deletion")
 			}
 		},
 	}

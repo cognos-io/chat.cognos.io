@@ -141,7 +141,7 @@
     "title": "Konto",
     "toasts": {
       "accountDeleted": "Dein Konto wurde gelöscht",
-      "deleteAccountConflict": "Kündige deinen Tarif, bevor du dein Konto löschst",
+      "deleteAccountConflict": "Löse Abrechnung oder Organisations-Besitz, bevor du dein Konto löschst",
       "deleteAccountError": "Dein Konto konnte nicht gelöscht werden",
       "deleteAccountStepUpError": "Prüfe dein Passwort und den Authenticator-Code und versuche es erneut",
       "deleteChatsError": "Chats konnten nicht gelöscht werden",

@@ -6,15 +6,22 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// AccountDelete erases the caller's account: their conversations (messages,
-// secret keys, participants and public shares cascade off each), their key
-// pairs, personas, preferences and vault wrap keys (all cascade off the user
-// record), and finally the user record itself.
+// AccountDelete erases the caller's account: their personal conversations
+// (messages, secret keys, participants and public shares cascade off each),
+// their personal projects, key pairs, personas, preferences and vault wrap
+// keys (all cascade off the user record), and finally the user record itself.
+//
+// Organisation content is never deleted merely because the caller created it.
+// Organisation Owners must transfer ownership or dissolve first (409). Ordinary
+// members are offboarded first: membership and Project access are revoked and
+// affected Projects are marked rotation_pending so remaining Admins can finish
+// key rotation.
 //
 // Financial records (user_billing, balance_transactions, refunds,
 // payg_cycle_summaries) reference the user with a non-cascade relation, so
@@ -75,7 +82,68 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 			)
 		}
 
+		orgRepo := organisations.NewPocketBaseRepo(params.App)
+		userOrgs, err := orgRepo.GetForUser(user.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load organisations", err)
+		}
+
+		type pendingOffboard struct {
+			orgID              string
+			affectedProjectIDs []string
+		}
+		offboards := make([]pendingOffboard, 0, len(userOrgs))
+		for _, userOrg := range userOrgs {
+			if userOrg.Role == organisations.RoleOwner {
+				return apis.NewApiError(
+					http.StatusConflict,
+					"Transfer ownership or dissolve your Organisation before deleting your account",
+					nil,
+				)
+			}
+			affected, collectErr := collectOffboardProjects(params.App, orgRepo, userOrg.ID, user.ID)
+			if collectErr != nil {
+				if errors.Is(collectErr, errLastProjectAdmin) {
+					return apis.NewApiError(
+						http.StatusConflict,
+						"Assign another Project Admin before deleting your account",
+						nil,
+					)
+				}
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to resolve Project access",
+					collectErr,
+				)
+			}
+			offboards = append(offboards, pendingOffboard{
+				orgID:              userOrg.ID,
+				affectedProjectIDs: affected,
+			})
+		}
+
 		if err := params.App.RunInTransaction(func(txApp core.App) error {
+			for _, offboard := range offboards {
+				if err := applyOffboardInTx(
+					txApp,
+					offboard.orgID,
+					user.ID,
+					offboard.affectedProjectIDs,
+				); err != nil {
+					return err
+				}
+				// Record while the Account still exists. Deleting the user
+				// detaches actor (optional relation); target keeps the opaque
+				// user id so the trail remains content-free but attributable.
+				organisations.RecordAudit(
+					txApp,
+					offboard.orgID,
+					user.ID,
+					organisations.AuditMemberOffboarded,
+					user.ID,
+				)
+			}
+
 			conversations, err := txApp.FindAllRecords(
 				"conversations",
 				dbx.HashExp{"creator": user.ID},
@@ -84,16 +152,17 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 				return err
 			}
 			for _, record := range conversations {
+				if isOrganisationScopedConversation(txApp, record) {
+					continue
+				}
 				if err := txApp.Delete(record); err != nil {
 					return err
 				}
 			}
 
-			// Projects the user created are removed too — their
-			// participants and key wrappings cascade off each project. (A
-			// later sharing phase will need to reassign ownership instead of
-			// hard-deleting shared projects; today every project is
-			// single-owner.)
+			// Personal Projects only. Organisation Projects keep their
+			// creator field until the user row is deleted (nulled, not
+			// cascaded); content stays with the Organisation.
 			projects, err := txApp.FindAllRecords(
 				"projects",
 				dbx.HashExp{"creator": user.ID},
@@ -102,6 +171,9 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 				return err
 			}
 			for _, record := range projects {
+				if record.GetString("organisation") != "" {
+					continue
+				}
 				if err := txApp.Delete(record); err != nil {
 					return err
 				}
@@ -114,4 +186,18 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 
 		return e.NoContent(http.StatusNoContent)
 	}
+}
+
+// isOrganisationScopedConversation reports whether the conversation belongs to
+// an Organisation Project and must survive Account deletion.
+func isOrganisationScopedConversation(app core.App, conversation *core.Record) bool {
+	projectID := conversation.GetString("project")
+	if projectID == "" {
+		return false
+	}
+	project, err := app.FindRecordById("projects", projectID)
+	if err != nil {
+		return false
+	}
+	return project.GetString("organisation") != ""
 }

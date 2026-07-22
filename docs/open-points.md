@@ -1,6 +1,6 @@
 ---
 description: Single review queue for unresolved Cognos product, security and operational work
-last_reviewed: 2026-07-21
+last_reviewed: 2026-07-22
 name: open-points
 ---
 
@@ -12,34 +12,12 @@ decision, priority and owner belong here.
 
 ## Review first
 
-| ID     | Priority    | Open point                                                                                             | Recommendation                                                                                                                      |
-| ------ | ----------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| OP-001 | P0          | [Account deletion can delete shared Organisation data](#op-001-account-deletion-and-organisation-data) | Block unsafe deletion before broad Teams use; add the four denial/survival tests below.                                             |
-| OP-002 | P0 external | Counsel, Provider retention and data-transfer approval remain unproven.                                | Keep charging limited to controlled design partners until the [approval checklist](./legal/launch-approval-checklist.md) is signed. |
-| OP-003 | P0 external | No retained tagged release bundle proves tests, scans, SBOM and deployed digest.                       | Complete the [release evidence](./operations/release-evidence.md) for every paid release.                                           |
-| OP-004 | P0 external | Restore and incident response are documented but not evidenced as rehearsed.                           | Run and date the [restore drill](./operations/restore-drill.md) and [incident tabletop](./operations/incident-response.md).         |
-| OP-005 | P0 external | Live Paddle prices, checkout, webhook and refund behaviour need production proof.                      | Complete the [billing runbook](./billing-ops-runbook.md) with synthetic Accounts before charging outside design partners.           |
-
-### OP-001: Account deletion and Organisation data
-
-`backend/internal/handler/account.go` checks only personal billing, then deletes every Project whose
-`creator` is the caller. Organisation Projects also store the creating member in `creator`, so a
-non-owner member can currently delete a shared Organisation Project and its cascading data by
-deleting their Account. An Organisation Owner instead receives a generic failure because the owner
-relation prevents deletion.
-
-Target behaviour:
-
-1. Account deletion never deletes Organisation content merely because the Account holder created
-   it.
-2. An Organisation Owner receives `409` until ownership is transferred or the Organisation is
-   dissolved.
-3. Deleting an ordinary member offboards them, revokes Project access and completes required key
-   rotation before deleting the Account.
-4. Personal data still deletes and retained financial records remain detached.
-
-Add API tests for all four cases before changing the
-[Account deletion process](./business_processes/account-delete.md).
+| ID     | Priority    | Open point                                                                       | Recommendation                                                                                                                      |
+| ------ | ----------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| OP-002 | P0 external | Counsel, Provider retention and data-transfer approval remain unproven.          | Keep charging limited to controlled design partners until the [approval checklist](./legal/launch-approval-checklist.md) is signed. |
+| OP-003 | P0 external | No retained tagged release bundle proves tests, scans, SBOM and deployed digest. | Complete the [release evidence](./operations/release-evidence.md) for every paid release.                                           |
+| OP-004 | P0 external | Restore and incident response are documented but not evidenced as rehearsed.     | Run and date the [restore drill](./operations/restore-drill.md) and [incident tabletop](./operations/incident-response.md).         |
+| OP-005 | P0 external | Live Paddle prices, checkout, webhook and refund behaviour need production proof.| Complete the [billing runbook](./billing-ops-runbook.md) with synthetic Accounts before charging outside design partners.           |
 
 ## Security and accessibility
 
@@ -124,7 +102,6 @@ automate only when volume makes the operational path unreliable.
 | ID     | Priority | Open point                                                                                  | Recommendation                                                                                                                 |
 | ------ | -------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | OP-036 | P1       | Property-test planning is stale and may duplicate tests already present.                    | Re-scan current coverage; retain only missing high-risk compaction parser/coverage and TypeScript crypto/Redaction properties. |
-| OP-037 | P1       | The Account deletion Organisation cases in OP-001 have no regression tests.                 | Add API tests before changing the handler.                                                                                     |
 | OP-038 | P2       | Web-search system-message and conditional Vertex Claude paths are not fully live-validated. | Test only families enabled in the catalogue; fail closed for unknown offset/stream shapes.                                     |
 
 ## ADR candidates

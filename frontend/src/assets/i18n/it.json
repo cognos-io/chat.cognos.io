@@ -141,7 +141,7 @@
     "title": "Account",
     "toasts": {
       "accountDeleted": "Il tuo account è stato eliminato",
-      "deleteAccountConflict": "Annulla il tuo piano prima di eliminare il tuo account",
+      "deleteAccountConflict": "Risolvi la fatturazione o la proprietà dell’Organizzazione prima di eliminare il tuo account",
       "deleteAccountError": "Impossibile eliminare il tuo account",
       "deleteAccountStepUpError": "Controlla la password e il codice dell’app di autenticazione, quindi riprova",
       "deleteChatsError": "Impossibile eliminare le chat",
