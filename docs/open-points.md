@@ -21,17 +21,13 @@ decision, priority and owner belong here.
 
 ## Security and accessibility
 
-| ID     | Priority | Open point                                            | Recommendation                                                                                                          |
-| ------ | -------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| OP-008 | P1       | The TOTP seed encryption key has no versioned keyring.| Add key versions and staged re-encryption before rotating the production key.                                           |
-
 The accepted PocketBase JWT-in-`localStorage` risk remains in
 [`security_findings.md`](./security_findings.md); revisit it before enterprise claims or after an
 XSS report.
 
 Closed in this engineering pass (removed from the queue): OP-006 registration rate limit, OP-007
-sign out other devices, OP-010 auth error focus + marketing catalogue-key parity, OP-036
-property-test coverage refresh.
+sign out other devices, OP-008 TOTP seed encryption keyring, OP-010 auth error focus + marketing
+catalogue-key parity, OP-036 property-test coverage refresh.
 
 ## Operations and billing
 

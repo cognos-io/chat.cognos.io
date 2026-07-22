@@ -22,6 +22,16 @@ var testMFAKeyB64 = base64.StdEncoding.EncodeToString([]byte("0123456789abcdef01
 
 const testUserEmail = "test1@example.com"
 
+// testMFAKeyring returns a keyring keyed identically to the test app.
+func testMFAKeyring(t *testing.T) *mfa.SeedKeyring {
+	t.Helper()
+	keyring, err := mfa.NewSeedKeyring(testMFAKeyB64)
+	if err != nil {
+		t.Fatalf("test seed keyring: %v", err)
+	}
+	return keyring
+}
+
 // testMFACipher returns a cipher keyed identically to the test app.
 func testMFACipher(t *testing.T) *mfa.SeedCipher {
 	t.Helper()

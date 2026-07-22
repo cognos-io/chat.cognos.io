@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/nacl/secretbox"
 
@@ -78,6 +79,139 @@ func (c *SeedCipher) Seal(seed []byte) (ciphertextB64, nonceB64 string, err erro
 	return base64.StdEncoding.EncodeToString(sealed),
 		base64.StdEncoding.EncodeToString(nonce[:]),
 		nil
+}
+
+// SeedKeyring holds the active TOTP seed encryption key plus any previous keys
+// still needed to open rows sealed before rotation. Seal always uses the primary;
+// Open tries the stored secret_key_id first, then other ring members.
+type SeedKeyring struct {
+	primary *SeedCipher
+	byID    map[string]*SeedCipher
+}
+
+// ParseTOTPEncryptionKeysList splits a comma-separated list of base64 keys
+// (empty entries are ignored). Used for mfa.totp_encryption_key_previous.
+func ParseTOTPEncryptionKeysList(s string) []string {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// NewSeedKeyring builds a keyring from the primary key and zero or more previous
+// keys. An empty primary yields ErrSeedCipherUnavailable. Malformed previous keys
+// are a hard error so a typo cannot silently strand enrolled seeds.
+func NewSeedKeyring(primaryB64 string, previousB64 ...string) (*SeedKeyring, error) {
+	primary, err := NewSeedCipher(primaryB64)
+	if err != nil {
+		return nil, err
+	}
+
+	kr := &SeedKeyring{
+		primary: primary,
+		byID:    map[string]*SeedCipher{primary.KeyID(): primary},
+	}
+
+	for _, prev := range previousB64 {
+		prev = strings.TrimSpace(prev)
+		if prev == "" {
+			continue
+		}
+		c, err := NewSeedCipher(prev)
+		if err != nil {
+			return nil, fmt.Errorf("mfa: invalid previous TOTP encryption key: %w", err)
+		}
+		kr.byID[c.KeyID()] = c
+	}
+
+	return kr, nil
+}
+
+// KeyID identifies the primary key (used when sealing new seeds).
+func (k *SeedKeyring) KeyID() string { return k.primary.KeyID() }
+
+// Seal encrypts a TOTP seed with the primary key.
+func (k *SeedKeyring) Seal(seed []byte) (ciphertextB64, nonceB64 string, err error) {
+	return k.primary.Seal(seed)
+}
+
+// OpenResult is returned by OpenAndReseal. When NeedsReseal is true the opened
+// seed was encrypted with a non-primary key and the caller should persist the
+// re-sealed fields on the TOTP row.
+type OpenResult struct {
+	Seed        []byte
+	NeedsReseal bool
+	Ciphertext  string
+	Nonce       string
+	KeyID       string
+}
+
+// OpenAndReseal decrypts a sealed TOTP seed and, when it was opened with a
+// non-primary key, returns freshly sealed ciphertext under the primary.
+func (k *SeedKeyring) OpenAndReseal(ciphertextB64, nonceB64, storedKeyID string) (OpenResult, error) {
+	seed, usedKeyID, err := k.open(ciphertextB64, nonceB64, storedKeyID)
+	if err != nil {
+		return OpenResult{}, err
+	}
+
+	result := OpenResult{Seed: seed}
+	if usedKeyID != k.primary.KeyID() {
+		ct, nonce, err := k.primary.Seal(seed)
+		if err != nil {
+			return OpenResult{}, err
+		}
+		result.NeedsReseal = true
+		result.Ciphertext = ct
+		result.Nonce = nonce
+		result.KeyID = k.primary.KeyID()
+	}
+	return result, nil
+}
+
+func (k *SeedKeyring) open(ciphertextB64, nonceB64, storedKeyID string) ([]byte, string, error) {
+	order := k.openOrder(storedKeyID)
+	var lastErr error
+	for _, c := range order {
+		seed, err := c.Open(ciphertextB64, nonceB64)
+		if err == nil {
+			return seed, c.KeyID(), nil
+		}
+		lastErr = err
+	}
+	if lastErr != nil {
+		return nil, "", lastErr
+	}
+	return nil, "", errors.New("mfa: failed to decrypt TOTP seed")
+}
+
+func (k *SeedKeyring) openOrder(storedKeyID string) []*SeedCipher {
+	seen := make(map[string]struct{}, len(k.byID))
+	order := make([]*SeedCipher, 0, len(k.byID))
+
+	if storedKeyID != "" {
+		if c, ok := k.byID[storedKeyID]; ok {
+			order = append(order, c)
+			seen[c.KeyID()] = struct{}{}
+		}
+	}
+	if _, ok := seen[k.primary.KeyID()]; !ok {
+		order = append(order, k.primary)
+		seen[k.primary.KeyID()] = struct{}{}
+	}
+	for id, c := range k.byID {
+		if _, ok := seen[id]; !ok {
+			order = append(order, c)
+		}
+	}
+	return order
 }
 
 // Open decrypts a sealed TOTP seed.

@@ -22,11 +22,11 @@ const maxDeviceLabelLen = 64
 
 // MFAParams carries the dependencies shared by all MFA handlers.
 type MFAParams struct {
-	App    core.App
-	Store  *mfa.Store
-	Cipher *mfa.SeedCipher // nil when no server key is configured (enrolment disabled)
-	Issuer string          // shown in the authenticator app (e.g. "Cognos")
-	Logger *slog.Logger
+	App     core.App
+	Store   *mfa.Store
+	Keyring *mfa.SeedKeyring // nil when no server key is configured (enrolment disabled)
+	Issuer  string           // shown in the authenticator app (e.g. "Cognos")
+	Logger  *slog.Logger
 }
 
 // mfaCompleteRequest is the shared body for the two completion endpoints.
@@ -56,7 +56,7 @@ func MFACompleteTOTP(params MFAParams) func(e *core.RequestEvent) error {
 		if apiErr != nil {
 			return apiErr
 		}
-		if params.Cipher == nil {
+		if params.Keyring == nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
 		}
 
@@ -65,7 +65,7 @@ func MFACompleteTOTP(params MFAParams) func(e *core.RequestEvent) error {
 			return invalidCredentialError()
 		}
 
-		seed, err := params.Cipher.Open(totp.GetString("secret_ciphertext"), totp.GetString("secret_nonce"))
+		seed, err := openTOTPSeed(params, totp)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify code", err)
 		}

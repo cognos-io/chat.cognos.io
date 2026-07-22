@@ -97,13 +97,19 @@ paddle:
 # Generate one with:   openssl rand -base64 32
 #
 # Treat it like any other secret: set it via the env var or a mounted secret
-# file in production, NOT in a committed config file. Rotating the key strands
-# already-enrolled seeds (affected users must re-enrol); secret_key_id records
-# which key sealed each row.
+# file in production, NOT in a committed config file. To rotate: generate a new
+# primary key, move the old primary to totp_encryption_key_previous (comma-
+# separate if several retired keys are still needed), deploy, wait for lazy re-
+# seal on the next TOTP verify per Account (or run an optional batch job), then
+# remove the previous key(s). secret_key_id records which key sealed each row.
 # Env override: COGNOS_MFA_TOTP_ENCRYPTION_KEY
 # Secret file override: COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE
+# Previous key(s): mfa.totp_encryption_key_previous (comma-separated)
+# Env: COGNOS_MFA_TOTP_ENCRYPTION_KEY_PREVIOUS
+# Secret file: COGNOS_MFA_TOTP_ENCRYPTION_KEY_PREVIOUS_FILE
 mfa:
   totp_encryption_key: ""
+  totp_encryption_key_previous: ""
 
 # --- Env-only (not loaded from YAML) ------------------------------------------
 # BILLING_FX_RATE_FALLBACK_USD_CHF — fallback USD→CHF rate when the live rate

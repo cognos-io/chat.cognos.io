@@ -129,7 +129,7 @@ func addPocketBaseRoutes(
 	paddleOveragePriceID string,
 	attachmentMaxFileBytes int64,
 	attachmentStorageCapBytes int64,
-	mfaCipher *mfa.SeedCipher,
+	mfaKeyring *mfa.SeedKeyring,
 	paddlePriceOrgSeat string,
 ) {
 	// Shared MFA dependencies for the auth-completion and management endpoints.
@@ -141,7 +141,7 @@ func addPocketBaseRoutes(
 	mfaParams := handler.MFAParams{
 		App:    app,
 		Store:  mfaStore,
-		Cipher: mfaCipher,
+		Keyring: mfaKeyring,
 		Issuer: mfaIssuer,
 		Logger: logger,
 	}

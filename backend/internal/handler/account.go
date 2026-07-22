@@ -56,7 +56,7 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 		}
 		if userRecord.GetBool("mfa_enabled") {
 			totp, err := params.Store.GetTOTP(user.ID)
-			if err != nil || params.Cipher == nil {
+			if err != nil || params.Keyring == nil {
 				return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
 			}
 			ok, _, err := verifyTOTPRecord(params, totp, req.TOTPCode)

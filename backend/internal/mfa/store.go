@@ -167,6 +167,14 @@ func (s *Store) MarkTOTPVerified(record *core.Record) error {
 	return s.app.Save(record)
 }
 
+// ResealTOTPSecret persists ciphertext re-sealed under a new encryption key.
+func (s *Store) ResealTOTPSecret(record *core.Record, ciphertext, nonce, keyID string) error {
+	record.Set("secret_ciphertext", ciphertext)
+	record.Set("secret_nonce", nonce)
+	record.Set("secret_key_id", keyID)
+	return s.app.Save(record)
+}
+
 // RecordTOTPUse advances replay protection (last_accepted_step) and stamps
 // last_used_at after a successful verification.
 func (s *Store) RecordTOTPUse(record *core.Record, step uint64) error {

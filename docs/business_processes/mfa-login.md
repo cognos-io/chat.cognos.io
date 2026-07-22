@@ -52,3 +52,24 @@ A trusted-MFA-device token:
 MFA protects Account access. It does not decrypt Conversation data. The Account Key
 (or trusted-device Vault session) is still required after login to open encrypted
 content.
+
+## TOTP seed encryption key rotation
+
+TOTP seeds are encrypted at rest with a server-held symmetric key
+(`mfa.totp_encryption_key`). Each row stores a `secret_key_id` so the backend
+knows which key sealed it.
+
+To rotate without stranding enrolled Accounts:
+
+1. Generate a new 32-byte key (`openssl rand -base64 32`).
+2. Set the **new** key as `mfa.totp_encryption_key` (or `COGNOS_MFA_TOTP_ENCRYPTION_KEY`).
+3. Move the **old** primary into `mfa.totp_encryption_key_previous` (comma-
+   separate if more than one retired key is still needed).
+4. Deploy. New enrolments seal under the new primary; existing seeds open with
+   the previous key and are **lazily re-sealed** under the primary the next time
+   the Account verifies a TOTP code (login or settings).
+5. After all active rows show the new `secret_key_id` (monitor the database, or
+   wait a conservative window), remove the previous key from config and redeploy.
+
+Never log key material or decrypted seeds. Without a configured primary key, TOTP
+enrolment stays disabled.

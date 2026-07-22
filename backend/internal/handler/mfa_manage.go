@@ -63,7 +63,7 @@ func MFAEnrolTOTP(params MFAParams) func(e *core.RequestEvent) error {
 		if user == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
-		if params.Cipher == nil {
+		if params.Keyring == nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
 		}
 
@@ -83,11 +83,11 @@ func MFAEnrolTOTP(params MFAParams) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to start enrolment", err)
 		}
 
-		ct, nonce, err := params.Cipher.Seal([]byte(key.Secret()))
+		ct, nonce, err := params.Keyring.Seal([]byte(key.Secret()))
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to start enrolment", err)
 		}
-		if _, err := params.Store.UpsertEnrolment(user.Id, ct, nonce, params.Cipher.KeyID()); err != nil {
+		if _, err := params.Store.UpsertEnrolment(user.Id, ct, nonce, params.Keyring.KeyID()); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to start enrolment", err)
 		}
 
@@ -114,7 +114,7 @@ func MFAConfirmTOTP(params MFAParams) func(e *core.RequestEvent) error {
 		if user == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
-		if params.Cipher == nil {
+		if params.Keyring == nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
 		}
 
@@ -186,7 +186,7 @@ func MFADisableTOTP(params MFAParams) func(e *core.RequestEvent) error {
 		}
 
 		totp, err := params.Store.GetTOTP(user.Id)
-		if err != nil || params.Cipher == nil {
+		if err != nil || params.Keyring == nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
 		}
 		ok, _, err := verifyTOTPRecord(params, totp, req.Code)
@@ -225,7 +225,7 @@ func MFARegenerateRecoveryCodes(params MFAParams) func(e *core.RequestEvent) err
 		if user == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
-		if !user.GetBool("mfa_enabled") || params.Cipher == nil {
+		if !user.GetBool("mfa_enabled") || params.Keyring == nil {
 			return apis.NewBadRequestError("MFA is not enabled", nil)
 		}
 
@@ -323,10 +323,29 @@ func MFARevokeTrustedDevice(params MFAParams) func(e *core.RequestEvent) error {
 	}
 }
 
+// openTOTPSeed decrypts a TOTP row's seed and lazily re-seals it under the
+// primary key when the row was encrypted with a retired key.
+func openTOTPSeed(params MFAParams, totp *core.Record) ([]byte, error) {
+	result, err := params.Keyring.OpenAndReseal(
+		totp.GetString("secret_ciphertext"),
+		totp.GetString("secret_nonce"),
+		totp.GetString("secret_key_id"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if result.NeedsReseal {
+		if err := params.Store.ResealTOTPSecret(totp, result.Ciphertext, result.Nonce, result.KeyID); err != nil && params.Logger != nil {
+			params.Logger.Error("mfa: failed to reseal TOTP seed after key rotation", "error", err)
+		}
+	}
+	return result.Seed, nil
+}
+
 // verifyTOTPRecord opens the sealed seed in a TOTP row and verifies a code
 // against it, enforcing the same replay guard as login completion.
 func verifyTOTPRecord(params MFAParams, totp *core.Record, code string) (bool, uint64, error) {
-	seed, err := params.Cipher.Open(totp.GetString("secret_ciphertext"), totp.GetString("secret_nonce"))
+	seed, err := openTOTPSeed(params, totp)
 	if err != nil {
 		return false, 0, err
 	}
