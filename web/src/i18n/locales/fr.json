@@ -836,36 +836,36 @@
   "docs": {
     "meta": {
       "eyebrow": "Documentation",
-      "home": "Aide - accueil",
+      "home": "Accueil de l'aide",
       "navLabel": "Documentation",
       "browse": "Parcourir la documentation",
-      "breadcrumb": "Fil d'Ariane",
+      "breadcrumb": "Fil d’Ariane",
       "tocLabel": "Sur cette page",
       "onThisPage": "Sur cette page",
-      "updatedLabel": "Mis à jour",
+      "updatedLabel": "Mise à jour",
       "relatedLabel": "À lire aussi",
       "needLabel": "Avant de commencer",
-      "pagerLabel": "Navigation entre les pages",
+      "pagerLabel": "Navigation de page",
       "prev": "Précédent",
       "next": "Suivant"
     },
     "nav": {
-      "gettingStarted": "Bien démarrer",
+      "gettingStarted": "Premiers pas",
       "chatting": "Discuter",
       "privacyTools": "Outils de confidentialité",
-      "organising": "Organiser",
+      "organising": "Organisation",
       "accountSecurity": "Compte et sécurité",
       "billing": "Forfaits et facturation",
       "organisations": "Organisations"
     },
     "home": {
       "metaTitle": "Aide et documentation — Cognos",
-      "metaDescription": "Apprenez à utiliser Cognos : créer un compte, sauvegarder votre clé de compte, discuter en toute confidentialité et gérer vos données. Des guides clairs, étape par étape.",
+      "metaDescription": "Apprenez à utiliser Cognos : créez un compte, enregistrez votre clé de compte, discutez en toute confidentialité et gérez vos données. Des guides clairs, étape par étape.",
       "title": "Aide et documentation Cognos",
-      "lead": "Tout ce qu'il vous faut pour vous installer et discuter en toute confidentialité — de la création de votre compte jusqu'aux détails de la manière dont vos données restent les vôtres.",
+      "lead": "Tout ce qu'il vous faut pour vous installer et discuter en toute confidentialité — de la création de votre compte aux détails de la façon dont vos données restent les vôtres.",
       "sections": [
         {
-          "heading": "Nouveau ici ? Commencez par là",
+          "heading": "Nouveau ici ? Commencez par ceci",
           "blocks": [
             {
               "cards": [
@@ -873,13 +873,13 @@
                   "to": "/docs/what-is-cognos",
                   "icon": "Sparkles",
                   "title": "Qu'est-ce que Cognos ?",
-                  "body": "L'explication en une page de la manière dont vos discussions restent confidentielles."
+                  "body": "L'explication en une page de la façon dont vos discussions restent privées."
                 },
                 {
                   "to": "/docs/create-account",
                   "icon": "UserPlus",
                   "title": "Créez votre compte",
-                  "body": "Inscrivez-vous et sauvegardez votre clé de compte en quelques minutes."
+                  "body": "Inscrivez-vous et enregistrez votre clé de compte en quelques minutes."
                 },
                 {
                   "to": "/docs/your-first-chat",
@@ -899,7 +899,7 @@
                 {
                   "to": "/docs/what-is-cognos",
                   "icon": "Rocket",
-                  "title": "Bien démarrer",
+                  "title": "Premiers pas",
                   "body": "Comptes, votre clé de compte, le kit d'urgence, la connexion."
                 },
                 {
@@ -917,8 +917,8 @@
                 {
                   "to": "/docs/projects",
                   "icon": "FolderTree",
-                  "title": "Organiser",
-                  "body": "Projets, signets, recherche, importation, partage."
+                  "title": "Organisation",
+                  "body": "Projets, signets, recherche, import, partage."
                 },
                 {
                   "to": "/docs/multi-factor-authentication",
@@ -930,7 +930,7 @@
                   "to": "/docs/plans-and-pricing",
                   "icon": "CreditCard",
                   "title": "Forfaits et facturation",
-                  "body": "Crédit d'essai, forfaits Paiement à l'usage et Illimité."
+                  "body": "Crédit d'essai, forfaits Pay as you go et Unlimited."
                 }
               ]
             }
@@ -942,9 +942,9 @@
       "what-is-cognos": {
         "navTitle": "Qu'est-ce que Cognos ?",
         "metaTitle": "Qu'est-ce que Cognos ? — Documentation Cognos",
-        "metaDescription": "Cognos est une IA conversationnelle qui conserve vos conversations enregistrées sous une forme que nous ne pouvons pas lire. Voici comment cela fonctionne, en langage simple.",
+        "metaDescription": "Cognos est un chat IA qui conserve vos conversations enregistrées sous une forme que nous ne pouvons pas lire. Voici comment cela fonctionne, en termes simples.",
         "title": "Qu'est-ce que Cognos ?",
-        "lead": "Cognos est une IA conversationnelle qui conserve vos conversations enregistrées sous une forme que nous ne pouvons pas lire — vous seul(e) pouvez les déverrouiller.",
+        "lead": "Cognos est un chat IA qui conserve vos conversations enregistrées sous une forme que nous ne pouvons pas lire — vous seul pouvez les déverrouiller.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -952,22 +952,29 @@
             "heading": "En bref",
             "blocks": [
               {
-                "p": "Vous discutez avec les meilleurs modèles d'IA, et vos messages enregistrés sont conservés sur nos serveurs sous une forme que nous ne pouvons pas lire. Ils ne sont déverrouillés que sur votre appareil, avec une clé que vous seul(e) détenez — votre <a href=\"/docs/account-key\">clé de compte</a>."
+                "p": "Vous discutez avec les meilleurs modèles d'IA, et vos messages enregistrés sont verrouillés sur nos serveurs sous une forme que nous ne pouvons pas lire. Ils ne sont déverrouillés que sur votre appareil, avec une clé que vous seul détenez — votre <a href=\"/docs/account-key\">clé de compte</a>."
               },
               {
-                "p": "Trois éléments travaillent ensemble, chacun ayant accès au strict minimum :"
+                "p": "Trois éléments travaillent ensemble, et chacun se voit confier le moins possible :"
               },
               {
                 "ul": [
-                  "<b>Votre appareil</b> détient les clés. Vos discussions ne sont déverrouillées et lues qu'ici, nulle part ailleurs.",
-                  "<b>Nos serveurs</b> stockent vos discussions verrouillées et transmettent votre message à l'IA. Ils n'en conservent jamais de copie que nous puissions lire.",
-                  "<b>Le fournisseur d'IA approuvé</b> ne voit votre message que le temps de rédiger une réponse. Nous demandons aux fournisseurs de ne pas s'entraîner dessus."
+                  "<b>Votre appareil</b> détient les clés. Vos discussions sont déverrouillées et lues ici, et nulle part ailleurs.",
+                  "<b>Nos serveurs</b> stockent vos discussions verrouillées et transmettent votre message à l'IA. Ils ne conservent jamais de copie que nous puissions lire.",
+                  "<b>Le fournisseur d'IA approuvé</b> ne voit votre message que pendant qu'il rédige une réponse. Nous demandons aux fournisseurs de ne pas l'utiliser pour entraîner leurs modèles."
                 ]
               },
               {
                 "note": {
                   "variant": "tip",
-                  "body": "Vous voulez une explication plus détaillée ? Consultez l'<a href=\"/security\">aperçu de la sécurité</a> et la <a href=\"/privacy\">politique de confidentialité</a>."
+                  "body": "Vous voulez une explication plus approfondie ? Consultez notre <a href=\"/security\">aperçu de la sécurité</a> et notre <a href=\"/privacy\">politique de confidentialité</a>."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-exchange.png",
+                  "alt": "Une conversation Cognos : une question du titulaire du compte et la réponse de l'assistant.",
+                  "caption": "Une conversation dans Cognos — enregistrée et chiffrée au fil de l'eau."
                 }
               }
             ]
@@ -977,22 +984,22 @@
             "blocks": [
               {
                 "ul": [
-                  "<b>Nous ne pouvons pas lire</b> le contenu de vos conversations enregistrées, pièces jointes ou signets.",
-                  "<b>Nous pouvons voir</b> certaines métadonnées nécessaires au fonctionnement du service — quand un message a été enregistré, et le coût d'une requête.",
-                  "<b>Le fournisseur d'IA</b> voit bien votre message pendant qu'il y répond. C'est vrai pour tout assistant IA ; Cognos limite les endroits où cela se produit grâce aux <a href=\"/docs/privacy-tiers\">niveaux de confidentialité</a>."
+                  "<b>Nous ne pouvons pas lire</b> le contenu de vos conversations enregistrées, de vos pièces jointes ou de vos signets.",
+                  "<b>Nous pouvons voir</b> certaines métadonnées nécessaires au fonctionnement du service — le moment où un message a été enregistré, et le coût d'une requête.",
+                  "<b>Le fournisseur d'IA</b> voit bien votre message pendant qu'il y répond. C'est le cas pour tout assistant IA ; Cognos limite où cela se produit grâce aux <a href=\"/docs/privacy-tiers\">niveaux de confidentialité</a>."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "title": "Stockage confidentiel, pas discussion invisible",
-                  "body": "« Confidentiel » signifie que nous n'en conservons aucune copie que nous puissions lire. Cela ne signifie pas que votre message est caché à l'IA qui y répond — elle ne peut pas répondre à ce qu'elle ne voit pas."
+                  "title": "Stockage privé, pas une discussion invisible",
+                  "body": "« Privé » signifie que nous ne conservons aucune copie que nous puissions lire. Cela ne signifie pas que votre message est caché à l'IA qui y répond — elle ne peut pas répondre à ce qu'elle ne voit pas."
                 }
               }
             ]
           },
           {
-            "heading": "Comment les éléments s'assemblent",
+            "heading": "Comment les pièces s'assemblent",
             "blocks": [
               {
                 "cards": [
@@ -1024,9 +1031,9 @@
       "create-account": {
         "navTitle": "Créez votre compte",
         "metaTitle": "Créez votre compte — Documentation Cognos",
-        "metaDescription": "Inscrivez-vous sur Cognos avec un e-mail et un mot de passe, puis sauvegardez votre clé de compte. Un guide étape par étape qui prend quelques minutes.",
+        "metaDescription": "Inscrivez-vous à Cognos avec un e-mail et un mot de passe, puis enregistrez votre clé de compte. Un guide étape par étape qui prend quelques minutes.",
         "title": "Créez votre compte",
-        "lead": "Inscrivez-vous avec un e-mail et un mot de passe, puis sauvegardez votre clé de compte. Le tout prend quelques minutes.",
+        "lead": "Inscrivez-vous avec un e-mail et un mot de passe, puis enregistrez votre clé de compte. Le tout prend quelques minutes.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "needs": [
@@ -1036,21 +1043,21 @@
         ],
         "sections": [
           {
-            "heading": "Inscrivez-vous",
+            "heading": "Inscription",
             "blocks": [
               {
                 "steps": [
                   {
                     "title": "Ouvrez la page d'inscription",
-                    "body": "Allez sur <a href=\"https://app.cognos.io/auth/register\">la page d'inscription Cognos</a> et vous verrez <b>Créez votre compte Cognos</b>."
+                    "body": "Allez sur <a href=\"https://app.cognos.io/auth/register\">la page d'inscription de Cognos</a> et vous verrez <b>Créez votre compte Cognos</b>."
                   },
                   {
                     "title": "Saisissez votre e-mail et un mot de passe",
-                    "body": "Utilisez au moins 12 caractères. Votre mot de passe sert uniquement à vous connecter — il ne déverrouille jamais vos données, et vous pourrez le réinitialiser plus tard par e-mail."
+                    "body": "Utilisez au moins 12 caractères. Votre mot de passe sert uniquement à vous connecter — il ne déverrouille jamais vos données, et vous pouvez le réinitialiser plus tard par e-mail."
                   },
                   {
                     "title": "Sélectionnez Créer un compte",
-                    "body": "Vous êtes connecté(e) immédiatement, et Cognos génère votre <a href=\"/docs/account-key\">clé de compte</a>."
+                    "body": "Vous êtes connecté immédiatement, et Cognos génère votre <a href=\"/docs/account-key\">clé de compte</a>."
                   }
                 ]
               },
@@ -1058,22 +1065,22 @@
                 "figure": {
                   "src": "/docs-media/create-account-register.png",
                   "alt": "Le formulaire d'inscription Cognos avec les champs e-mail et mot de passe et un bouton Créer un compte.",
-                  "caption": "La page d'inscription sur app.cognos.io/auth/register."
+                  "caption": "La page d'inscription à l'adresse app.cognos.io/auth/register."
                 }
               }
             ]
           },
           {
-            "heading": "Sauvegardez votre clé de compte",
+            "heading": "Enregistrez votre clé de compte",
             "blocks": [
               {
-                "p": "Juste après l'inscription, Cognos affiche un écran intitulé <b>Sécurisez votre sauvegarde chiffrée</b>. C'est là que vous sauvegardez votre <a href=\"/docs/account-key\">clé de compte</a> sous forme de <a href=\"/docs/emergency-kit\">kit d'urgence</a> — ne sautez pas cette étape."
+                "p": "Juste après l'inscription, Cognos affiche un écran intitulé <b>Sécurisez votre sauvegarde chiffrée</b>. C'est là que vous enregistrez votre <a href=\"/docs/account-key\">clé de compte</a> sous forme de <a href=\"/docs/emergency-kit\">kit d'urgence</a> — ne sautez pas cette étape."
               },
               {
                 "note": {
                   "variant": "security",
-                  "title": "C'est la seule clé de vos données",
-                  "body": "La clé de compte est la seule chose qui puisse déchiffrer vos discussions. Cognos ne la stocke jamais, donc si vous la perdez, vos données ne peuvent pas être récupérées. Sauvegardez-la avant de continuer."
+                  "title": "C'est l'unique clé de vos données",
+                  "body": "La clé de compte est la seule chose capable de déchiffrer vos discussions. Cognos ne la stocke jamais, donc si vous la perdez, vos données ne peuvent pas être récupérées. Enregistrez-la avant de continuer."
                 }
               }
             ]
@@ -1082,10 +1089,10 @@
             "heading": "Vérifiez votre e-mail",
             "blocks": [
               {
-                "p": "Cognos vous envoie un lien de confirmation par e-mail. Vous pouvez consulter et gérer votre compte avant de confirmer, mais vous ne pouvez pas envoyer de messages à l'IA tant que votre e-mail n'est pas vérifié."
+                "p": "Cognos vous envoie un lien de confirmation par e-mail. Vous pouvez lire et gérer votre compte avant de confirmer, mais vous ne pouvez pas envoyer de messages à l'IA tant que votre e-mail n'est pas vérifié."
               },
               {
-                "p": "Une fois vérifié, votre <a href=\"/docs/trial-credit\">crédit d'essai</a> est prêt et vous pouvez commencer <a href=\"/docs/your-first-chat\">votre première discussion</a>."
+                "p": "Une fois vérifié, votre <a href=\"/docs/trial-credit\">crédit d'essai</a> est prêt et vous pouvez démarrer <a href=\"/docs/your-first-chat\">votre première discussion</a>."
               }
             ]
           }
@@ -1095,9 +1102,9 @@
       "account-key": {
         "navTitle": "Votre clé de compte",
         "metaTitle": "Votre clé de compte — Documentation Cognos",
-        "metaDescription": "La clé de compte est le seul secret qui déverrouille vos données chiffrées dans Cognos. Ce qu'elle est, en quoi elle diffère de votre mot de passe, et pourquoi elle ne peut pas être réinitialisée.",
+        "metaDescription": "La clé de compte est l'unique secret qui déverrouille vos données chiffrées dans Cognos. Ce qu'elle est, en quoi elle diffère de votre mot de passe, et pourquoi elle ne peut pas être réinitialisée.",
         "title": "Votre clé de compte",
-        "lead": "La clé de compte est le seul secret qui déverrouille vos données chiffrées. Cognos ne la stocke jamais, alors conservez-la en sécurité.",
+        "lead": "La clé de compte est l'unique secret qui déverrouille vos données chiffrées. Cognos ne la stocke jamais, alors conservez-la en lieu sûr.",
         "time": "4 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1105,7 +1112,7 @@
             "heading": "Ce qu'est la clé de compte",
             "blocks": [
               {
-                "p": "Lors de votre inscription, Cognos génère une clé de compte unique, longue et aléatoire. C'est elle qui déverrouille vos données sur n'importe quel appareil."
+                "p": "Lorsque vous vous inscrivez, Cognos génère une clé de compte longue et aléatoire, unique à votre compte. C'est elle qui déverrouille vos données sur n'importe quel appareil."
               },
               {
                 "ul": [
@@ -1118,10 +1125,10 @@
             ]
           },
           {
-            "heading": "Clé de compte contre mot de passe",
+            "heading": "Clé de compte et mot de passe",
             "blocks": [
               {
-                "p": "Elles ont des rôles différents. Les confondre est la source de confusion la plus courante :"
+                "p": "Ils remplissent des rôles différents. Les confondre est la source d'incompréhension la plus fréquente :"
               },
               {
                 "table": {
@@ -1129,7 +1136,7 @@
                   "rows": [
                     ["Rôle", "Vous connecte", "Déverrouille vos données"],
                     ["Réinitialisable par e-mail ?", "Oui", "Non — jamais"],
-                    ["Touche vos discussions ?", "Non", "Oui — c'est la clé"],
+                    ["Concerne vos discussions ?", "Non", "Oui — c'est la clé"],
                     [
                       "Si vous la perdez",
                       "<a href=\"/docs/resetting-your-password\">Réinitialisez-le</a> et continuez",
@@ -1147,22 +1154,29 @@
                 "note": {
                   "variant": "security",
                   "title": "Il n'existe pas d'option « clé de compte oubliée »",
-                  "body": "La clé de compte est fixée pour toute la durée de vie de votre compte — il n'y a ni modification ni réinitialisation, et le support ne peut pas la récupérer. Si vous la perdez, vous pouvez toujours vous connecter et <a href=\"/docs/deleting-your-account\">supprimer votre compte</a>, mais vos discussions existantes restent verrouillées pour toujours."
+                  "body": "La clé de compte est fixée pour toute la durée de vie de votre compte — il n'y a ni modification ni réinitialisation possible, et le support ne peut pas la récupérer. Si vous la perdez, vous pouvez toujours vous connecter et <a href=\"/docs/deleting-your-account\">supprimer votre compte</a>, mais vos discussions existantes restent verrouillées pour toujours."
                 }
               },
               {
-                "p": "Sauvegardez-la lors de l'inscription — c'est le seul moment fiable. Au cours de cette même première session, vous pouvez encore la rouvrir depuis <a href=\"https://app.cognos.io/account/security\">Sécurité et clés</a>, mais une fois la session terminée, Cognos ne peut vraiment plus vous la montrer. Ne considérez donc pas cela comme un moyen de remettre à plus tard — sauvegardez le kit d'urgence tout de suite."
+                "p": "Enregistrez-la lors de l'inscription — c'est le seul moment fiable. Au cours de cette même première session, vous pouvez encore la rouvrir depuis <a href=\"https://app.cognos.io/account/security\">Sécurité et clés</a>, mais une fois la session terminée, Cognos ne peut réellement plus l'afficher. Ne considérez donc pas cela comme un moyen de remettre l'enregistrement à plus tard — sauvegardez le kit d'urgence tout de suite."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/account-key-settings.png",
+                  "alt": "La page Sécurité et clés, où sont gérés la clé de compte et le kit d'urgence.",
+                  "caption": "Sécurité et clés, où vous pouvez rouvrir votre kit d'urgence au cours de la même session."
+                }
               }
             ]
           },
           {
-            "heading": "Conservez-la en sécurité",
+            "heading": "Conservez-la en lieu sûr",
             "blocks": [
               {
                 "ul": [
                   "Conservez le <a href=\"/docs/emergency-kit\">kit d'urgence</a> dans un gestionnaire de mots de passe ou sur un disque chiffré.",
-                  "Ne la collez pas dans une note partagée, une discussion ou un document cloud non protégé.",
-                  "Quiconque possède votre clé de compte peut déchiffrer vos données — traitez-la comme la clé d'un coffre-fort."
+                  "Ne le collez pas dans une note partagée, une discussion ou un document cloud non protégé.",
+                  "Toute personne possédant votre clé de compte peut déchiffrer vos données — traitez-la comme la clé d'un coffre-fort."
                 ]
               }
             ]
@@ -1173,9 +1187,9 @@
       "emergency-kit": {
         "navTitle": "Kit d'urgence",
         "metaTitle": "Le kit d'urgence — Documentation Cognos",
-        "metaDescription": "Le kit d'urgence est le fichier texte qui contient votre clé de compte Cognos. Comment le sauvegarder, où le conserver, et ce qui se passe si vous le perdez.",
+        "metaDescription": "Le kit d'urgence est le fichier texte qui contient votre clé de compte Cognos. Comment l'enregistrer, où le conserver, et ce qui se passe si vous le perdez.",
         "title": "Le kit d'urgence",
-        "lead": "Le kit d'urgence est le fichier texte qui contient votre clé de compte. Sauvegardez-le en lieu sûr dès votre inscription.",
+        "lead": "Le kit d'urgence est le fichier texte qui contient votre clé de compte. Enregistrez-le en lieu sûr dès votre inscription.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1183,32 +1197,32 @@
             "heading": "Ce qu'il contient",
             "blocks": [
               {
-                "p": "Le kit d'urgence est un fichier texte brut nommé <code>cognos-emergency-kit.txt</code>. Il contient votre <a href=\"/docs/account-key\">clé de compte</a>, l'e-mail associé à votre compte, et une brève note sur la marche à suivre."
+                "p": "Le kit d'urgence est un simple fichier texte nommé <code>cognos-emergency-kit.txt</code>. Il contient votre <a href=\"/docs/account-key\">clé de compte</a>, l'e-mail de votre compte, et une brève note sur son utilisation."
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Ce n'est pas un secret distinct — c'est simplement le format de remise de votre clé de compte."
+                  "body": "Ce n'est pas un secret distinct — c'est simplement le format sous lequel votre clé de compte vous est remise."
                 }
               }
             ]
           },
           {
-            "heading": "Sauvegardez-le à l'inscription",
+            "heading": "Enregistrez-le lors de l'inscription",
             "blocks": [
               {
                 "steps": [
                   {
-                    "title": "Sur l'écran « Sécurisez votre sauvegarde chiffrée », sauvegardez la clé",
+                    "title": "Sur l'écran « Sécurisez votre sauvegarde chiffrée », enregistrez la clé",
                     "body": "Sélectionnez <b>Télécharger le kit d'urgence</b> pour enregistrer le fichier, ou <b>Copier la clé de compte</b> pour la coller dans votre gestionnaire de mots de passe."
                   },
                   {
                     "title": "Cochez la case de confirmation",
-                    "body": "Elle confirme que vous avez sauvegardé la clé et que vous comprenez qu'elle ne peut pas être récupérée en cas de perte."
+                    "body": "Elle confirme que vous avez enregistré la clé et que vous comprenez qu'elle ne peut pas être récupérée en cas de perte."
                   },
                   {
                     "title": "Sélectionnez Créer la sauvegarde chiffrée",
-                    "body": "Cognos configure votre sauvegarde chiffrée et vous emmène dans l'application."
+                    "body": "Cognos configure votre sauvegarde chiffrée et vous conduit dans l'application."
                   }
                 ]
               },
@@ -1216,22 +1230,22 @@
                 "figure": {
                   "src": "/docs-media/emergency-kit-dialog.png",
                   "alt": "L'écran Sécurisez votre sauvegarde chiffrée montrant la clé de compte, les boutons Copier et Télécharger, et une case de confirmation.",
-                  "caption": "Sauvegardez le kit d'urgence avant de continuer — cet écran n'apparaît qu'une seule fois."
+                  "caption": "Enregistrez le kit d'urgence avant de continuer — cet écran n'apparaît qu'une seule fois."
                 }
               }
             ]
           },
           {
-            "heading": "Où la conserver",
+            "heading": "Où le conserver",
             "blocks": [
               {
                 "note": {
                   "variant": "tip",
-                  "body": "Un gestionnaire de mots de passe est l'endroit le plus simple pour la conserver en sécurité. Une clé USB chiffrée ou une copie imprimée dans un endroit sûr fonctionnent aussi."
+                  "body": "Un gestionnaire de mots de passe est l'endroit le plus simple et le plus sûr pour le conserver. Une clé USB chiffrée ou une copie imprimée dans un endroit sécurisé conviennent également."
                 }
               },
               {
-                "p": "Évitez les disques partagés, un e-mail brut à vous-même, ou des notes cloud non protégées — quiconque lit ce fichier peut déverrouiller vos données."
+                "p": "Évitez les lecteurs partagés, l'e-mail non chiffré à vous-même ou les notes cloud non protégées — quiconque lit le fichier peut déverrouiller vos données."
               }
             ]
           },
@@ -1241,7 +1255,7 @@
               {
                 "note": {
                   "variant": "security",
-                  "body": "Sans la clé de compte, vos discussions enregistrées ne peuvent pas être récupérées — ni par vous, ni par Cognos. Il n'y a pas de réinitialisation. Consultez <a href=\"/docs/account-key\">Votre clé de compte</a> pour comprendre pourquoi."
+                  "body": "Sans la clé de compte, vos discussions enregistrées ne peuvent pas être récupérées — ni par vous, ni par Cognos. Il n'existe aucune réinitialisation. Consultez <a href=\"/docs/account-key\">Votre clé de compte</a> pour comprendre pourquoi."
                 }
               }
             ]
@@ -1252,30 +1266,37 @@
       "signing-in": {
         "navTitle": "Se connecter",
         "metaTitle": "Se connecter — Documentation Cognos",
-        "metaDescription": "Connectez-vous à Cognos avec votre e-mail et votre mot de passe. Sur un nouvel appareil, vous devrez aussi saisir votre clé de compte pour déverrouiller vos données.",
+        "metaDescription": "Connectez-vous à Cognos avec votre e-mail et votre mot de passe. Sur un nouvel appareil, vous saisirez également votre clé de compte pour déverrouiller vos données.",
         "title": "Se connecter",
-        "lead": "Connectez-vous avec votre e-mail et votre mot de passe. Sur un nouvel appareil, vous devrez aussi saisir votre clé de compte pour déverrouiller vos données.",
+        "lead": "Connectez-vous avec votre e-mail et votre mot de passe. Sur un nouvel appareil, vous saisirez également votre clé de compte pour déverrouiller vos données.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
           {
-            "heading": "Connectez-vous",
+            "heading": "Se connecter",
             "blocks": [
               {
                 "steps": [
                   {
                     "title": "Ouvrez la page de connexion",
-                    "body": "Allez sur <a href=\"https://app.cognos.io/auth/login\">la page de connexion Cognos</a>."
+                    "body": "Allez sur <a href=\"https://app.cognos.io/auth/login\">la page de connexion de Cognos</a>."
                   },
                   {
                     "title": "Saisissez votre e-mail et votre mot de passe",
                     "body": "Puis sélectionnez <b>Se connecter</b>."
                   },
                   {
-                    "title": "Saisissez votre code si la double authentification est activée",
+                    "title": "Saisissez votre code si l'authentification à deux facteurs est activée",
                     "body": "Si vous avez activé l'<a href=\"/docs/multi-factor-authentication\">authentification à deux facteurs</a>, saisissez le code à 6 chiffres de votre application d'authentification."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/login.png",
+                  "alt": "La page de connexion Cognos avec les champs e-mail et mot de passe.",
+                  "caption": "La page de connexion à l'adresse app.cognos.io/auth/login."
+                }
               }
             ]
           },
@@ -1283,21 +1304,21 @@
             "heading": "Déverrouiller sur un nouvel appareil",
             "blocks": [
               {
-                "p": "La première fois que vous vous connectez sur un nouvel appareil ou navigateur, Cognos vous demande votre clé de compte sur un écran intitulé <b>Déverrouiller la sauvegarde</b>. Saisissez-la pour déverrouiller vos discussions. Consultez <a href=\"/docs/unlock-and-lock\">Déverrouiller et verrouiller</a> pour plus de détails."
+                "p": "La première fois que vous vous connectez sur un nouvel appareil ou un nouveau navigateur, Cognos vous demande votre clé de compte sur un écran intitulé <b>Déverrouiller la sauvegarde</b>. Saisissez-la pour déverrouiller vos discussions. Consultez <a href=\"/docs/unlock-and-lock\">Déverrouiller et verrouiller</a> pour plus de détails."
               },
               {
                 "note": {
                   "variant": "tip",
-                  "body": "Vous ne retrouvez plus votre clé de compte ? Cherchez le fichier <code>cognos-emergency-kit.txt</code> que vous avez sauvegardé à l'inscription. S'il a disparu, consultez <a href=\"/docs/emergency-kit\">le kit d'urgence</a>."
+                  "body": "Vous ne trouvez pas votre clé de compte ? Recherchez le fichier <code>cognos-emergency-kit.txt</code> que vous avez enregistré à l'inscription. S'il a disparu, consultez <a href=\"/docs/emergency-kit\">le kit d'urgence</a>."
                 }
               }
             ]
           },
           {
-            "heading": "Rester connecté(e)",
+            "heading": "Rester connecté",
             "blocks": [
               {
-                "p": "Sur un appareil déjà déverrouillé, actualiser ou rouvrir l'application ne vous redemandera pas votre clé de compte. <a href=\"/docs/sessions-and-logout\">Se déconnecter</a> met fin à cela et vous déconnecte partout."
+                "p": "Sur un appareil que vous avez déjà déverrouillé, actualiser ou rouvrir l'application ne vous redemandera pas votre clé de compte. <a href=\"/docs/sessions-and-logout\">Se déconnecter</a> met fin à cela et vous déconnecte partout."
               }
             ]
           }
@@ -1307,9 +1328,9 @@
       "unlock-and-lock": {
         "navTitle": "Déverrouiller et verrouiller",
         "metaTitle": "Déverrouiller et verrouiller — Documentation Cognos",
-        "metaDescription": "Déverrouiller ouvre vos données chiffrées sur un appareil avec votre clé de compte. Verrouiller les masque à nouveau sans vous déconnecter. En quoi cela diffère de la déconnexion.",
+        "metaDescription": "Déverrouiller ouvre vos données chiffrées sur un appareil grâce à votre clé de compte. Verrouiller les masque à nouveau sans vous déconnecter. En quoi cela diffère de la déconnexion.",
         "title": "Déverrouiller et verrouiller",
-        "lead": "Déverrouiller ouvre vos données sur un appareil avec votre clé de compte. Verrouiller les masque à nouveau — sans vous déconnecter.",
+        "lead": "Déverrouiller ouvre vos données sur un appareil grâce à votre clé de compte. Verrouiller les masque à nouveau — sans vous déconnecter.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1322,7 +1343,14 @@
               {
                 "note": {
                   "variant": "tip",
-                  "body": "Le déverrouillage effectue un travail cryptographique volontaire, ce qui peut prendre une seconde ou deux sur un appareil plus ancien — c'est normal, pas un blocage."
+                  "body": "Le déverrouillage effectue un travail cryptographique volontairement exigeant, ce qui peut prendre une seconde ou deux sur un appareil plus ancien — c'est normal, pas un blocage."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/unlock-dialog.png",
+                  "alt": "La boîte de dialogue Déverrouiller la sauvegarde demandant la clé de compte sur un nouvel appareil.",
+                  "caption": "Déverrouillage d'un nouvel appareil avec votre clé de compte."
                 }
               }
             ]
@@ -1331,7 +1359,7 @@
             "heading": "Verrouiller",
             "blocks": [
               {
-                "p": "Sélectionnez <b>Verrouiller</b> dans la barre latérale pour effacer vos données déverrouillées de cet appareil — pratique sur un ordinateur partagé ou public. Vous restez connecté(e) ; pour continuer, déverrouillez à nouveau avec votre clé de compte. Aucun mot de passe requis."
+                "p": "Sélectionnez <b>Verrouiller</b> dans la barre latérale pour effacer vos données déverrouillées de cet appareil — pratique sur un ordinateur partagé ou public. Vous restez connecté ; pour continuer, déverrouillez à nouveau avec votre clé de compte. Aucun mot de passe requis."
               }
             ]
           },
@@ -1342,7 +1370,7 @@
                 "table": {
                   "head": ["", "Verrouiller", "Se déconnecter"],
                   "rows": [
-                    ["Toujours connecté(e) ?", "Oui", "Non"],
+                    ["Toujours connecté ?", "Oui", "Non"],
                     [
                       "Pour revenir",
                       "Votre clé de compte",
@@ -1351,13 +1379,13 @@
                     [
                       "Affecte les autres appareils ?",
                       "Non",
-                      "Oui — les déconnecte aussi"
+                      "Oui — ils sont aussi déconnectés"
                     ]
                   ]
                 }
               },
               {
-                "p": "Consultez <a href=\"/docs/sessions-and-logout\">Sessions et déconnexion</a> pour savoir ce que fait la déconnexion sur tous vos appareils."
+                "p": "Consultez <a href=\"/docs/sessions-and-logout\">Sessions et déconnexion</a> pour savoir ce que fait la déconnexion sur l'ensemble de vos appareils."
               }
             ]
           }
@@ -1369,7 +1397,7 @@
         "metaTitle": "Votre première discussion — Documentation Cognos",
         "metaDescription": "Envoyez votre premier message dans Cognos, choisissez un modèle, et découvrez comment votre conversation est enregistrée et chiffrée automatiquement.",
         "title": "Votre première discussion",
-        "lead": "Saisissez un message, choisissez un modèle si vous le souhaitez, et envoyez. Votre conversation est enregistrée et chiffrée automatiquement.",
+        "lead": "Tapez un message, choisissez un modèle si vous le souhaitez, et envoyez. Votre conversation est enregistrée et chiffrée automatiquement.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1379,12 +1407,12 @@
               {
                 "steps": [
                   {
-                    "title": "Démarrez une nouvelle discussion",
+                    "title": "Démarrez une nouvelle conversation",
                     "body": "Sélectionnez <b>Nouvelle conversation</b> dans la barre latérale."
                   },
                   {
-                    "title": "Saisissez dans la zone de message",
-                    "body": "C'est la zone en bas qui indique <b>Écrire avec Cognos</b>."
+                    "title": "Écrivez dans la zone de message",
+                    "body": "C'est la zone en bas qui affiche <b>Écrire avec Cognos</b>."
                   },
                   {
                     "title": "Envoyez-le",
@@ -1395,7 +1423,7 @@
               {
                 "figure": {
                   "src": "/docs-media/first-chat-composer.png",
-                  "alt": "La discussion Cognos avec la zone de message en bas et le sélecteur de modèle au-dessus.",
+                  "alt": "La discussion Cognos avec la zone de message en bas et le sélecteur de modèle juste au-dessus.",
                   "caption": "La zone de message, avec le sélecteur de modèle juste au-dessus."
                 }
               }
@@ -1405,12 +1433,19 @@
             "heading": "Ce qui est enregistré",
             "blocks": [
               {
-                "p": "Votre conversation est enregistrée et <a href=\"/docs/your-privacy\">chiffrée</a> au fur et à mesure. La liste des titres de discussion n'est déchiffrée que sur votre appareil, afin que la barre latérale se charge rapidement et en toute confidentialité."
+                "p": "Votre conversation est enregistrée et <a href=\"/docs/your-privacy\">chiffrée</a> au fil de l'eau. La liste des titres de discussion n'est déchiffrée que sur votre appareil, si bien que la barre latérale se charge rapidement et en toute confidentialité."
               },
               {
                 "note": {
                   "variant": "tip",
                   "body": "Vous ne voulez pas qu'elle soit enregistrée ? Activez une <a href=\"/docs/temporary-conversations\">conversation temporaire</a> avant de commencer."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-exchange.png",
+                  "alt": "Un message envoyé et la réponse de l'assistant dans une conversation.",
+                  "caption": "Votre message et la réponse — enregistrés et chiffrés automatiquement."
                 }
               }
             ]
@@ -1419,7 +1454,7 @@
             "heading": "Essayez un autre modèle",
             "blocks": [
               {
-                "p": "Au-dessus de la zone de message, vous pouvez <a href=\"/docs/choosing-a-model\">choisir un autre modèle</a> — certains sont plus rapides, d'autres meilleurs en raisonnement, d'autres encore peuvent chercher sur le web ou créer des images."
+                "p": "Au-dessus de la zone de message, vous pouvez <a href=\"/docs/choosing-a-model\">choisir un autre modèle</a> — certains sont plus rapides, d'autres meilleurs en raisonnement, d'autres encore peuvent effectuer des recherches web ou créer des images."
               }
             ]
           }
@@ -1429,9 +1464,9 @@
       "choosing-a-model": {
         "navTitle": "Choisir un modèle",
         "metaTitle": "Choisir un modèle — Documentation Cognos",
-        "metaDescription": "Cognos propose de nombreux modèles d'IA. Choisissez-en un par nom ou filtrez selon vos besoins — rapidité, raisonnement, recherche web ou images.",
+        "metaDescription": "Cognos propose de nombreux modèles d'IA. Choisissez-en un par son nom ou filtrez selon vos besoins — vitesse, raisonnement, recherche web ou images.",
         "title": "Choisir un modèle",
-        "lead": "Cognos propose de nombreux modèles. Choisissez-en un par nom, ou filtrez selon vos besoins — rapidité, raisonnement, recherche web ou images.",
+        "lead": "Cognos propose de nombreux modèles. Choisissez-en un par son nom, ou filtrez selon vos besoins — vitesse, raisonnement, recherche web ou images.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1446,25 +1481,25 @@
                   },
                   {
                     "title": "Trouvez-en un",
-                    "body": "Parcourez <b>Épinglés</b>, <b>Récents</b> et <b>Recommandés</b>, recherchez par nom, ou utilisez les filtres rapides (Rapide, Puissant, Raisonnement, Recherche web, Image, Vision, et plus encore)."
+                    "body": "Parcourez <b>Épinglés</b>, <b>Récents</b> et <b>Recommandés</b>, cherchez par nom, ou utilisez les filtres rapides (Rapide, Puissant, Raisonnement, Recherche web, Image, Vision, et plus encore)."
                   },
                   {
                     "title": "Sélectionnez-le",
-                    "body": "Votre choix reste actif pour les nouveaux messages et vous suit sur tous vos appareils."
+                    "body": "Votre choix reste pour les nouveaux messages et vous suit sur tous vos appareils."
                   }
                 ]
               },
               {
                 "figure": {
                   "src": "/docs-media/model-picker.png",
-                  "alt": "Le sélecteur de modèle montrant les modèles épinglés, récents et recommandés avec des filtres rapides.",
+                  "alt": "Le sélecteur de modèle affichant les modèles épinglés, récents et recommandés avec des filtres rapides.",
                   "caption": "Le sélecteur de modèle, avec les filtres rapides en haut."
                 }
               }
             ]
           },
           {
-            "heading": "Modèle contre fournisseur",
+            "heading": "Modèle et fournisseur",
             "blocks": [
               {
                 "p": "Le <b>modèle</b> est le choix que vous faites. Le <b>fournisseur</b> est l'entreprise qui l'exécute réellement et voit votre message pendant qu'il répond. Cognos enregistre le fournisseur pour chaque réponse — vous pouvez le vérifier à tout moment dans les <a href=\"/docs/your-privacy\">détails de confidentialité par réponse</a>."
@@ -1476,9 +1511,9 @@
             "blocks": [
               {
                 "ul": [
-                  "Le sélecteur n'active que ce qu'un modèle prend réellement en charge — un modèle uniquement image ne peut pas tenir une discussion textuelle, par exemple.",
-                  "La <a href=\"/docs/web-search\">recherche web</a> est simplement désactivée sur les modèles qui n'en sont pas capables, plutôt que de bloquer votre message.",
-                  "Votre <a href=\"/docs/privacy-tiers\">niveau de confidentialité</a> limite les modèles que vous pouvez utiliser. Les modèles au-delà de votre niveau apparaissent grisés, afin que vous voyiez ce qu'un niveau supérieur débloquerait."
+                  "Le sélecteur n'active que ce qu'un modèle prend réellement en charge — un modèle uniquement dédié aux images ne peut par exemple pas tenir une discussion textuelle.",
+                  "La <a href=\"/docs/web-search\">recherche web</a> est simplement ignorée sur les modèles qui n'en sont pas capables, plutôt que de bloquer votre message.",
+                  "Votre <a href=\"/docs/privacy-tiers\">niveau de confidentialité</a> limite les modèles que vous pouvez utiliser. Les modèles au-delà de votre niveau apparaissent grisés afin que vous puissiez voir ce qu'un niveau supérieur débloquerait."
                 ]
               }
             ]
@@ -1489,9 +1524,9 @@
       "privacy-tiers": {
         "navTitle": "Niveaux de confidentialité",
         "metaTitle": "Niveaux de confidentialité — Documentation Cognos",
-        "metaDescription": "Votre niveau de confidentialité définit jusqu'où vos messages peuvent voyager pour obtenir une réponse. Il change les modèles que vous pouvez utiliser — et rien d'autre.",
+        "metaDescription": "Votre niveau de confidentialité détermine jusqu'où vos messages peuvent voyager pour obtenir une réponse. Il change les modèles que vous pouvez utiliser — et rien d'autre.",
         "title": "Niveaux de confidentialité",
-        "lead": "Votre niveau de confidentialité définit la distance maximale que vos messages peuvent parcourir pour obtenir une réponse. Il change les modèles que vous pouvez utiliser — et rien d'autre.",
+        "lead": "Votre niveau de confidentialité fixe la distance maximale que vos messages peuvent parcourir pour obtenir une réponse. Il change les modèles que vous pouvez utiliser — et rien d'autre.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1512,7 +1547,7 @@
                     ],
                     [
                       "<b>Mondial</b>",
-                      "Dans des centres de données agréés dans le monde entier — débloque tous les modèles."
+                      "Dans des centres de données vérifiés dans le monde entier — débloque tous les modèles."
                     ]
                   ]
                 }
@@ -1530,7 +1565,7 @@
                   },
                   {
                     "title": "Choisissez un niveau",
-                    "body": "Sélectionnez l'une des trois cartes. L'enregistrement est immédiat et la liste des modèles se met à jour."
+                    "body": "Sélectionnez l'une des trois cartes. Elle est enregistrée immédiatement et la liste des modèles se met à jour."
                   }
                 ]
               },
@@ -1548,14 +1583,14 @@
             "blocks": [
               {
                 "ul": [
-                  "<b>Change :</b> les modèles que vous êtes autorisé(e) à utiliser.",
-                  "<b>Ne change pas :</b> la manière dont vos discussions sont stockées — elles sont toujours conservées sous une forme que nous ne pouvons pas lire, quel que soit le niveau choisi."
+                  "<b>Change :</b> les modèles que vous êtes autorisé à utiliser.",
+                  "<b>Ne change pas :</b> la façon dont vos discussions sont stockées — elles sont toujours conservées sous une forme que nous ne pouvons pas lire, quel que soit le niveau choisi."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Le niveau concerne uniquement l'endroit où une réponse est produite en direct. Vos conversations enregistrées sont chiffrées de la même manière à chaque niveau."
+                  "body": "Le niveau ne concerne que l'endroit où une réponse en direct est produite. Vos conversations enregistrées sont chiffrées de la même façon quel que soit le niveau."
                 }
               }
             ]
@@ -1566,9 +1601,9 @@
       "personas": {
         "navTitle": "Personas",
         "metaTitle": "Personas — Documentation Cognos",
-        "metaDescription": "Une persona est un ensemble d'instructions réutilisable qui façonne la manière dont l'IA répond — un ton, un rôle, un format. Utilisez-en une prédéfinie ou créez la vôtre.",
+        "metaDescription": "Une persona est un ensemble d'instructions réutilisable qui façonne la façon dont l'IA répond — un ton, un rôle, un format. Utilisez-en une intégrée ou créez la vôtre.",
         "title": "Personas",
-        "lead": "Une persona est un ensemble d'instructions réutilisable qui façonne la manière dont l'IA répond — un ton, un rôle, ou un format. Ce n'est pas un robot distinct.",
+        "lead": "Une persona est un ensemble d'instructions réutilisable qui façonne la façon dont l'IA répond — un ton, un rôle ou un format. Ce n'est pas un robot séparé.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1576,7 +1611,7 @@
             "heading": "Utiliser une persona",
             "blocks": [
               {
-                "p": "Cognos propose un ensemble de personas prédéfinies. Changez de persona depuis la puce dans la zone de message, ou ouvrez la <a href=\"https://app.cognos.io/personas\">page Personas</a> pour toutes les parcourir."
+                "p": "Cognos propose un ensemble de personas intégrées. Changez de persona depuis la puce dans la zone de message, ou ouvrez la <a href=\"https://app.cognos.io/personas\">page Personas</a> pour toutes les parcourir."
               }
             ]
           },
@@ -1591,10 +1626,10 @@
                   },
                   {
                     "title": "Décrivez-la",
-                    "body": "Donnez-lui un nom, une description, et les instructions que l'IA doit suivre. Ajoutez une couleur et une icône si vous le souhaitez."
+                    "body": "Donnez-lui un nom, une description et les instructions que l'IA doit suivre. Ajoutez une couleur et une icône si vous le souhaitez."
                   },
                   {
-                    "title": "Faites-en votre persona par défaut (facultatif)",
+                    "title": "Optionnellement, définissez-la par défaut",
                     "body": "Activez <b>Utiliser comme ma persona par défaut</b> pour qu'elle s'applique aux nouvelles discussions."
                   }
                 ]
@@ -1602,8 +1637,8 @@
               {
                 "figure": {
                   "src": "/docs-media/personas.png",
-                  "alt": "La page Personas montrant les personas épinglées, récentes et officielles dans une grille.",
-                  "caption": "Vos personas, y compris les personas « Officielles » prédéfinies."
+                  "alt": "La page Personas affichant les personas épinglées, récentes et officielles dans une grille.",
+                  "caption": "Vos personas, y compris les personas « Officielles » intégrées."
                 }
               }
             ]
@@ -1615,7 +1650,7 @@
                 "ul": [
                   "Vos personas personnalisées sont privées et <a href=\"/docs/your-privacy\">chiffrées</a>.",
                   "Votre persona par défaut vous suit sur tous vos appareils.",
-                  "Si une persona est supprimée ou ne peut pas être chargée, la discussion fonctionne quand même — elle revient simplement à aucune persona.",
+                  "Si une persona est supprimée ou ne peut pas être chargée, la discussion continue de fonctionner — elle revient simplement à l'absence de persona.",
                   "Les personas sont propres à votre compte ; il n'existe pas de persona partagée."
                 ]
               }
@@ -1637,15 +1672,22 @@
             "heading": "Afficher la réflexion",
             "blocks": [
               {
-                "p": "Sur les modèles qui le permettent, chaque réponse dispose d'un bouton <b>Afficher le raisonnement</b>. La réflexion s'affiche en direct, puis se replie une fois la réponse arrivée. Elle est <a href=\"/docs/your-privacy\">chiffrée</a> comme le reste de votre message et jamais consignée."
+                "p": "Sur les modèles qui le prennent en charge, chaque réponse dispose d'un interrupteur <b>Afficher le raisonnement</b>. La réflexion s'affiche en direct, puis se replie une fois la réponse arrivée. Elle est <a href=\"/docs/your-privacy\">chiffrée</a> comme le reste de votre message et jamais journalisée."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/reasoning-effort.png",
+                  "alt": "Le contrôle de l'effort de raisonnement affichant les niveaux sélectionnables.",
+                  "caption": "Réglez l'effort qu'un modèle compatible consacre à la réflexion."
+                }
               }
             ]
           },
           {
-            "heading": "Régler l'effort",
+            "heading": "Réglez l'effort",
             "blocks": [
               {
-                "p": "Le réglage <b>Effort de raisonnement</b> dans la zone de message vous permet de faire varier un modèle capable de désactivé à élevé. Plus d'effort peut prendre plus de temps et <a href=\"/docs/plans-and-pricing\">coûter plus cher</a> ; les niveaux exacts dépendent du modèle."
+                "p": "Le contrôle <b>Effort de raisonnement</b> dans la zone de message vous permet de régler un modèle compatible de désactivé jusqu'à élevé. Plus d'effort peut prendre plus de temps et <a href=\"/docs/plans-and-pricing\">coûter plus cher</a> ; les niveaux exacts dépendent du modèle."
               }
             ]
           },
@@ -1655,7 +1697,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Le raisonnement est une aide à la transparence, pas une preuve — il peut être incomplet ou reformuler votre message. Jugez la réponse, pas la réflexion."
+                  "body": "Le raisonnement est une aide à la transparence, pas une preuve — il peut être incomplet ou simplement reformuler votre requête. Jugez la réponse, pas la réflexion."
                 }
               },
               {
@@ -1672,7 +1714,7 @@
       "web-search": {
         "navTitle": "Recherche web",
         "metaTitle": "Recherche web — Documentation Cognos",
-        "metaDescription": "Sur certains modèles, l'IA peut faire des recherches sur le web pendant qu'elle répond et citer ses sources. Comment l'activer et ce que cela coûte.",
+        "metaDescription": "Sur certains modèles, l'IA peut faire des recherches sur le web en répondant et citer ses sources. Comment l'activer et ce que cela coûte.",
         "title": "Recherche web",
         "lead": "Sur certains modèles, l'IA peut faire des recherches sur le web pendant qu'elle répond, et citer ses sources.",
         "time": "2 min",
@@ -1683,6 +1725,13 @@
             "blocks": [
               {
                 "p": "Ouvrez le menu <b>Outils</b> dans la zone de message et activez <b>Recherche web</b>. Si le modèle choisi ne peut pas effectuer de recherche, l'option l'indique et est simplement ignorée."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "Le menu Outils avec l'interrupteur Recherche web.",
+                  "caption": "Activez Recherche web depuis le menu Outils."
+                }
               }
             ]
           },
@@ -1692,14 +1741,14 @@
               {
                 "ul": [
                   "Votre question peut être envoyée à un moteur de recherche par le fournisseur d'IA pour trouver des sources.",
-                  "Les résultats et citations sont <a href=\"/docs/your-privacy\">chiffrés</a> comme le reste de votre message, et affichés en ligne sous forme de sources cliquables.",
-                  "Chaque recherche effectuée ajoute un petit forfait fixe au coût habituel — consultez <a href=\"/docs/plans-and-pricing\">Forfaits et tarifs</a>."
+                  "Les résultats et citations sont <a href=\"/docs/your-privacy\">chiffrés</a> comme le reste de votre message, et affichés directement sous forme de sources cliquables.",
+                  "Chaque recherche effectuée ajoute un petit forfait fixe au coût habituel — consultez <a href=\"/docs/plans-and-pricing\">forfaits et tarifs</a>."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Cognos n'effectue pas la recherche elle-même — c'est le fournisseur d'IA qui s'en charge. La recherche web ne fonctionne que sur les modèles qui la prennent en charge (actuellement certains hébergés en Europe) ; votre <a href=\"/docs/privacy-tiers\">niveau de confidentialité</a> ne change rien à cela."
+                  "body": "Cognos n'effectue pas la recherche elle-même — c'est le fournisseur d'IA qui s'en charge. La recherche web ne fonctionne que sur les modèles qui la prennent en charge (actuellement certains modèles hébergés en Europe) ; votre <a href=\"/docs/privacy-tiers\">niveau de confidentialité</a> ne change rien à cela."
                 }
               }
             ]
@@ -1710,9 +1759,9 @@
       "temporary-conversations": {
         "navTitle": "Conversations temporaires",
         "metaTitle": "Conversations temporaires — Documentation Cognos",
-        "metaDescription": "Une conversation temporaire n'est jamais enregistrée — les messages restent dans votre navigateur jusqu'à ce que vous le fermiez. Quand en utiliser une et en quoi elle diffère des messages éphémères.",
+        "metaDescription": "Une conversation temporaire n'est jamais enregistrée — les messages restent dans votre navigateur jusqu'à sa fermeture. Quand en utiliser une et en quoi elle diffère des messages éphémères.",
         "title": "Conversations temporaires",
-        "lead": "Une conversation temporaire n'est jamais enregistrée. Les messages restent dans votre navigateur jusqu'à ce que vous le fermiez.",
+        "lead": "Une conversation temporaire n'est jamais enregistrée. Les messages restent dans votre navigateur jusqu'à sa fermeture.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1720,7 +1769,14 @@
             "heading": "Démarrez-en une",
             "blocks": [
               {
-                "p": "Sur une nouvelle discussion non enregistrée, activez le bouton <b>Discussion temporaire</b>. Rien n'est écrit sous forme de Conversation enregistrée — les messages ne vivent que dans ce navigateur."
+                "p": "Sur une nouvelle discussion non enregistrée, activez l'interrupteur <b>Discussion temporaire</b>. Rien n'est écrit sous forme de conversation enregistrée — les messages n'existent que dans ce navigateur."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/temporary-chat.png",
+                  "alt": "L'interrupteur Discussion temporaire sur une nouvelle conversation non enregistrée.",
+                  "caption": "L'interrupteur Discussion temporaire sur une nouvelle conversation."
+                }
               }
             ]
           },
@@ -1730,7 +1786,7 @@
               {
                 "ul": [
                   "Des questions rapides et jetables que vous n'avez pas besoin de conserver.",
-                  "Un travail sur un ordinateur partagé ou public."
+                  "Travailler sur un ordinateur partagé ou public."
                 ]
               }
             ]
@@ -1750,7 +1806,7 @@
                     [
                       "<a href=\"/docs/disappearing-messages\">Messages éphémères</a>",
                       "Oui",
-                      "Chaque message, selon une minuterie"
+                      "Chaque message, selon un minuteur"
                     ],
                     [
                       "<a href=\"/docs/disappearing-messages\">Suppression automatique</a>",
@@ -1772,11 +1828,11 @@
         "related": ["disappearing-messages", "your-first-chat", "your-privacy"]
       },
       "disappearing-messages": {
-        "navTitle": "Messages éphémères et suppression auto",
+        "navTitle": "Éphémères et suppression automatique",
         "metaTitle": "Messages éphémères et suppression automatique — Documentation Cognos",
-        "metaDescription": "Faites expirer des messages selon une minuterie, ou faites supprimer automatiquement toute une conversation après une période d'inactivité. Les deux sont permanents.",
+        "metaDescription": "Configurez l'expiration des messages selon un minuteur, ou la suppression automatique de toute une conversation après une période d'inactivité. Les deux sont définitives.",
         "title": "Des messages qui se suppriment eux-mêmes",
-        "lead": "Faites expirer des messages selon une minuterie, ou faites en sorte qu'une conversation entière se supprime après une période d'inactivité.",
+        "lead": "Configurez l'expiration des messages selon un minuteur, ou la suppression d'une conversation entière après une période d'inactivité.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1784,12 +1840,19 @@
             "heading": "Messages éphémères",
             "blocks": [
               {
-                "p": "Lorsque vous créez une discussion, vous pouvez régler l'expiration de ses messages après <b>24 heures, 7 jours, 90 jours ou 180 jours</b>. Chaque message est supprimé définitivement une fois sa minuterie écoulée."
+                "p": "Lorsque vous créez une discussion, vous pouvez configurer l'expiration de ses messages après <b>24 heures, 7 jours, 90 jours ou 180 jours</b>. Chaque message est supprimé définitivement une fois son minuteur écoulé."
               },
               {
                 "note": {
                   "variant": "tip",
                   "body": "Un fichier que vous avez joint reste dans votre <a href=\"/docs/attachments\">bibliothèque</a> même après la disparition du message qui l'utilisait."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/disappearing-dialog.png",
+                  "alt": "La boîte de dialogue Messages éphémères avec les options de durée d'expiration.",
+                  "caption": "Choix de la durée de vie des messages."
                 }
               }
             ]
@@ -1798,20 +1861,20 @@
             "heading": "Supprimer automatiquement une conversation",
             "blocks": [
               {
-                "p": "Dans une discussion enregistrée, ouvrez le menu <b>⋯</b> et choisissez <b>Suppression automatique</b> pour retirer toute la conversation après une période d'inactivité (Réglage du compte, Jamais, 7 jours ou 30 jours). Réglez la valeur par défaut à l'échelle du compte sous <a href=\"https://app.cognos.io/account\">Compte</a>."
+                "p": "Dans une discussion enregistrée, ouvrez le menu <b>⋯</b> et choisissez <b>Suppression automatique</b> pour supprimer toute la conversation après une période d'inactivité (Réglage du compte, Jamais, 7 jours ou 30 jours). Définissez le réglage par défaut pour l'ensemble du compte sous <a href=\"https://app.cognos.io/account\">Compte</a>."
               },
               {
-                "p": "Le compte à rebours se base sur la dernière activité de la discussion — le resserrer plus tard ne supprimera pas rétroactivement une discussion ancienne mais récemment utilisée."
+                "p": "Le compte à rebours se base sur la dernière activité de la discussion — le raccourcir plus tard ne supprimera pas rétroactivement une discussion ancienne mais récemment utilisée."
               }
             ]
           },
           {
-            "heading": "Les deux sont permanents",
+            "heading": "Les deux sont définitives",
             "blocks": [
               {
                 "note": {
                   "variant": "security",
-                  "body": "Le contenu supprimé ne peut pas être récupéré — ni par vous, ni par Cognos. Il n'y a ni sauvegarde ni annulation."
+                  "body": "Le contenu supprimé ne peut pas être récupéré — ni par vous, ni par Cognos. Il n'y a ni sauvegarde ni annulation possible."
                 }
               }
             ]
@@ -1822,17 +1885,17 @@
       "redaction": {
         "navTitle": "Masquage",
         "metaTitle": "Masquage : cacher les détails sensibles — Documentation Cognos",
-        "metaDescription": "Cognos peut repérer des détails sensibles dans votre message — comme un IBAN ou un e-mail — et les masquer à l'IA avant l'envoi. Comment cela fonctionne et comment le vérifier.",
+        "metaDescription": "Cognos peut repérer les détails sensibles dans votre message — comme un IBAN ou un e-mail — et les cacher à l'IA avant l'envoi. Comment cela fonctionne et comment le vérifier.",
         "title": "Masquage",
-        "lead": "Cognos peut repérer des détails sensibles dans votre message — un IBAN, un e-mail, un numéro de carte — et les masquer avant même que l'IA ne les voie.",
+        "lead": "Cognos peut repérer les détails sensibles dans votre message — un IBAN, un e-mail, un numéro de carte — et les cacher avant même que l'IA ne les voie.",
         "time": "4 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
           {
-            "heading": "Comment cela fonctionne",
+            "heading": "Comment ça marche",
             "blocks": [
               {
-                "p": "La détection s'exécute <b>dans votre navigateur</b> avant que quoi que ce soit ne soit envoyé. Chaque valeur sensible est remplacée par un espace réservé comme <code>[[PII_IBAN_Q7K9M2]]</code>. Le fournisseur d'IA et le message enregistré ne voient jamais que l'espace réservé — vous continuez à voir la valeur réelle."
+                "p": "La détection s'exécute <b>dans votre navigateur</b> avant tout envoi. Chaque valeur sensible est remplacée par un espace réservé comme <code>[[PII_IBAN_Q7K9M2]]</code>. Le fournisseur d'IA et le message enregistré ne voient jamais que l'espace réservé — vous continuez de voir la valeur réelle."
               }
             ]
           },
@@ -1840,7 +1903,7 @@
             "heading": "Choisissez un mode",
             "blocks": [
               {
-                "p": "Sur <a href=\"https://app.cognos.io/account\">votre page Compte</a>, la carte <b>Masquage des données personnelles</b> propose <b>Désactivée</b>, <b>Simple</b> (rapide, par défaut) et <b>Meilleure</b> (plus lente, en détecte plus). Les deux s'exécutent entièrement sur votre appareil."
+                "p": "Sur <a href=\"https://app.cognos.io/account\">votre page Compte</a>, la carte <b>Masquage des données personnelles</b> propose <b>Désactivée</b>, <b>Simple</b> (rapide, par défaut) et <b>Meilleure</b> (plus lente, détecte davantage). Les deux s'exécutent entièrement sur votre appareil."
               }
             ]
           },
@@ -1850,8 +1913,8 @@
               {
                 "steps": [
                   {
-                    "title": "Regardez le résumé",
-                    "body": "La zone de message indique combien de valeurs sensibles seront masquées."
+                    "title": "Consultez le résumé",
+                    "body": "La zone de message indique le nombre de valeurs sensibles qui seront masquées."
                   },
                   {
                     "title": "Vérifiez ce qui est surligné",
@@ -1859,35 +1922,42 @@
                   },
                   {
                     "title": "Ajustez si nécessaire",
-                    "body": "Désélectionnez un élément pour l'envoyer tel quel, ou marquez <b>Ne jamais masquer ceci</b> pour une valeur que vous voulez toujours laisser intacte."
+                    "body": "Désélectionnez un élément pour l'envoyer tel quel, ou marquez <b>Ne jamais masquer</b> pour une valeur que vous voulez toujours laisser intacte."
                   }
                 ]
               },
               {
                 "figure": {
                   "src": "/docs-media/redaction-composer.png",
-                  "alt": "La zone de message montrant les valeurs sensibles détectées surlignées avant l'envoi.",
+                  "alt": "La zone de message affichant les valeurs sensibles détectées, surlignées avant l'envoi.",
                   "caption": "Les valeurs détectées sont surlignées afin que vous puissiez les vérifier avant l'envoi."
                 }
               },
               {
                 "note": {
                   "variant": "warning",
-                  "body": "La détection privilégie la prudence et peut manquer quelque chose plutôt que d'abîmer un texte normal. Vérifiez toujours les surlignages avant d'envoyer."
+                  "body": "La détection privilégie la prudence et peut manquer quelque chose plutôt que de dénaturer du texte normal. Vérifiez toujours les éléments surlignés avant d'envoyer."
                 }
               }
             ]
           },
           {
-            "heading": "Révéler des valeurs plus tard",
+            "heading": "Révéler les valeurs plus tard",
             "blocks": [
               {
-                "p": "Sélectionnez un espace réservé dans un message envoyé pour ouvrir <b>Informations personnelles masquées</b>, qui compare ce que vous voyez avec ce que le modèle a vu. Seule une personne détenant la clé de masquage peut révéler la valeur réelle — par défaut, c'est vous seul(e)."
+                "p": "Sélectionnez un espace réservé dans un message envoyé pour ouvrir <b>Informations personnelles masquées</b>, qui compare ce que vous voyez avec ce que le modèle a vu. Seule une personne possédant la clé de masquage peut révéler la valeur réelle — par défaut, c'est vous seul."
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Lorsque vous <a href=\"/docs/sharing-conversations\">partagez une conversation</a>, un lien masqué uniquement garde les valeurs cachées ; un lien incluant les valeurs sensibles permet aux destinataires de les révéler. Choisissez avec soin."
+                  "body": "Lorsque vous <a href=\"/docs/sharing-conversations\">partagez une conversation</a>, un lien masqué uniquement garde les valeurs cachées ; un lien avec valeurs sensibles permet aux destinataires de les révéler. Choisissez avec soin."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/redaction-reveal.png",
+                  "alt": "La fenêtre Informations personnelles masquées comparant ce que vous voyez avec ce que le modèle a vu.",
+                  "caption": "Ce que vous voyez face à ce que le modèle a vu."
                 }
               }
             ]
@@ -1898,9 +1968,9 @@
       "attachments": {
         "navTitle": "Pièces jointes et bibliothèque",
         "metaTitle": "Pièces jointes et votre bibliothèque — Documentation Cognos",
-        "metaDescription": "Joignez des fichiers à un message dans Cognos. Ils sont chiffrés dans votre navigateur et stockés dans votre bibliothèque personnelle pour être réutilisés dans d'autres discussions.",
+        "metaDescription": "Joignez des fichiers à un message dans Cognos. Ils sont chiffrés dans votre navigateur et stockés dans votre bibliothèque personnelle pour être réutilisés dans vos discussions.",
         "title": "Pièces jointes et votre bibliothèque",
-        "lead": "Joignez des fichiers à un message. Ils sont chiffrés dans votre navigateur et conservés dans votre bibliothèque personnelle, prêts à être réutilisés dans d'autres discussions.",
+        "lead": "Joignez des fichiers à un message. Ils sont chiffrés dans votre navigateur et conservés dans votre bibliothèque personnelle, prêts à être réutilisés dans vos discussions.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1918,6 +1988,13 @@
                     "body": "Choisissez <b>Téléverser</b> pour un nouveau fichier, ou <b>Depuis la bibliothèque</b> pour en réutiliser un. Les types de fichiers non pris en charge sont refusés plutôt que téléversés à moitié."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/first-chat-composer.png",
+                  "alt": "La zone de message avec le bouton trombone pour joindre un fichier.",
+                  "caption": "Joignez un fichier depuis la zone de message."
+                }
               }
             ]
           },
@@ -1925,13 +2002,13 @@
             "heading": "Votre bibliothèque",
             "blocks": [
               {
-                "p": "Les fichiers vous appartiennent, à <b>vous</b>, pas à la discussion — une conversation ne fait que pointer vers un fichier. Gérez-les dans la <a href=\"https://app.cognos.io/account/library\">bibliothèque de fichiers</a> : renommez, téléchargez ou supprimez."
+                "p": "Les fichiers vous appartiennent, à <b>vous</b>, pas à la discussion — une conversation ne fait que pointer vers un fichier. Gérez-les depuis <a href=\"https://app.cognos.io/account/library\">Bibliothèque de fichiers</a> : renommez, téléchargez ou supprimez."
               },
               {
                 "figure": {
                   "src": "/docs-media/library.png",
-                  "alt": "La page Bibliothèque de fichiers montrant les fichiers téléversés dans une grille.",
-                  "caption": "Votre bibliothèque de fichiers, réutilisable dans chaque discussion."
+                  "alt": "La page Bibliothèque de fichiers affichant les fichiers téléversés dans une grille.",
+                  "caption": "Votre bibliothèque de fichiers, réutilisable dans toutes vos discussions."
                 }
               }
             ]
@@ -1942,8 +2019,8 @@
               {
                 "ul": [
                   "Les fichiers sont traités, <a href=\"/docs/redaction\">masqués</a> et chiffrés dans votre navigateur avant le téléversement.",
-                  "Supprimez un fichier et les anciens messages affichent « Fichier supprimé » plutôt que de perdre l'historique.",
-                  "Les PDF scannés bénéficient d'une extraction de texte sur votre appareil (anglais, première version).",
+                  "Supprimez un fichier et les messages passés afficheront « Fichier supprimé » plutôt que de perdre l'historique.",
+                  "Les PDF scannés bénéficient d'une extraction de texte sur votre appareil (en anglais, dans cette première version).",
                   "Des limites de taille et de stockage par compte s'appliquent."
                 ]
               },
@@ -1961,9 +2038,9 @@
       "generating-documents": {
         "navTitle": "Générer des documents",
         "metaTitle": "Générer des documents — Documentation Cognos",
-        "metaDescription": "Transformez n'importe quelle réponse en un vrai fichier Word, PDF ou Markdown — créé dans votre navigateur, jamais sur les serveurs Cognos.",
+        "metaDescription": "Transformez n'importe quelle réponse en un véritable fichier Word, PDF ou Markdown — créé dans votre navigateur, jamais sur les serveurs de Cognos.",
         "title": "Générer des documents",
-        "lead": "Transformez n'importe quelle réponse en un vrai fichier Word, PDF ou Markdown — créé dans votre navigateur, jamais sur nos serveurs.",
+        "lead": "Transformez n'importe quelle réponse en un véritable fichier Word, PDF ou Markdown — créé dans votre navigateur, jamais sur nos serveurs.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -1971,7 +2048,14 @@
             "heading": "Télécharger une réponse",
             "blocks": [
               {
-                "p": "Utilisez l'option de téléchargement sur n'importe quelle réponse de l'assistant et choisissez un format — Word, PDF ou Markdown. Le fichier est créé sur votre appareil ; les octets ne touchent jamais les serveurs Cognos."
+                "p": "Utilisez l'option de téléchargement sur n'importe quelle réponse de l'assistant et choisissez un format — Word, PDF ou Markdown. Le fichier est créé sur votre appareil ; les octets ne transitent jamais par les serveurs de Cognos."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "Le menu Outils avec l'interrupteur Créer des documents.",
+                  "caption": "Activez Créer des documents dans le menu Outils."
+                }
               }
             ]
           },
@@ -1979,7 +2063,7 @@
             "heading": "Demandez un document",
             "blocks": [
               {
-                "p": "Vous pouvez aussi demander au modèle d'en rédiger un (« rédige ceci sous forme de note PDF »). Il apparaît sous forme de carte de document que vous pouvez télécharger ou enregistrer dans votre <a href=\"/docs/attachments\">bibliothèque</a>. Demandez des modifications et il régénère l'intégralité du fichier mis à jour."
+                "p": "Vous pouvez aussi demander au modèle d'en rédiger un (« rédige ceci sous forme de note PDF »). Il apparaît sous la forme d'une carte document que vous pouvez télécharger ou enregistrer dans votre <a href=\"/docs/attachments\">bibliothèque</a>. Demandez des modifications et il régénère le fichier mis à jour dans son intégralité."
               }
             ]
           },
@@ -1988,9 +2072,9 @@
             "blocks": [
               {
                 "ul": [
-                  "Les fichiers générés ne portent aucun détail sur l'auteur personnel — juste « Cognos » — et les dates sont arrondies au jour.",
-                  "Les feuilles de calcul générées ne peuvent pas « communiquer à l'extérieur » — les formules réseau sont désactivées et affichées en texte brut.",
-                  "Désactiver <b>Créer des documents</b> pour une discussion en retire complètement la fonctionnalité."
+                  "Les fichiers générés ne portent aucun détail personnel sur l'auteur — juste « Cognos » — et les dates sont arrondies au jour près.",
+                  "Les feuilles de calcul générées ne peuvent pas « téléphoner à la maison » — les formules réseau sont désactivées et affichées en texte brut.",
+                  "Désactiver <b>Créer des documents</b> pour une discussion en retire entièrement la fonctionnalité."
                 ]
               }
             ]
@@ -2001,9 +2085,9 @@
       "generating-images": {
         "navTitle": "Générer des images",
         "metaTitle": "Générer des images — Documentation Cognos",
-        "metaDescription": "Décrivez une image et un modèle compatible la crée. Le résultat est chiffré comme tout autre message.",
+        "metaDescription": "Décrivez une image et un modèle compatible la crée. Le résultat est chiffré comme n'importe quel autre message.",
         "title": "Générer des images",
-        "lead": "Décrivez une image et un modèle compatible la créera. Le résultat est chiffré comme tout autre message.",
+        "lead": "Décrivez une image et un modèle compatible la créera. Le résultat est chiffré comme n'importe quel autre message.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2021,6 +2105,13 @@
                     "body": "Rédigez votre requête et envoyez."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "Le menu Outils avec l'interrupteur Générer une image.",
+                  "caption": "Activez Générer une image dans le menu Outils."
+                }
               }
             ]
           },
@@ -2030,9 +2121,9 @@
               {
                 "ul": [
                   "Le modèle peut répondre par une question de clarification plutôt que par une image — c'est normal, pas une erreur.",
-                  "Sélectionnez <b>régénérer</b> pour créer une variante en plus de l'originale.",
-                  "Une discussion contenant des images s'exporte en <code>.zip</code> (les discussions uniquement textuelles s'exportent en <code>.json</code>).",
-                  "La génération d'images est facturée par image — consultez <a href=\"/docs/plans-and-pricing\">Forfaits et tarifs</a>."
+                  "Sélectionnez <b>régénérer</b> pour créer une autre version à côté de l'originale.",
+                  "Une discussion contenant des images s'exporte sous forme de <code>.zip</code> (les discussions uniquement textuelles s'exportent en <code>.json</code>).",
+                  "La génération d'images est facturée à l'image — consultez <a href=\"/docs/plans-and-pricing\">forfaits et tarifs</a>."
                 ]
               }
             ]
@@ -2043,9 +2134,9 @@
       "projects": {
         "navTitle": "Projets",
         "metaTitle": "Projets — Documentation Cognos",
-        "metaDescription": "Un projet regroupe des conversations liées en un seul endroit. Les projets personnels ne concernent que vous ; les projets d'organisation sont partagés avec votre équipe.",
+        "metaDescription": "Un projet regroupe des conversations liées en un seul endroit. Les projets personnels sont réservés à vous seul ; les projets d'organisation sont partagés avec votre équipe.",
         "title": "Projets",
-        "lead": "Un projet regroupe des conversations liées en un seul endroit. Les projets personnels ne concernent que vous ; les projets d'organisation sont partagés avec une équipe.",
+        "lead": "Un projet regroupe des conversations liées en un seul endroit. Les projets personnels sont réservés à vous seul ; les projets d'organisation sont partagés avec une équipe.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2060,19 +2151,26 @@
                   },
                   {
                     "title": "Configurez-le",
-                    "body": "Donnez-lui un nom, et éventuellement une icône, une couleur, et un modèle par défaut."
+                    "body": "Donnez-lui un nom, et éventuellement une icône, une couleur et un modèle par défaut."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/projects.png",
+                  "alt": "La page Projets répertoriant les projets.",
+                  "caption": "La page Projets."
+                }
               }
             ]
           },
           {
-            "heading": "Projets personnels contre projets d'organisation",
+            "heading": "Projets personnels et projets d'organisation",
             "blocks": [
               {
                 "ul": [
-                  "<b>Projet personnel</b> — vous seul(e). Il ne peut pas être partagé avec d'autres personnes.",
-                  "<b>Projet d'organisation</b> — partagé avec les <a href=\"/docs/organisation-projects\">membres de votre organisation</a>, chacun avec un rôle de Lecteur, Éditeur ou Administrateur."
+                  "<b>Projet personnel</b> — vous seul. Il ne peut pas être partagé avec d'autres personnes.",
+                  "<b>Projet d'organisation</b> — partagé avec les <a href=\"/docs/organisation-projects\">membres de votre organisation</a>, chacun avec un rôle de lecteur, éditeur ou administrateur."
                 ]
               }
             ]
@@ -2081,7 +2179,7 @@
             "heading": "Déplacer des discussions",
             "blocks": [
               {
-                "p": "Depuis le menu <b>⋯</b> d'une discussion, choisissez <b>Déplacer vers un projet</b> ou <b>Retirer du projet</b>. Vous devez être Administrateur à la fois de la discussion et du projet."
+                "p": "Depuis le menu <b>⋯</b> d'une discussion, choisissez <b>Déplacer vers un projet</b> ou <b>Retirer du projet</b>. Vous devez être administrateur à la fois de la discussion et du projet."
               },
               {
                 "note": {
@@ -2097,9 +2195,9 @@
       "bookmarks": {
         "navTitle": "Signets",
         "metaTitle": "Signets — Documentation Cognos",
-        "metaDescription": "Surlignez n'importe quelle partie d'un message et enregistrez-la. Vos signets restent privés, même dans une conversation partagée.",
+        "metaDescription": "Surlignez n'importe quelle partie d'un message et enregistrez-la. Vos signets vous sont privés, même dans une conversation partagée.",
         "title": "Signets",
-        "lead": "Surlignez n'importe quelle partie d'un message et enregistrez-la. Vos signets vous restent privés — même dans une discussion partagée.",
+        "lead": "Surlignez n'importe quelle partie d'un message et enregistrez-la. Vos signets vous sont privés — même dans une discussion partagée.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2107,15 +2205,22 @@
             "heading": "Enregistrer un signet",
             "blocks": [
               {
-                "p": "Sélectionnez du texte dans un message, puis choisissez <b>Enregistrer dans les signets</b>. Cognos conserve la citation ainsi qu'un peu de contexte environnant afin de pouvoir retrouver cet endroit."
+                "p": "Sélectionnez du texte dans un message, puis choisissez <b>Enregistrer dans les signets</b>. Cognos conserve la citation ainsi qu'un peu de contexte alentour afin de pouvoir retrouver l'endroit."
               }
             ]
           },
           {
-            "heading": "Les retrouver",
+            "heading": "Retrouvez-les",
             "blocks": [
               {
                 "p": "Ouvrez <a href=\"https://app.cognos.io/account/bookmarks\">Signets</a> pour tous les voir, et sélectionnez-en un pour revenir exactement à l'endroit dans sa conversation."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/bookmarks.png",
+                  "alt": "La page Signets répertoriant les passages enregistrés.",
+                  "caption": "Vos signets, consultables en un seul endroit."
+                }
               }
             ]
           },
@@ -2125,7 +2230,7 @@
               {
                 "ul": [
                   "Les signets sont <a href=\"/docs/your-privacy\">chiffrés</a> et lisibles uniquement par vous — même si la discussion est partagée, les autres ne les voient jamais.",
-                  "Si un message a trop changé pour retrouver la citation exacte, le signet reste listé — il ne surlignera simplement pas un endroit précis."
+                  "Si un message a trop changé pour retrouver la citation exacte, le signet reste listé — il ne surlignera simplement pas d'endroit précis."
                 ]
               }
             ]
@@ -2143,10 +2248,17 @@
         "updated": "22 juillet 2026",
         "sections": [
           {
-            "heading": "Rechercher",
+            "heading": "Recherche",
             "blocks": [
               {
-                "p": "Utilisez la zone <b>Rechercher</b> dans la barre latérale (trois caractères ou plus). Elle trouve instantanément les titres de conversation et cherche aussi dans le contenu des messages récents, avec les correspondances de titre classées en premier."
+                "p": "Utilisez la zone <b>Recherche</b> dans la barre latérale (trois caractères ou plus). Elle trouve instantanément les titres de conversation correspondants et recherche aussi dans le contenu des messages récents, les correspondances de titre étant classées en premier."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/search.png",
+                  "alt": "La zone de recherche de la barre latérale avec les conversations correspondantes.",
+                  "caption": "Recherche dans vos conversations depuis la barre latérale."
+                }
               }
             ]
           },
@@ -2154,12 +2266,12 @@
             "heading": "Privé par conception",
             "blocks": [
               {
-                "p": "L'index de recherche est construit et utilisé uniquement sur votre appareil — rien de ce que vous saisissez ne nous est envoyé ni consigné. L'index est effacé chaque fois que vous <a href=\"/docs/unlock-and-lock\">verrouillez</a>, vous <a href=\"/docs/sessions-and-logout\">déconnectez</a>, ou changez de compte."
+                "p": "L'index de recherche est construit et utilisé uniquement sur votre appareil — rien de ce que vous tapez ne nous est envoyé ni journalisé. L'index est effacé chaque fois que vous <a href=\"/docs/unlock-and-lock\">verrouillez</a>, <a href=\"/docs/sessions-and-logout\">vous déconnectez</a>, ou changez de compte."
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Ceci diffère de la <a href=\"/docs/web-search\">recherche web</a>, qui demande à l'IA de chercher des informations en ligne."
+                  "body": "Ceci est différent de la <a href=\"/docs/web-search\">recherche web</a>, qui demande à l'IA de chercher des informations en ligne."
                 }
               }
             ]
@@ -2182,18 +2294,25 @@
               {
                 "steps": [
                   {
-                    "title": "Ouvrez la page d'importation",
-                    "body": "Allez sur <a href=\"https://app.cognos.io/import\">Importer</a>."
+                    "title": "Ouvrez la page d'import",
+                    "body": "Allez sur <a href=\"https://app.cognos.io/import\">Import</a>."
                   },
                   {
                     "title": "Choisissez votre source",
-                    "body": "Sélectionnez ChatGPT ou Claude et suivez les étapes à l'écran pour choisir le fichier d'export téléchargé depuis ces services."
+                    "body": "Choisissez ChatGPT ou Claude et suivez les étapes à l'écran pour sélectionner le fichier d'export que vous avez téléchargé depuis leur service."
                   },
                   {
                     "title": "Vérifiez, puis confirmez",
-                    "body": "Vérifiez les compteurs de l'aperçu pour savoir exactement ce qui sera importé, puis confirmez."
+                    "body": "Vérifiez les totaux de l'aperçu pour savoir exactement ce qui sera transféré, puis confirmez."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/import.png",
+                  "alt": "La page d'import avec les options de source pour ChatGPT et Claude.",
+                  "caption": "La page d'import."
+                }
               }
             ]
           },
@@ -2202,17 +2321,17 @@
             "blocks": [
               {
                 "ul": [
-                  "La lecture et le chiffrement se font dans votre navigateur — l'export brut ne nous est pas téléversé.",
+                  "La lecture et le chiffrement s'effectuent dans votre navigateur — l'export brut ne nous est pas téléversé.",
                   "Jusqu'à 10 000 messages par conversation.",
-                  "Les fils qui se ramifient sont scindés en conversations distinctes clairement étiquetées, jamais devinées ni fusionnées.",
-                  "Réimporter le même fichier est sans risque — cela ne créera pas de doublons.",
-                  "Les discussions importées arrivent sous forme de conversations autonomes ; déplacez-les ensuite dans un <a href=\"/docs/projects\">projet</a> si vous le souhaitez."
+                  "Les fils ramifiés sont scindés en conversations distinctes clairement identifiées, jamais devinées ni fusionnées.",
+                  "Réimporter le même fichier est sans risque — cela ne crée pas de doublons.",
+                  "Les discussions importées arrivent comme des conversations autonomes ; déplacez-les ensuite vers un <a href=\"/docs/projects\">projet</a> si vous le souhaitez."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Le contenu non pris en charge (PDF, images, journaux d'outils) est volontairement exclu — les compteurs de l'aperçu montrent ce qui sera importé ou non."
+                  "body": "Le contenu non pris en charge (PDF, images, enregistrements d'outils) est volontairement laissé de côté — les totaux de l'aperçu indiquent ce qui sera transféré et ce qui ne le sera pas."
                 }
               }
             ]
@@ -2223,9 +2342,9 @@
       "sharing-conversations": {
         "navTitle": "Partager une conversation",
         "metaTitle": "Partager une conversation — Documentation Cognos",
-        "metaDescription": "Publiez un lien en lecture seule vers une conversation que n'importe qui peut ouvrir — avec ou sans révéler les détails sensibles.",
+        "metaDescription": "Publiez un lien en lecture seule vers une conversation que n'importe qui peut ouvrir — avec ou sans les détails sensibles révélés.",
         "title": "Partager une conversation",
-        "lead": "Publiez un lien en lecture seule vers une conversation que n'importe qui peut ouvrir — avec ou sans révéler les détails sensibles.",
+        "lead": "Publiez un lien en lecture seule vers une conversation que n'importe qui peut ouvrir — avec ou sans les détails sensibles révélés.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2240,7 +2359,7 @@
                   },
                   {
                     "title": "Choisissez ce qu'il faut inclure",
-                    "body": "Décidez de garder les valeurs sensibles cachées ou de permettre aux destinataires de les révéler (voir ci-dessous)."
+                    "body": "Décidez si les valeurs sensibles restent cachées ou si les destinataires peuvent les révéler (voir ci-dessous)."
                   },
                   {
                     "title": "Copiez le lien",
@@ -2251,7 +2370,7 @@
               {
                 "figure": {
                   "src": "/docs-media/share-dialog.png",
-                  "alt": "La boîte de dialogue Partager la conversation avec un lien public et un bouton pour inclure les valeurs sensibles.",
+                  "alt": "La boîte de dialogue Partager la conversation avec un lien public et un interrupteur pour inclure les valeurs sensibles.",
                   "caption": "La boîte de dialogue Partager, avec l'option d'inclure ou de masquer les valeurs sensibles."
                 }
               }
@@ -2269,7 +2388,7 @@
                       "Les valeurs sensibles restent cachées sous forme d'espaces réservés."
                     ],
                     [
-                      "<b>Valeurs sensibles incluses</b>",
+                      "<b>Avec valeurs sensibles</b>",
                       "Les destinataires peuvent révéler les valeurs réelles sans se connecter."
                     ]
                   ]
@@ -2278,7 +2397,14 @@
               {
                 "note": {
                   "variant": "warning",
-                  "body": "Inclure les valeurs sensibles signifie que quiconque possède le lien peut voir les valeurs <a href=\"/docs/redaction\">masquées</a> réelles. Utilisez le mode masqué uniquement, sauf si vous souhaitez vraiment les partager."
+                  "body": "« Avec valeurs sensibles » signifie que toute personne disposant du lien peut voir les valeurs <a href=\"/docs/redaction\">masquées</a> réelles. Utilisez le mode masqué uniquement, sauf si vous souhaitez vraiment les partager."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/share-public.png",
+                  "alt": "Une vue publique en lecture seule d'une conversation partagée avec les valeurs sensibles cachées.",
+                  "caption": "Un lien partagé en mode masqué uniquement — les valeurs sensibles restent cachées."
                 }
               }
             ]
@@ -2287,12 +2413,12 @@
             "heading": "Comment un lien partagé reste privé",
             "blocks": [
               {
-                "p": "La clé qui déverrouille une conversation partagée se trouve dans le lien lui-même (après le <code>#</code>), que les navigateurs n'envoient jamais à nos serveurs — nous ne pouvons donc pas lire une conversation partagée depuis nos journaux. Révoquer un partage rompt immédiatement le lien, sans affecter la conversation."
+                "p": "La clé qui déverrouille une conversation partagée se trouve dans le lien lui-même (après le <code>#</code>), que les navigateurs n'envoient jamais à nos serveurs — nous ne pouvons donc pas lire une conversation partagée depuis nos journaux. Révoquer un partage rend le lien immédiatement inopérant, sans affecter la conversation."
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Un partage public est en lecture seule et n'accorde aucune adhésion. Collaborer avec des personnes nommées se fait via les <a href=\"/docs/organisation-projects\">projets d'organisation</a>."
+                  "body": "Un partage public est en lecture seule et n'accorde aucune adhésion. Collaborer avec des personnes nommées passe par les <a href=\"/docs/organisation-projects\">projets d'organisation</a>."
                 }
               }
             ]
@@ -2303,9 +2429,9 @@
       "multi-factor-authentication": {
         "navTitle": "Connexion à deux facteurs",
         "metaTitle": "Authentification à deux facteurs — Documentation Cognos",
-        "metaDescription": "Ajoutez une deuxième étape à la connexion : un code à 6 chiffres depuis une application d'authentification. Elle protège votre connexion — votre clé de compte protège toujours vos données.",
+        "metaDescription": "Ajoutez une deuxième étape à la connexion : un code à 6 chiffres provenant d'une application d'authentification. Elle protège votre connexion — votre clé de compte continue de protéger vos données.",
         "title": "Authentification à deux facteurs",
-        "lead": "Ajoutez une deuxième étape à la connexion — un code à 6 chiffres depuis une application d'authentification. Elle protège votre connexion, pas vos données.",
+        "lead": "Ajoutez une deuxième étape à la connexion — un code à 6 chiffres provenant d'une application d'authentification. Elle protège votre connexion, pas vos données.",
         "time": "4 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2327,25 +2453,25 @@
                     "body": "Saisissez le code à 6 chiffres de l'application et sélectionnez <b>Vérifier et activer</b>."
                   },
                   {
-                    "title": "Sauvegardez vos codes de récupération",
-                    "body": "Conservez les <a href=\"/docs/recovery-codes\">codes de récupération</a> qui s'affichent — ce sont votre solution de secours si vous perdez l'application."
+                    "title": "Enregistrez vos codes de récupération",
+                    "body": "Conservez les <a href=\"/docs/recovery-codes\">codes de récupération</a> qui vous sont montrés — c'est votre moyen de revenir si vous perdez l'application."
                   }
                 ]
               },
               {
                 "figure": {
                   "src": "/docs-media/mfa-setup.png",
-                  "alt": "L'écran de configuration à deux facteurs montrant un QR code et un champ pour saisir un code à 6 chiffres.",
+                  "alt": "L'écran de configuration à deux facteurs affichant un QR code et un champ pour saisir un code à 6 chiffres.",
                   "caption": "Scannez le QR code, puis confirmez avec un code à 6 chiffres."
                 }
               }
             ]
           },
           {
-            "heading": "Se connecter avec",
+            "heading": "Se connecter avec elle",
             "blocks": [
               {
-                "p": "Après votre mot de passe, vous saisirez le code à 6 chiffres actuel. Cocher <b>Se souvenir de cet appareil pendant 30 jours</b> ignore le code sur cet appareil pendant un certain temps."
+                "p": "Après votre mot de passe, vous saisirez le code à 6 chiffres du moment. Cocher <b>Se souvenir de cet appareil pendant 30 jours</b> permet de sauter le code sur cet appareil pendant un moment."
               }
             ]
           },
@@ -2355,14 +2481,14 @@
               {
                 "ul": [
                   "Application d'authentification uniquement — Cognos n'envoie pas de codes par e-mail.",
-                  "Les appareils de confiance sont effacés lorsque vous vous déconnectez, désactivez la double authentification, régénérez les codes de récupération, ou changez votre mot de passe.",
-                  "La double authentification protège votre connexion. Vos données restent déverrouillées par votre <a href=\"/docs/account-key\">clé de compte</a>."
+                  "Les appareils de confiance sont effacés lorsque vous vous déconnectez, désactivez l'authentification à deux facteurs, régénérez les codes de récupération, ou changez votre mot de passe.",
+                  "L'authentification à deux facteurs protège votre connexion. Vos données restent déverrouillées par votre <a href=\"/docs/account-key\">clé de compte</a>."
                 ]
               },
               {
                 "note": {
                   "variant": "security",
-                  "body": "Il n'existe pas de réinitialisation de la double authentification. Si vous perdez à la fois votre application d'authentification et tous vos <a href=\"/docs/recovery-codes\">codes de récupération</a>, vous ne pourrez plus vous connecter — conservez donc ces codes en sécurité."
+                  "body": "Il n'existe aucune réinitialisation de l'authentification à deux facteurs. Si vous perdez à la fois votre application d'authentification et tous vos <a href=\"/docs/recovery-codes\">codes de récupération</a>, vous ne pourrez plus vous connecter — conservez donc ces codes en lieu sûr."
                 }
               }
             ]
@@ -2373,25 +2499,32 @@
       "recovery-codes": {
         "navTitle": "Codes de récupération",
         "metaTitle": "Codes de récupération — Documentation Cognos",
-        "metaDescription": "Les codes de récupération sont des codes de secours à usage unique qui vous permettent de vous reconnecter si vous perdez votre application d'authentification. Comment les sauvegarder, les utiliser et les régénérer.",
+        "metaDescription": "Les codes de récupération sont des codes de secours à usage unique qui vous permettent de vous reconnecter si vous perdez votre application d'authentification. Comment les enregistrer, les utiliser et les régénérer.",
         "title": "Codes de récupération",
         "lead": "Les codes de récupération sont des codes de secours à usage unique qui vous permettent de vous reconnecter si vous perdez votre application d'authentification.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
           {
-            "heading": "Sauvegardez-les",
+            "heading": "Enregistrez-les",
             "blocks": [
               {
-                "p": "Lorsque vous activez l'<a href=\"/docs/multi-factor-authentication\">authentification à deux facteurs</a>, Cognos affiche 10 codes de récupération <b>une seule fois</b>. Copiez-les ou téléchargez-les et conservez-les en sécurité — ils ne peuvent pas être affichés à nouveau."
+                "p": "Lorsque vous activez l'<a href=\"/docs/multi-factor-authentication\">authentification à deux facteurs</a>, Cognos affiche 10 codes de récupération <b>une seule fois</b>. Copiez-les ou téléchargez-les et conservez-les en lieu sûr — ils ne peuvent pas être réaffichés."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mfa-setup.png",
+                  "alt": "La carte d'authentification à deux facteurs où les codes de récupération sont configurés.",
+                  "caption": "Les codes de récupération sont configurés en même temps que l'authentification à deux facteurs."
+                }
               }
             ]
           },
           {
-            "heading": "Utilisez-en un",
+            "heading": "Utiliser un code",
             "blocks": [
               {
-                "p": "Sur l'écran de code à la connexion, choisissez <b>Utiliser plutôt un code de récupération</b> et saisissez-en un. Chaque code ne fonctionne qu'une seule fois."
+                "p": "Sur l'écran de code lors de la connexion, choisissez <b>Utiliser plutôt un code de récupération</b> et saisissez-en un. Chaque code ne fonctionne qu'une seule fois."
               }
             ]
           },
@@ -2399,12 +2532,12 @@
             "heading": "Régénérer",
             "blocks": [
               {
-                "p": "Depuis <a href=\"https://app.cognos.io/account/security\">Sécurité et clés</a>, vous pouvez régénérer l'ensemble (cela nécessite votre mot de passe et un code actuel). Cela annule les anciens codes et déconnecte les appareils de confiance."
+                "p": "Depuis <a href=\"https://app.cognos.io/account/security\">Sécurité et clés</a>, vous pouvez régénérer l'ensemble des codes (cela nécessite votre mot de passe et un code actuel). Cela annule les anciens codes et déconnecte les appareils de confiance."
               },
               {
                 "note": {
                   "variant": "security",
-                  "body": "Perdez votre application d'authentification et tous vos codes de récupération, et il n'y a aucun moyen de revenir — il n'y a pas de réinitialisation par le support. Cela protège uniquement la connexion ; vos données sont régies par votre <a href=\"/docs/account-key\">clé de compte</a>."
+                  "body": "Perdez votre application d'authentification et tous vos codes de récupération, et il n'y a aucun moyen de revenir — le support ne peut pas réinitialiser cela. Cela ne protège que la connexion ; vos données restent régies par votre <a href=\"/docs/account-key\">clé de compte</a>."
                 }
               }
             ]
@@ -2432,13 +2565,20 @@
                   },
                   {
                     "title": "Ouvrez le lien reçu par e-mail",
-                    "body": "Il vous amène à une page pour choisir un nouveau mot de passe."
+                    "body": "Il vous conduit vers une page pour choisir un nouveau mot de passe."
                   },
                   {
                     "title": "Choisissez un nouveau mot de passe",
                     "body": "Définissez-le et c'est terminé."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/forgot-password.png",
+                  "alt": "La page de réinitialisation du mot de passe avec un champ e-mail.",
+                  "caption": "Demandez un lien de réinitialisation par e-mail."
+                }
               }
             ]
           },
@@ -2453,7 +2593,7 @@
                 }
               },
               {
-                "p": "Si vous avez activé l'<a href=\"/docs/multi-factor-authentication\">authentification à deux facteurs</a>, une réinitialisation de mot de passe ne la contourne pas — vous aurez toujours besoin de votre code."
+                "p": "Si l'<a href=\"/docs/multi-factor-authentication\">authentification à deux facteurs</a> est activée, une réinitialisation du mot de passe ne la contourne pas — vous aurez toujours besoin de votre code."
               }
             ]
           }
@@ -2463,9 +2603,9 @@
       "your-privacy": {
         "navTitle": "Votre confidentialité",
         "metaTitle": "Votre confidentialité — Documentation Cognos",
-        "metaDescription": "Un résumé en langage simple de ce que Cognos peut et ne peut pas voir, et des contrôles qui gardent vos conversations à vous.",
+        "metaDescription": "Un résumé en langage simple de ce que Cognos peut et ne peut pas voir, et des contrôles qui font que vos conversations restent les vôtres.",
         "title": "Votre confidentialité",
-        "lead": "Un résumé en langage simple de ce que Cognos peut et ne peut pas voir — et des contrôles qui le garantissent.",
+        "lead": "Un résumé en langage simple de ce que Cognos peut et ne peut pas voir — et des contrôles qui préservent cet état de fait.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2482,7 +2622,7 @@
             "blocks": [
               {
                 "ul": [
-                  "Les métadonnées nécessaires au fonctionnement du service — quand un message a été enregistré, et le coût d'une requête.",
+                  "Les métadonnées nécessaires au fonctionnement du service — le moment où un message a été enregistré, et le coût d'une requête.",
                   "Le <a href=\"/docs/choosing-a-model\">fournisseur</a> d'IA qui a répondu à chaque message (enregistré sur la réponse)."
                 ]
               },
@@ -2492,10 +2632,17 @@
             ]
           },
           {
-            "heading": "Vérifiez n'importe quelle réponse",
+            "heading": "Vérifier n'importe quelle réponse",
             "blocks": [
               {
-                "p": "Le bouton <b>Sécurité</b> d'une conversation indique, pour chaque réponse, quel modèle et quel fournisseur l'ont traitée et où — afin que vous puissiez vérifier qu'elle correspond à vos réglages."
+                "p": "Le bouton <b>Sécurité</b> sur une conversation indique, pour chaque réponse, quel modèle et quel fournisseur l'ont traitée et où — afin que vous puissiez vérifier que cela correspond à vos réglages."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/redaction-reveal.png",
+                  "alt": "Une fenêtre comparant ce que voit le titulaire du compte avec ce que le modèle a vu.",
+                  "caption": "Vous voyez toujours vos valeurs réelles ; le modèle n'a vu que des espaces réservés."
+                }
               }
             ]
           },
@@ -2520,7 +2667,7 @@
                     "to": "/docs/disappearing-messages",
                     "icon": "Clock",
                     "title": "Suppression automatique",
-                    "body": "Faites disparaître le contenu de lui-même."
+                    "body": "Faites en sorte que le contenu se supprime lui-même."
                   },
                   {
                     "to": "/docs/account-memory",
@@ -2544,9 +2691,9 @@
       "account-memory": {
         "navTitle": "Mémoire",
         "metaTitle": "Mémoire — Documentation Cognos",
-        "metaDescription": "La mémoire permet à l'IA de se souvenir de faits et de préférences que vous choisissez — dans toutes vos discussions, ou au sein d'un projet. Elle est optionnelle et chiffrée.",
+        "metaDescription": "La mémoire permet à l'IA de se souvenir des faits et préférences que vous choisissez — dans toutes vos discussions, ou au sein d'un projet. Elle est facultative et chiffrée.",
         "title": "Mémoire",
-        "lead": "La mémoire permet à l'IA de se souvenir de faits et de préférences que vous choisissez — dans toutes vos discussions, ou au sein d'un projet.",
+        "lead": "La mémoire permet à l'IA de se souvenir des faits et préférences que vous choisissez — dans toutes vos discussions, ou au sein d'un projet.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2554,7 +2701,7 @@
             "heading": "Ce que c'est",
             "blocks": [
               {
-                "p": "Vous pouvez stocker des faits, des préférences et des instructions que l'IA réutilisera. La mémoire peut être <b>au niveau du compte</b> (privée à vous, utilisée dans toutes vos discussions) ou <b>au niveau du projet</b> (partagée avec les personnes de ce <a href=\"/docs/projects\">projet</a>)."
+                "p": "Vous pouvez stocker des faits, des préférences et des instructions que l'IA réutilisera. La mémoire peut être <b>au niveau du compte</b> (privée, utilisée dans toutes vos discussions) ou <b>au niveau du projet</b> (partagée avec les personnes de ce <a href=\"/docs/projects\">projet</a>)."
               }
             ]
           },
@@ -2562,12 +2709,19 @@
             "heading": "Gérez-la",
             "blocks": [
               {
-                "p": "Activez ou désactivez la mémoire personnelle et modifiez les entrées sur <a href=\"https://app.cognos.io/account/memory\">Mémoire</a>. Elle est <a href=\"/docs/your-privacy\">chiffrée</a>, et le <a href=\"/docs/redaction\">masquage</a> est appliqué avant que la mémoire ne soit envoyée avec une requête."
+                "p": "Activez ou désactivez la mémoire personnelle et modifiez les entrées depuis <a href=\"https://app.cognos.io/account/memory\">Mémoire</a>. Elle est <a href=\"/docs/your-privacy\">chiffrée</a>, et le <a href=\"/docs/redaction\">masquage</a> est appliqué avant que la mémoire ne soit envoyée avec une requête."
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "La mémoire est optionnelle — Cognos ne se construit pas une image de vous à moins que vous n'en ajoutiez une. Modifier ou supprimer une entrée n'affecte que les futurs messages."
+                  "body": "La mémoire est facultative — Cognos ne se construit pas une image de vous à moins que vous n'en ajoutiez une. Modifier ou supprimer une entrée n'affecte que les futurs messages."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/memory.png",
+                  "alt": "La page de réglages Mémoire.",
+                  "caption": "Gérez ce dont l'IA se souvient sur la page Mémoire."
                 }
               }
             ]
@@ -2588,15 +2742,22 @@
             "heading": "Se déconnecter",
             "blocks": [
               {
-                "p": "Le bouton <b>Se déconnecter</b> dans la barre latérale déconnecte tous les appareils à la fois, efface le cache de déverrouillage rapide, et oublie les appareils que vous aviez demandé à mémoriser pour votre code à deux facteurs."
+                "p": "Le bouton <b>Se déconnecter</b> dans la barre latérale déconnecte tous les appareils en une fois, efface le cache de déverrouillage pratique, et oublie tous les appareils auxquels vous aviez demandé de se souvenir de votre code à deux facteurs."
               }
             ]
           },
           {
-            "heading": "Déconnecter d'autres appareils",
+            "heading": "Déconnecter les autres appareils",
             "blocks": [
               {
-                "p": "Pour mettre fin à d'autres sessions sans vous déconnecter vous-même ici, utilisez <b>Déconnecter les autres appareils</b> sur <a href=\"https://app.cognos.io/account/security\">Sécurité et clés</a>."
+                "p": "Pour mettre fin aux autres sessions sans vous déconnecter vous-même ici, utilisez <b>Déconnecter les autres appareils</b> sur <a href=\"https://app.cognos.io/account/security\">Sécurité et clés</a>."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/sign-out-devices.png",
+                  "alt": "La carte Déconnecter les autres appareils sur la page Sécurité et clés.",
+                  "caption": "Déconnectez les autres appareils sans vous déconnecter vous-même ici."
+                }
               }
             ]
           },
@@ -2604,7 +2765,7 @@
             "heading": "Après la déconnexion",
             "blocks": [
               {
-                "p": "Pour revenir, vous aurez besoin de votre mot de passe, puis de votre <a href=\"/docs/account-key\">clé de compte</a> pour <a href=\"/docs/unlock-and-lock\">déverrouiller</a> à nouveau."
+                "p": "Pour revenir, il vous faudra votre mot de passe, puis votre <a href=\"/docs/account-key\">clé de compte</a> pour <a href=\"/docs/unlock-and-lock\">déverrouiller</a> à nouveau."
               },
               {
                 "note": {
@@ -2620,7 +2781,7 @@
       "deleting-your-account": {
         "navTitle": "Supprimer votre compte",
         "metaTitle": "Supprimer votre compte — Documentation Cognos",
-        "metaDescription": "Supprimez définitivement votre compte Cognos et toutes vos données personnelles. Ce qu'il faut faire d'abord, ce qui est supprimé, et ce qui est conservé.",
+        "metaDescription": "Supprimez définitivement votre compte Cognos et toutes vos données personnelles. Ce qu'il faut faire d'abord, ce qui est supprimé et ce qui est conservé.",
         "title": "Supprimer votre compte",
         "lead": "Vous pouvez supprimer définitivement votre compte et toutes vos données personnelles. Cette action est irréversible.",
         "time": "3 min de lecture",
@@ -2648,13 +2809,20 @@
                   },
                   {
                     "title": "Confirmez que c'est bien vous",
-                    "body": "Saisissez <code>DELETE</code>, votre mot de passe, et (si la double authentification est activée) un code actuel."
+                    "body": "Saisissez <code>DELETE</code>, entrez votre mot de passe et (si l'authentification à deux facteurs est activée) un code actuel."
                   },
                   {
                     "title": "Confirmez",
-                    "body": "Vos données personnelles sont retirées."
+                    "body": "Vos données personnelles sont supprimées."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/delete-account.png",
+                  "alt": "La Zone de danger avec les contrôles de suppression de compte.",
+                  "caption": "La Zone de danger sur votre page Compte."
+                }
               }
             ]
           },
@@ -2663,20 +2831,20 @@
             "blocks": [
               {
                 "ul": [
-                  "<b>Supprimés :</b> vos conversations, messages, personas, signets, fichiers de bibliothèque, mémoire, correspondances de masquage et enregistrements de double authentification.",
-                  "<b>Conservés :</b> les projets appartenant à l'organisation que vous avez créés restent avec l'organisation ; certains registres financiers peuvent être conservés (détachés de vous) pour des raisons légales."
+                  "<b>Supprimé :</b> vos conversations, messages, personas, signets, fichiers de la bibliothèque, mémoire, correspondances de masquage et enregistrements d'authentification à deux facteurs.",
+                  "<b>Conservé :</b> les projets appartenant à une organisation que vous avez créés restent avec l'organisation ; certains enregistrements financiers peuvent être conservés (dissociés de vous) pour des raisons légales."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Il existe aussi <b>Supprimer toutes les conversations</b>, qui efface vos discussions mais conserve votre compte. Perdre votre <a href=\"/docs/account-key\">clé de compte</a> n'est pas un moyen d'accéder à la suppression — vous pouvez toujours vous connecter et supprimer."
+                  "body": "Il existe aussi <b>Supprimer toutes les conversations</b>, qui efface vos conversations mais conserve votre compte. Perdre votre <a href=\"/docs/account-key\">clé de compte</a> n'est pas une voie vers la suppression — vous pouvez toujours vous connecter et supprimer votre compte."
                 }
               },
               {
                 "note": {
                   "variant": "security",
-                  "body": "La suppression est permanente — il n'y a pas de récupération possible."
+                  "body": "La suppression est définitive — il n'y a pas de récupération possible."
                 }
               }
             ]
@@ -2687,9 +2855,9 @@
       "plans-and-pricing": {
         "navTitle": "Forfaits et tarifs",
         "metaTitle": "Forfaits et tarifs — Documentation Cognos",
-        "metaDescription": "Commencez avec un crédit d'essai gratuit, puis choisissez Pay-As-You-Go ou Unlimited. Comment Cognos tarife l'utilisation, et où choisir un forfait.",
+        "metaDescription": "Commencez avec un crédit d'essai gratuit, puis choisissez Pay as you go ou Unlimited. Comment Cognos tarife l'utilisation, et où choisir un forfait.",
         "title": "Forfaits et tarifs",
-        "lead": "Commencez avec un crédit d'essai gratuit, puis choisissez Pay-As-You-Go ou Unlimited. Les paiements passent par Paddle.",
+        "lead": "Commencez avec un crédit d'essai gratuit, puis choisissez Pay as you go ou Unlimited. Les paiements passent par Paddle.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2698,19 +2866,19 @@
             "blocks": [
               {
                 "table": {
-                  "head": ["Forfait", "Fonctionnement"],
+                  "head": ["Forfait", "Comment ça marche"],
                   "rows": [
                     [
                       "<a href=\"/docs/trial-credit\">Crédit d'essai</a>",
-                      "Un solde de départ gratuit. Une fois épuisé, votre compte passe en lecture seule jusqu'à ce que vous choisissiez un forfait."
+                      "Un solde de départ gratuit. Une fois épuisé, votre compte est en lecture seule jusqu'à ce que vous choisissiez un forfait."
                     ],
                     [
-                      "<b>Pay-As-You-Go</b>",
+                      "<b>Pay as you go</b>",
                       "Vous payez ce que vous utilisez, avec un minimum mensuel de CHF 15."
                     ],
                     [
                       "<b>Unlimited</b>",
-                      "Un forfait fixe de CHF 150 par mois (ou CHF 1'500 par an) selon une utilisation raisonnable."
+                      "Un tarif fixe de CHF 150 par mois (ou CHF 1'500 par an) sous réserve d'un usage raisonnable."
                     ]
                   ]
                 }
@@ -2721,7 +2889,7 @@
             "heading": "Comment l'utilisation est tarifée",
             "blocks": [
               {
-                "p": "En Pay-As-You-Go, votre coût par message correspond au coût du fournisseur d'IA plus une marge de 22 %, converti en francs suisses. Chaque <a href=\"/docs/web-search\">recherche web</a> effectuée ajoute un petit forfait fixe."
+                "p": "Avec Pay as you go, le coût d'un message correspond au coût du fournisseur d'IA majoré d'une marge de 22 %, converti en francs suisses. Chaque <a href=\"/docs/web-search\">recherche web</a> effectuée ajoute un petit forfait fixe."
               }
             ]
           },
@@ -2729,19 +2897,19 @@
             "heading": "Choisissez un forfait",
             "blocks": [
               {
-                "p": "Choisissez ou changez de forfait depuis <a href=\"https://app.cognos.io/pricing\">la page des tarifs</a> ou vos <a href=\"https://app.cognos.io/account/billing\">paramètres de facturation</a>."
+                "p": "Choisissez ou changez de forfait depuis <a href=\"https://app.cognos.io/pricing\">la page des tarifs</a> ou <a href=\"https://app.cognos.io/account/billing\">vos paramètres de facturation</a>."
               },
               {
                 "figure": {
                   "src": "/docs-media/pricing.png",
-                  "alt": "La page des tarifs montrant les cartes des forfaits Pay-As-You-Go et Unlimited.",
-                  "caption": "Les forfaits Pay-As-You-Go et Unlimited."
+                  "alt": "La page des tarifs affichant les cartes des forfaits Pay as you go et Unlimited.",
+                  "caption": "Les forfaits Pay as you go et Unlimited."
                 }
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Vos discussions d'essai restent entièrement lisibles même une fois le crédit épuisé — vous ne pouvez simplement plus envoyer de nouveaux messages tant que vous n'avez pas choisi un forfait."
+                  "body": "Vos discussions d'essai restent entièrement lisibles même une fois le crédit épuisé — vous ne pouvez simplement plus envoyer de nouveaux messages tant que vous n'avez pas choisi de forfait."
                 }
               }
             ]
@@ -2752,9 +2920,9 @@
       "trial-credit": {
         "navTitle": "Crédit d'essai",
         "metaTitle": "Crédit d'essai — Documentation Cognos",
-        "metaDescription": "Chaque nouveau compte Cognos commence avec un petit montant de crédit gratuit afin que vous puissiez l'essayer avant de choisir un forfait.",
+        "metaDescription": "Chaque nouveau compte Cognos démarre avec un petit crédit gratuit afin que vous puissiez l'essayer avant de choisir un forfait.",
         "title": "Crédit d'essai",
-        "lead": "Chaque nouveau compte commence avec un petit montant de crédit gratuit, afin que vous puissiez essayer Cognos avant de choisir un forfait.",
+        "lead": "Chaque nouveau compte démarre avec un petit crédit gratuit, afin que vous puissiez essayer Cognos avant de choisir un forfait.",
         "time": "1 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2762,15 +2930,22 @@
             "heading": "Ce que vous obtenez",
             "blocks": [
               {
-                "p": "Un petit solde de départ arrive automatiquement sur votre compte à l'<a href=\"/docs/create-account\">inscription</a>. Vous pouvez le dépenser une fois votre e-mail vérifié, et le montant restant est affiché dans la barre latérale."
+                "p": "Un petit solde de départ arrive automatiquement sur votre compte lors de l'<a href=\"/docs/create-account\">inscription</a>. Vous pouvez le dépenser une fois votre e-mail vérifié, et le montant restant est affiché dans la barre latérale."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/trial-credit.png",
+                  "alt": "La carte de crédit d'essai dans la barre latérale affichant le solde restant.",
+                  "caption": "Votre solde d'essai, affiché dans la barre latérale."
+                }
               }
             ]
           },
           {
-            "heading": "Quand il s'épuise",
+            "heading": "Quand il est épuisé",
             "blocks": [
               {
-                "p": "Votre compte passe en lecture seule : vos discussions existantes restent entièrement lisibles, mais vous aurez besoin d'un <a href=\"/docs/plans-and-pricing\">forfait</a> pour envoyer de nouveaux messages."
+                "p": "Votre compte devient en lecture seule : vos discussions existantes restent entièrement lisibles, mais il vous faudra un <a href=\"/docs/plans-and-pricing\">forfait</a> pour envoyer de nouveaux messages."
               },
               {
                 "note": {
@@ -2786,9 +2961,9 @@
       "managing-your-subscription": {
         "navTitle": "Gérer la facturation",
         "metaTitle": "Gérer votre abonnement — Documentation Cognos",
-        "metaDescription": "Consultez l'utilisation, téléchargez des factures, changez de forfait ou annulez — tout depuis vos paramètres de facturation. Les paiements sont gérés par Paddle.",
+        "metaDescription": "Consultez l'utilisation, téléchargez les factures, changez de forfait ou annulez — le tout depuis vos paramètres de facturation. Les paiements sont gérés par Paddle.",
         "title": "Gérer votre abonnement",
-        "lead": "Consultez l'utilisation, téléchargez des factures, changez de forfait ou annulez — tout depuis vos paramètres de facturation.",
+        "lead": "Consultez l'utilisation, téléchargez les factures, changez de forfait ou annulez — le tout depuis vos paramètres de facturation.",
         "time": "2 min",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2796,7 +2971,14 @@
             "heading": "Où aller",
             "blocks": [
               {
-                "p": "<a href=\"https://app.cognos.io/account/billing\">Forfait et facturation</a> affiche votre forfait actuel, l'utilisation de cette période, votre moyen de paiement, et l'historique des factures avec téléchargement PDF. Les paiements et le portail de paiement sont gérés par Paddle."
+                "p": "<a href=\"https://app.cognos.io/account/billing\">Offre et facturation</a> affiche votre forfait actuel, l'utilisation de cette période, votre moyen de paiement et l'historique des factures avec téléchargements PDF. Les paiements et le portail de paiement sont gérés par Paddle."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/billing.png",
+                  "alt": "La page Offre et facturation avec le forfait actuel et les factures.",
+                  "caption": "La page Offre et facturation."
+                }
               }
             ]
           },
@@ -2804,7 +2986,7 @@
             "heading": "Changer ou annuler",
             "blocks": [
               {
-                "p": "Basculez entre Pay-As-You-Go et Unlimited, ou annulez, depuis la même page."
+                "p": "Basculez entre Pay as you go et Unlimited, ou annulez, depuis la même page."
               }
             ]
           },
@@ -2813,8 +2995,8 @@
             "blocks": [
               {
                 "ul": [
-                  "Une vérification rapide avant chaque message s'assure que vous pouvez le couvrir, afin de ne jamais être facturé(e) pour quelque chose que vous ne pouvez pas vous permettre.",
-                  "Cette vérification utilise une estimation pessimiste — la facturation réelle est généralement plus faible, et la différence joue en votre faveur."
+                  "Une vérification rapide avant chaque message garantit que vous pouvez le couvrir, afin de ne jamais être facturé pour quelque chose que vous ne pouvez pas vous permettre.",
+                  "Cette vérification utilise une estimation du pire cas — la facturation réelle est généralement plus faible, et la différence reste à votre avantage."
                 ]
               },
               {
@@ -2831,9 +3013,9 @@
       "organisations-overview": {
         "navTitle": "Aperçu des organisations",
         "metaTitle": "Organisations — Documentation Cognos",
-        "metaDescription": "Une organisation est une frontière de facturation et d'administration pour une équipe. Elle paie le travail partagé et garde le contenu des conversations privé, même vis-à-vis des administrateurs.",
+        "metaDescription": "Une organisation est un périmètre de facturation et d'administration pour une équipe. Elle paie le travail partagé et garde le contenu des conversations privé, même vis-à-vis des administrateurs.",
         "title": "Organisations",
-        "lead": "Une organisation est une frontière de facturation et d'administration pour une équipe. Elle paie le travail partagé — et garde le contenu privé, même vis-à-vis des administrateurs.",
+        "lead": "Une organisation est un périmètre de facturation et d'administration pour une équipe. Elle paie le travail partagé — et garde le contenu privé, même vis-à-vis des administrateurs.",
         "time": "4 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2841,19 +3023,26 @@
             "heading": "Ce qu'est une organisation",
             "blocks": [
               {
-                "p": "Une organisation regroupe des personnes via des adhésions, possède des <a href=\"/docs/organisation-projects\">projets</a> partagés, et paie une seule facture mutualisée. Il existe trois rôles :"
+                "p": "Une organisation regroupe des personnes par le biais d'adhésions, possède des <a href=\"/docs/organisation-projects\">projets</a> partagés, et paie une facture unique mutualisée. Il existe trois rôles :"
               },
               {
                 "ul": [
                   "<b>Propriétaire</b> — la facturation et la dissolution de l'organisation.",
-                  "<b>Administrateur</b> — les membres, les sièges, la politique, et le tableau de bord d'utilisation.",
-                  "<b>Membre</b> — travaille dans les projets auxquels il ou elle est ajouté(e)."
+                  "<b>Administrateur</b> — les membres, les sièges, la politique et le tableau de bord d'utilisation.",
+                  "<b>Membre</b> — travaille dans les projets auxquels il a été ajouté."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Les organisations sont aujourd'hui disponibles pour certains partenaires de conception sélectionnés."
+                  "body": "Les organisations sont aujourd'hui disponibles pour un groupe restreint de partenaires de conception."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/team.png",
+                  "alt": "La page de réglages Équipe d'une organisation.",
+                  "caption": "La page Équipe, où les organisations gèrent leurs membres."
                 }
               }
             ]
@@ -2868,19 +3057,19 @@
                     "body": "Dans Paramètres → Équipe, créez une invitation et copiez le lien (il n'est affiché qu'une seule fois)."
                   },
                   {
-                    "title": "Envoyez-le à votre façon",
-                    "body": "Partagez le lien comme vous le souhaitez — Cognos ne l'envoie pas par e-mail pour vous."
+                    "title": "Envoyez-le comme vous le souhaitez",
+                    "body": "Partagez le lien comme vous le souhaitez — Cognos ne l'envoie pas par e-mail à votre place."
                   },
                   {
                     "title": "Ils acceptent, vous les ajoutez",
-                    "body": "La personne invitée s'inscrit si nécessaire, puis ouvre le lien pour rejoindre. Un administrateur l'ajoute ensuite à des projets spécifiques."
+                    "body": "L'invité s'inscrit si nécessaire, puis ouvre le lien pour rejoindre l'organisation. Un administrateur l'ajoute ensuite à des projets spécifiques."
                   }
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Les liens d'invitation sont à usage unique et expirent après 14 jours. Lien perdu ? Révoquez-le et émettez-en un nouveau."
+                  "body": "Les liens d'invitation sont à usage unique et expirent après 14 jours. Un lien perdu ? Révoquez-le et émettez-en un nouveau."
                 }
               }
             ]
@@ -2892,7 +3081,7 @@
                 "note": {
                   "variant": "security",
                   "title": "Métadonnées uniquement — jamais le contenu",
-                  "body": "Les administrateurs voient les métadonnées d'utilisation : sièges, coût par membre, et répartition des modèles. Ils ne voient jamais le contenu des messages, les titres de conversation, ou la mémoire."
+                  "body": "Les administrateurs voient les métadonnées d'utilisation : sièges, coût par membre, et répartition des modèles. Ils ne voient jamais le contenu des messages, les titres de conversation ou la mémoire."
                 }
               }
             ]
@@ -2902,7 +3091,7 @@
       },
       "seats-and-billing": {
         "navTitle": "Sièges et facturation",
-        "metaTitle": "Sièges et facturation des organisations — Documentation Cognos",
+        "metaTitle": "Sièges et facturation de l'organisation — Documentation Cognos",
         "metaDescription": "Les organisations paient une seule facture : CHF 15 par siège et par mois, avec un minimum de trois sièges (CHF 45). Comment fonctionnent l'utilisation mutualisée et le dépassement.",
         "title": "Sièges et facturation",
         "lead": "Les organisations paient une seule facture : CHF 15 par siège et par mois, avec un minimum de trois sièges (CHF 45).",
@@ -2914,6 +3103,13 @@
             "blocks": [
               {
                 "p": "Chaque adhésion active occupe un siège, facturé CHF 15 par siège et par mois. Une organisation est toujours facturée pour au moins trois sièges (CHF 45 par mois), même avec moins de personnes actives."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/team.png",
+                  "alt": "La page de réglages Équipe affichant les membres et les sièges.",
+                  "caption": "Membres et sièges sur la page Équipe."
+                }
               }
             ]
           },
@@ -2921,7 +3117,7 @@
             "heading": "Utilisation mutualisée",
             "blocks": [
               {
-                "p": "Le travail de tous les membres dans les projets d'organisation se mutualise en une seule facture. L'utilisation au-delà du seuil combiné des sièges est facturée comme une seule ligne de dépassement à la fin du cycle. Le travail d'organisation facture toujours l'organisation — jamais le solde personnel d'un membre."
+                "p": "Le travail de tous les membres dans les projets de l'organisation est mutualisé en une seule facture. L'utilisation au-delà du plancher combiné des sièges est facturée en une seule ligne de dépassement à la fin du cycle. Le travail en organisation facture toujours l'organisation — jamais le solde personnel d'un membre."
               }
             ]
           },
@@ -2931,8 +3127,8 @@
               {
                 "ul": [
                   "Il n'existe pas d'essai pour les organisations — la facturation commence dès le premier jour.",
-                  "Retirer un siège en cours de cycle n'est pas remboursé ; le nombre diminue au cycle suivant, et jamais en dessous de trois.",
-                  "Si la facturation de l'organisation prend du retard, ses <a href=\"/docs/organisation-projects\">projets</a> passent en lecture seule pour tout le monde jusqu'à résolution."
+                  "Retirer un siège en cours de cycle n'est pas remboursé ; le nombre baisse au cycle suivant, et jamais en dessous de trois.",
+                  "Si la facturation de l'organisation cesse, ses <a href=\"/docs/organisation-projects\">projets</a> passent en lecture seule pour tout le monde jusqu'à résolution."
                 ]
               }
             ]
@@ -2947,9 +3143,9 @@
       "organisation-projects": {
         "navTitle": "Projets d'organisation",
         "metaTitle": "Projets d'organisation — Documentation Cognos",
-        "metaDescription": "Les projets d'organisation sont des espaces de travail partagés appartenant à l'organisation. Le travail effectué y est facturé à l'organisation.",
+        "metaDescription": "Les projets d'organisation sont des espaces de travail partagés appartenant à l'organisation. Le travail qui y est effectué est facturé à l'organisation.",
         "title": "Projets d'organisation",
-        "lead": "Les projets d'organisation sont des espaces de travail partagés appartenant à l'organisation. Le travail effectué y est facturé à l'organisation.",
+        "lead": "Les projets d'organisation sont des espaces de travail partagés appartenant à l'organisation. Le travail qui y est effectué est facturé à l'organisation.",
         "time": "3 min de lecture",
         "updated": "22 juillet 2026",
         "sections": [
@@ -2957,15 +3153,22 @@
             "heading": "Accès",
             "blocks": [
               {
-                "p": "Seuls les membres actifs peuvent être ajoutés à un projet d'organisation, chacun en tant que Lecteur, Éditeur ou Administrateur. Les administrateurs de l'organisation sont automatiquement administrateurs de chaque projet d'organisation. Le fonctionnement est identique à celui des <a href=\"/docs/projects\">projets</a> personnels."
+                "p": "Seuls les membres actifs peuvent être ajoutés à un projet d'organisation, chacun en tant que lecteur, éditeur ou administrateur. Les administrateurs de l'organisation sont automatiquement administrateurs de chaque projet d'organisation. Le fonctionnement est le même que pour les <a href=\"/docs/projects\">projets</a> personnels."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/projects.png",
+                  "alt": "La page Projets répertoriant les projets.",
+                  "caption": "Projets — personnels ou appartenant à une organisation."
+                }
               }
             ]
           },
           {
-            "heading": "Facturation et retards",
+            "heading": "Facturation et interruptions",
             "blocks": [
               {
-                "p": "Chaque message dans un projet d'organisation facture l'<a href=\"/docs/seats-and-billing\">organisation</a>, pas la personne qui l'a écrit. Si la facturation de l'organisation prend du retard, ses projets passent en lecture seule pour tout le monde jusqu'à résolution."
+                "p": "Chaque message dans un projet d'organisation facture l'<a href=\"/docs/seats-and-billing\">organisation</a>, pas la personne qui l'écrit. Si la facturation de l'organisation cesse, ses projets passent en lecture seule pour tout le monde jusqu'à résolution."
               }
             ]
           },
@@ -2973,7 +3176,7 @@
             "heading": "Quand quelqu'un part",
             "blocks": [
               {
-                "p": "Le départ retire d'abord l'accès de la personne, puis une rotation de clés lui interdit les futurs messages. Son compte personnel et ses données personnelles restent intacts."
+                "p": "Le départ coupe d'abord l'accès de la personne, puis un renouvellement de clé lui interdit l'accès aux futurs messages. Son compte personnel et ses données personnelles restent intacts."
               },
               {
                 "note": {
@@ -2985,6 +3188,121 @@
           }
         ],
         "related": ["organisations-overview", "seats-and-billing", "projects"]
+      },
+      "branches": {
+        "navTitle": "Modifier, régénérer et versions",
+        "metaTitle": "Modification, régénération et versions — Documentation Cognos",
+        "metaDescription": "Modifiez une question ou demandez une autre réponse — Cognos conserve chaque version afin que vous puissiez passer de l'une à l'autre à tout moment.",
+        "title": "Modification, régénération et versions",
+        "lead": "Modifiez une question ou demandez une autre réponse, et Cognos conserve chaque version — passez de l'une à l'autre quand vous le souhaitez.",
+        "time": "2 min",
+        "updated": "22 juillet 2026",
+        "sections": [
+          {
+            "heading": "Modifier un message",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Survolez le message que vous avez envoyé",
+                    "body": "Ses actions apparaissent."
+                  },
+                  {
+                    "title": "Choisissez Modifier le message",
+                    "body": "Modifiez le texte."
+                  },
+                  {
+                    "title": "Envoyez-le à nouveau",
+                    "body": "Votre message original reste une version ; la modification en démarre une autre."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Régénérer une réponse",
+            "blocks": [
+              {
+                "p": "Demandez au modèle une autre version, et la nouvelle réponse se place à côté de la première, plutôt que de la remplacer."
+              }
+            ]
+          },
+          {
+            "heading": "Basculer entre les versions",
+            "blocks": [
+              {
+                "p": "Lorsqu'un échange comporte plusieurs versions, un petit contrôle <code>&lsaquo; 1/2 &rsaquo;</code> apparaît. Utilisez les flèches pour passer de l'une à l'autre — le reste de la conversation suit la version que vous consultez."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Le changement modifie uniquement ce que vous voyez et ce que l'IA utilise comme contexte. Rien n'est supprimé — chaque version reste dans votre historique."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/forked-chats.png",
+                  "alt": "Un échange de conversation affichant un sélecteur de version avec des flèches précédent et suivant.",
+                  "caption": "Le sélecteur de version apparaît lorsqu'un échange comporte plusieurs versions."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["your-first-chat", "choosing-a-model", "searching-conversations"]
+      },
+      "exporting-your-data": {
+        "navTitle": "Exporter vos données",
+        "metaTitle": "Exporter vos données — Documentation Cognos",
+        "metaDescription": "Vos conversations vous appartiennent. Téléchargez-les à tout moment dans un format lisible — sans dépendance, et l'export s'effectue sur votre appareil.",
+        "title": "Exporter vos données",
+        "lead": "Vos conversations vous appartiennent. Téléchargez-les à tout moment, dans un format lisible — sans dépendance.",
+        "time": "2 min",
+        "updated": "22 juillet 2026",
+        "sections": [
+          {
+            "heading": "Téléchargez vos conversations",
+            "blocks": [
+              {
+                "p": "Sur <a href=\"https://app.cognos.io/account\">votre page Compte</a>, la section <b>Vos données</b> vous permet d'exporter et de télécharger vos conversations. Elles sont déchiffrées dans votre navigateur et enregistrées directement sur votre appareil."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/export-data.png",
+                  "alt": "La carte Vos données sur la page Compte avec les options d'export et de téléchargement.",
+                  "caption": "La section Vos données sur votre page Compte."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Ce que vous obtenez",
+            "blocks": [
+              {
+                "ul": [
+                  "Vos conversations sous forme de fichiers lisibles (un <code>.zip</code> lorsqu'une discussion contient des images).",
+                  "N'importe quelle réponse individuelle, à la demande, sous forme de fichier Word, PDF ou Markdown — consultez <a href=\"/docs/generating-documents\">générer des documents</a>.",
+                  "L'export s'exécute sur votre appareil — rien de plus ne nous est envoyé pour le produire."
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Jamais de dépendance",
+            "blocks": [
+              {
+                "p": "Comme vous pouvez exporter à tout moment — et que ni votre mot de passe ni votre forfait ne verrouillent vos données — vous n'êtes jamais bloqué. Même si votre forfait s'arrête, vos discussions existantes restent lisibles ; vous ne pouvez simplement plus envoyer de nouveaux messages tant que vous n'avez pas choisi de <a href=\"/docs/plans-and-pricing\">forfait</a>."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Exporter conserve vos données ; <a href=\"/docs/deleting-your-account\">supprimer votre compte</a> les retire. Ce sont deux choix distincts."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["your-privacy", "generating-documents", "deleting-your-account"]
       }
     }
   }

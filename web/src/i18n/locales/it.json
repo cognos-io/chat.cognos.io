@@ -930,7 +930,7 @@
                   "to": "/docs/plans-and-pricing",
                   "icon": "CreditCard",
                   "title": "Piani e fatturazione",
-                  "body": "Credito di prova, piani Pay-As-You-Go e Unlimited."
+                  "body": "Credito di prova, piani Pay as you go e Unlimited."
                 }
               ]
             }
@@ -968,6 +968,13 @@
                 "note": {
                   "variant": "tip",
                   "body": "Vuoi la spiegazione più approfondita? Consulta la <a href=\"/security\">Panoramica sulla sicurezza</a> e l'<a href=\"/privacy\">Informativa sulla privacy</a>."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-exchange.png",
+                  "alt": "Una conversazione Cognos: una domanda del titolare dell'account e la risposta dell'assistente.",
+                  "caption": "Una conversazione in Cognos — salvata e crittografata man mano che procedi."
                 }
               }
             ]
@@ -1152,6 +1159,13 @@
               },
               {
                 "p": "Salvala durante la registrazione — quello è l'unico momento affidabile. In quella stessa prima sessione puoi ancora riaprirla da <a href=\"https://app.cognos.io/account/security\">Sicurezza e chiavi</a>, ma una volta terminata la sessione Cognos non può più davvero mostrartela di nuovo. Quindi non considerarlo un modo per rimandare — salva subito il kit di emergenza."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/account-key-settings.png",
+                  "alt": "La pagina Sicurezza e chiavi, dove vengono gestite la Chiave dell'account e il kit di emergenza.",
+                  "caption": "Sicurezza e chiavi, dove puoi riaprire il tuo kit di emergenza nella stessa sessione."
+                }
               }
             ]
           },
@@ -1276,6 +1290,13 @@
                     "body": "Se hai attivato l'<a href=\"/docs/multi-factor-authentication\">autenticazione a due fattori</a>, digita il codice a 6 cifre dalla tua app di autenticazione."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/login.png",
+                  "alt": "La pagina di accesso di Cognos con i campi email e password.",
+                  "caption": "La pagina di accesso su app.cognos.io/auth/login."
+                }
               }
             ]
           },
@@ -1323,6 +1344,13 @@
                 "note": {
                   "variant": "tip",
                   "body": "Lo sblocco esegue un lavoro crittografico deliberato, quindi può richiedere un secondo o due su un dispositivo più datato — è normale, non un blocco del sistema."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/unlock-dialog.png",
+                  "alt": "La finestra Sblocca backup che richiede la Chiave dell'account su un nuovo dispositivo.",
+                  "caption": "Sbloccare un nuovo dispositivo con la tua Chiave dell'account."
                 }
               }
             ]
@@ -1411,6 +1439,13 @@
                 "note": {
                   "variant": "tip",
                   "body": "Non vuoi che venga salvata? Attiva una <a href=\"/docs/temporary-conversations\">conversazione temporanea</a> prima di iniziare."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-exchange.png",
+                  "alt": "Un messaggio inviato e la risposta dell'assistente in una conversazione.",
+                  "caption": "Il tuo messaggio e la risposta — salvati e crittografati automaticamente."
                 }
               }
             ]
@@ -1638,6 +1673,13 @@
             "blocks": [
               {
                 "p": "Sui modelli che lo supportano, ogni risposta ha un interruttore <b>Mostra ragionamento</b>. Il ragionamento scorre in diretta, poi si nasconde una volta arrivata la risposta. È <a href=\"/docs/your-privacy\">crittografato</a> come il resto del tuo messaggio e non viene mai registrato."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/reasoning-effort.png",
+                  "alt": "Il controllo dello sforzo di ragionamento che mostra i livelli selezionabili.",
+                  "caption": "Regola quanto impegno dedica al ragionamento un modello capace."
+                }
               }
             ]
           },
@@ -1645,7 +1687,7 @@
             "heading": "Imposta l'impegno",
             "blocks": [
               {
-                "p": "Il controllo <b>Impegno di ragionamento</b> nella casella del messaggio ti permette di regolare un modello capace da spento fino ad alto. Più impegno può richiedere più tempo e <a href=\"/docs/plans-and-pricing\">costare di più</a>; i livelli esatti dipendono dal modello."
+                "p": "Il controllo <b>Sforzo di ragionamento</b> nella casella del messaggio ti permette di regolare un modello capace da spento fino ad alto. Più impegno può richiedere più tempo e <a href=\"/docs/plans-and-pricing\">costare di più</a>; i livelli esatti dipendono dal modello."
               }
             ]
           },
@@ -1683,6 +1725,13 @@
             "blocks": [
               {
                 "p": "Apri il menu <b>Strumenti</b> nella casella del messaggio e attiva <b>Ricerca web</b>. Se il modello che hai scelto non può cercare, l'opzione lo indica e viene semplicemente saltata."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "Il menu Strumenti con l'interruttore Ricerca web.",
+                  "caption": "Attiva Ricerca web dal menu Strumenti."
+                }
               }
             ]
           },
@@ -1721,6 +1770,13 @@
             "blocks": [
               {
                 "p": "Su una chat nuova e non salvata, attiva l'interruttore <b>Chat temporanea</b>. Nulla viene scritto come Conversazione salvata — i messaggi vivono solo in questo browser."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/temporary-chat.png",
+                  "alt": "L'interruttore Chat temporanea su una nuova conversazione non salvata.",
+                  "caption": "L'interruttore Chat temporanea su una nuova conversazione."
+                }
               }
             ]
           },
@@ -1786,6 +1842,13 @@
                 "note": {
                   "variant": "tip",
                   "body": "Un file che hai allegato resta nella tua <a href=\"/docs/attachments\">Libreria</a> anche dopo che il messaggio che lo usava è scomparso."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/disappearing-dialog.png",
+                  "alt": "La finestra Messaggi che scompaiono con le opzioni di durata di scadenza.",
+                  "caption": "Scegliere per quanto tempo durano i messaggi."
                 }
               }
             ]
@@ -1885,6 +1948,13 @@
                   "variant": "info",
                   "body": "Quando <a href=\"/docs/sharing-conversations\">condividi una conversazione</a>, un link solo oscurato mantiene nascosti i valori; un link con dati sensibili inclusi permette ai destinatari di rivelarli. Scegli con attenzione."
                 }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/redaction-reveal.png",
+                  "alt": "La finestra Informazioni personali oscurate che confronta ciò che vedi con ciò che ha visto il modello.",
+                  "caption": "Ciò che vedi tu rispetto a ciò che ha visto il modello."
+                }
               }
             ]
           }
@@ -1914,6 +1984,13 @@
                     "body": "Scegli <b>Carica</b> per un nuovo file, oppure <b>Dalla libreria</b> per riutilizzarne uno. I tipi di file non supportati vengono respinti invece di essere caricati a metà."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/first-chat-composer.png",
+                  "alt": "La casella del messaggio con il pulsante a graffetta per allegare un file.",
+                  "caption": "Allega un file dalla casella del messaggio."
+                }
               }
             ]
           },
@@ -1968,6 +2045,13 @@
             "blocks": [
               {
                 "p": "Usa l'opzione di download su qualsiasi risposta dell'assistente e scegli un formato — Word, PDF o Markdown. Il file viene creato sul tuo dispositivo; i byte non toccano mai i server di Cognos."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "Il menu Strumenti con l'interruttore Crea documenti.",
+                  "caption": "Attiva Crea documenti nel menu Strumenti."
+                }
               }
             ]
           },
@@ -2017,6 +2101,13 @@
                     "body": "Scrivi la tua richiesta e invia."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "Il menu Strumenti con l'interruttore Genera immagine.",
+                  "caption": "Attiva Genera immagine nel menu Strumenti."
+                }
               }
             ]
           },
@@ -2059,6 +2150,13 @@
                     "body": "Dagli un nome, e facoltativamente un'icona, un colore e un modello predefinito."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/projects.png",
+                  "alt": "La pagina Progetti che elenca i progetti.",
+                  "caption": "La pagina Progetti."
+                }
               }
             ]
           },
@@ -2112,6 +2210,13 @@
             "blocks": [
               {
                 "p": "Apri <a href=\"https://app.cognos.io/account/bookmarks\">Segnalibri</a> per vederli tutti, e selezionane uno per tornare esattamente al punto nella sua conversazione."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/bookmarks.png",
+                  "alt": "La pagina Segnalibri che elenca gli evidenziati salvati.",
+                  "caption": "I tuoi segnalibri, sfogliabili in un unico posto."
+                }
               }
             ]
           },
@@ -2143,6 +2248,13 @@
             "blocks": [
               {
                 "p": "Usa la casella <b>Cerca</b> nella barra laterale (tre caratteri o più). Trova subito corrispondenze nei titoli delle conversazioni e cerca anche nel contenuto dei messaggi recenti, con le corrispondenze nei titoli in cima."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/search.png",
+                  "alt": "La casella di ricerca nella barra laterale con le conversazioni corrispondenti.",
+                  "caption": "Cercare nelle tue conversazioni dalla barra laterale."
+                }
               }
             ]
           },
@@ -2190,6 +2302,13 @@
                     "body": "Controlla i conteggi dell'anteprima così sai esattamente cosa arriverà, poi conferma."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/import.png",
+                  "alt": "La pagina di importazione con le opzioni di origine per ChatGPT e Claude.",
+                  "caption": "La pagina di importazione."
+                }
               }
             ]
           },
@@ -2275,6 +2394,13 @@
                 "note": {
                   "variant": "warning",
                   "body": "Con dati sensibili inclusi significa che chiunque abbia il link può vedere i valori reali <a href=\"/docs/redaction\">oscurati</a>. Usa solo oscurata a meno che tu non intenda davvero condividerli."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/share-public.png",
+                  "alt": "Una vista pubblica di sola lettura di una conversazione condivisa con i valori sensibili nascosti.",
+                  "caption": "Un link condiviso in modalità solo oscurata — i valori sensibili restano nascosti."
                 }
               }
             ]
@@ -2380,6 +2506,13 @@
             "blocks": [
               {
                 "p": "Quando attivi l'<a href=\"/docs/multi-factor-authentication\">autenticazione a due fattori</a>, Cognos mostra 10 codici di recupero <b>una sola volta</b>. Copiali o scaricali e conservali al sicuro — non potranno essere mostrati di nuovo."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mfa-setup.png",
+                  "alt": "La scheda dell'autenticazione a due fattori dove vengono configurati i codici di recupero.",
+                  "caption": "I codici di recupero vengono configurati insieme all'autenticazione a due fattori."
+                }
               }
             ]
           },
@@ -2435,6 +2568,13 @@
                     "body": "Impostala e hai finito."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/forgot-password.png",
+                  "alt": "La pagina di reimpostazione della password con un campo email.",
+                  "caption": "Richiedi un link di reimpostazione via email."
+                }
               }
             ]
           },
@@ -2492,6 +2632,13 @@
             "blocks": [
               {
                 "p": "Il pulsante <b>Sicurezza</b> su una conversazione mostra, per ogni risposta, quale modello e fornitore l'hanno gestita e dove — così puoi verificare che corrisponda alle tue impostazioni."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/redaction-reveal.png",
+                  "alt": "Una finestra che confronta ciò che vede il titolare dell'account con ciò che ha visto il modello.",
+                  "caption": "Vedi sempre i tuoi valori reali; il modello ha visto solo i segnaposto."
+                }
               }
             ]
           },
@@ -2565,6 +2712,13 @@
                   "variant": "info",
                   "body": "La memoria è facoltativa — Cognos non costruisce un profilo su di te a meno che tu non ne aggiunga uno. Modificare o eliminare una voce influisce solo sui messaggi futuri."
                 }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/memory.png",
+                  "alt": "La pagina delle impostazioni della Memoria.",
+                  "caption": "Gestisci cosa ricorda l'IA nella pagina Memoria."
+                }
               }
             ]
           }
@@ -2593,6 +2747,13 @@
             "blocks": [
               {
                 "p": "Per terminare altre sessioni senza uscire tu stesso da qui, usa <b>Disconnetti altri dispositivi</b> in <a href=\"https://app.cognos.io/account/security\">Sicurezza e chiavi</a>."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/sign-out-devices.png",
+                  "alt": "La scheda Disconnetti altri dispositivi nella pagina Sicurezza e chiavi.",
+                  "caption": "Disconnetti altri dispositivi senza uscire tu stesso da qui."
+                }
               }
             ]
           },
@@ -2651,6 +2812,13 @@
                     "body": "I tuoi dati personali vengono rimossi."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/delete-account.png",
+                  "alt": "La Zona pericolosa con i controlli per eliminare l'account.",
+                  "caption": "La Zona pericolosa nella tua pagina Account."
+                }
               }
             ]
           },
@@ -2683,9 +2851,9 @@
       "plans-and-pricing": {
         "navTitle": "Piani e prezzi",
         "metaTitle": "Piani e prezzi — Documentazione Cognos",
-        "metaDescription": "Inizia con credito di prova gratuito, poi scegli Pay-As-You-Go o Unlimited. Come Cognos stabilisce i prezzi dell'utilizzo, e dove scegliere un piano.",
+        "metaDescription": "Inizia con credito di prova gratuito, poi scegli Pay as you go o Unlimited. Come Cognos stabilisce i prezzi dell'utilizzo, e dove scegliere un piano.",
         "title": "Piani e prezzi",
-        "lead": "Inizia con credito di prova gratuito, poi scegli Pay-As-You-Go o Unlimited. I pagamenti passano attraverso Paddle.",
+        "lead": "Inizia con credito di prova gratuito, poi scegli Pay as you go o Unlimited. I pagamenti passano attraverso Paddle.",
         "time": "3 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -2701,7 +2869,7 @@
                       "Un saldo iniziale gratuito. Quando si esaurisce, il tuo account diventa di sola lettura finché non scegli un piano."
                     ],
                     [
-                      "<b>Pay-As-You-Go</b>",
+                      "<b>Pay as you go</b>",
                       "Paghi per quello che usi, con un minimo mensile di CHF 15."
                     ],
                     [
@@ -2717,7 +2885,7 @@
             "heading": "Come viene calcolato il prezzo dell'utilizzo",
             "blocks": [
               {
-                "p": "Con Pay-As-You-Go, il tuo costo per un messaggio è il costo del fornitore di IA più un margine del 22%, convertito in franchi svizzeri. Ogni <a href=\"/docs/web-search\">ricerca web</a> eseguita aggiunge una piccola tariffa fissa."
+                "p": "Con Pay as you go, il tuo costo per un messaggio è il costo del fornitore di IA più un margine del 22%, convertito in franchi svizzeri. Ogni <a href=\"/docs/web-search\">ricerca web</a> eseguita aggiunge una piccola tariffa fissa."
               }
             ]
           },
@@ -2730,8 +2898,8 @@
               {
                 "figure": {
                   "src": "/docs-media/pricing.png",
-                  "alt": "La pagina dei prezzi che mostra le schede dei piani Pay-As-You-Go e Unlimited.",
-                  "caption": "I piani Pay-As-You-Go e Unlimited."
+                  "alt": "La pagina dei prezzi che mostra le schede dei piani Pay as you go e Unlimited.",
+                  "caption": "I piani Pay as you go e Unlimited."
                 }
               },
               {
@@ -2759,6 +2927,13 @@
             "blocks": [
               {
                 "p": "Un piccolo saldo iniziale arriva automaticamente sul tuo account alla <a href=\"/docs/create-account\">registrazione</a>. Puoi spenderlo una volta verificata la tua email, e l'importo rimanente è mostrato nella barra laterale."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/trial-credit.png",
+                  "alt": "La scheda del credito di prova nella barra laterale che mostra il saldo rimanente.",
+                  "caption": "Il tuo saldo di prova, mostrato nella barra laterale."
+                }
               }
             ]
           },
@@ -2793,6 +2968,13 @@
             "blocks": [
               {
                 "p": "<a href=\"https://app.cognos.io/account/billing\">Piano e fatturazione</a> mostra il tuo piano attuale, l'utilizzo di questo periodo, il metodo di pagamento e lo storico delle fatture con download in PDF. I pagamenti e il portale dei pagamenti sono gestiti da Paddle."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/billing.png",
+                  "alt": "La pagina Piano e fatturazione con il piano attuale e le fatture.",
+                  "caption": "La pagina Piano e fatturazione."
+                }
               }
             ]
           },
@@ -2800,7 +2982,7 @@
             "heading": "Cambia o annulla",
             "blocks": [
               {
-                "p": "Passa da Pay-As-You-Go a Unlimited o viceversa, oppure annulla, dalla stessa pagina."
+                "p": "Passa da Pay as you go a Unlimited o viceversa, oppure annulla, dalla stessa pagina."
               }
             ]
           },
@@ -2850,6 +3032,13 @@
                 "note": {
                   "variant": "info",
                   "body": "Le Organizzazioni sono disponibili oggi per partner di design selezionati."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/team.png",
+                  "alt": "La pagina delle impostazioni Team per un'Organizzazione.",
+                  "caption": "La pagina Team, dove le Organizzazioni gestiscono i membri."
                 }
               }
             ]
@@ -2910,6 +3099,13 @@
             "blocks": [
               {
                 "p": "Ogni appartenenza attiva occupa un posto, fatturato a CHF 15 per posto al mese. Un'Organizzazione viene sempre fatturata per almeno tre posti (CHF 45 al mese), anche con meno persone attive."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/team.png",
+                  "alt": "La pagina delle impostazioni Team che mostra membri e posti.",
+                  "caption": "Membri e posti nella pagina Team."
+                }
               }
             ]
           },
@@ -2954,6 +3150,13 @@
             "blocks": [
               {
                 "p": "Solo i membri attivi possono essere aggiunti a un progetto dell'Organizzazione, ciascuno come Lettore, Editor o Amministratore. Gli Amministratori dell'Organizzazione sono automaticamente Amministratori su ogni progetto dell'Organizzazione. I meccanismi sono gli stessi dei <a href=\"/docs/projects\">Progetti</a> personali."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/projects.png",
+                  "alt": "La pagina Progetti che elenca i progetti.",
+                  "caption": "Progetti — personali o di proprietà dell'Organizzazione."
+                }
               }
             ]
           },
@@ -2981,6 +3184,121 @@
           }
         ],
         "related": ["organisations-overview", "seats-and-billing", "projects"]
+      },
+      "branches": {
+        "navTitle": "Modifica, rigenera e versioni",
+        "metaTitle": "Modifica, rigenerazione e versioni — Documentazione Cognos",
+        "metaDescription": "Cambia una domanda o chiedi un'altra risposta — Cognos conserva ogni versione così puoi passare dall'una all'altra in qualsiasi momento.",
+        "title": "Modifica, rigenerazione e versioni",
+        "lead": "Cambia una domanda o chiedi un'altra risposta, e Cognos conserva ogni versione — passa dall'una all'altra quando vuoi.",
+        "time": "2 min",
+        "updated": "22 luglio 2026",
+        "sections": [
+          {
+            "heading": "Modifica un messaggio",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Passa il mouse sul messaggio che hai inviato",
+                    "body": "Appaiono le sue azioni."
+                  },
+                  {
+                    "title": "Scegli Modifica messaggio",
+                    "body": "Cambia il testo."
+                  },
+                  {
+                    "title": "Invialo di nuovo",
+                    "body": "Il tuo messaggio originale resta come una versione; la modifica ne avvia un'altra."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Rigenera una risposta",
+            "blocks": [
+              {
+                "p": "Chiedi al modello un'altra versione e la nuova risposta si affianca alla prima, invece di sostituirla."
+              }
+            ]
+          },
+          {
+            "heading": "Passa da una versione all'altra",
+            "blocks": [
+              {
+                "p": "Quando un turno ha più di una versione, appare un piccolo controllo <code>&lsaquo; 1/2 &rsaquo;</code>. Usa le frecce per spostarti tra le versioni — il resto della conversazione segue qualunque versione tu stia visualizzando."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Cambiare versione modifica solo ciò che vedi e ciò che l'IA usa come contesto. Niente viene eliminato — ogni versione resta nella tua cronologia."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/forked-chats.png",
+                  "alt": "Un turno di conversazione che mostra un selettore di versione con frecce avanti e indietro.",
+                  "caption": "Il selettore di versione appare quando un turno ha più di una versione."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["your-first-chat", "choosing-a-model", "searching-conversations"]
+      },
+      "exporting-your-data": {
+        "navTitle": "Esporta i tuoi dati",
+        "metaTitle": "Esporta i tuoi dati — Documentazione Cognos",
+        "metaDescription": "Le tue conversazioni sono tue. Scaricale in qualsiasi momento in un formato leggibile — nessun vincolo, e l'esportazione avviene sul tuo dispositivo.",
+        "title": "Esporta i tuoi dati",
+        "lead": "Le tue conversazioni sono tue. Scaricale in qualsiasi momento, in un formato leggibile — nessun vincolo.",
+        "time": "2 min",
+        "updated": "22 luglio 2026",
+        "sections": [
+          {
+            "heading": "Scarica le tue conversazioni",
+            "blocks": [
+              {
+                "p": "Nella <a href=\"https://app.cognos.io/account\">tua pagina Account</a>, la sezione <b>I tuoi dati</b> ti permette di esportare e scaricare le tue conversazioni. Vengono decifrate nel tuo browser e salvate direttamente sul tuo dispositivo."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/export-data.png",
+                  "alt": "La scheda I tuoi dati nella pagina Account con le opzioni di esportazione e download.",
+                  "caption": "La sezione I tuoi dati nella tua pagina Account."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Cosa ottieni",
+            "blocks": [
+              {
+                "ul": [
+                  "Le tue conversazioni come file leggibili (un <code>.zip</code> quando una chat include immagini).",
+                  "Qualsiasi singola risposta, su richiesta, come file Word, PDF o Markdown — consulta <a href=\"/docs/generating-documents\">generare documenti</a>.",
+                  "L'esportazione viene eseguita sul tuo dispositivo — non ci viene inviato nulla in più per produrla."
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Mai vincolato",
+            "blocks": [
+              {
+                "p": "Poiché puoi esportare in qualsiasi momento — e né la tua password né il tuo piano bloccano i tuoi dati — non resti mai bloccato. Anche se il tuo piano scade, le tue chat esistenti restano leggibili; semplicemente non puoi inviare nuovi messaggi finché non scegli un <a href=\"/docs/plans-and-pricing\">piano</a>."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Esportare conserva i tuoi dati; <a href=\"/docs/deleting-your-account\">eliminare il tuo account</a> li rimuove. Sono scelte separate."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["your-privacy", "generating-documents", "deleting-your-account"]
       }
     }
   }
