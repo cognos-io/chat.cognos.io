@@ -2103,6 +2103,13 @@
                   "variant": "tip",
                   "body": "Want the deeper explanation? See the <a href=\"/security\">Security overview</a> and <a href=\"/privacy\">Privacy Policy</a>."
                 }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-exchange.png",
+                  "alt": "A Cognos conversation: a question from the account holder and the assistant's reply.",
+                  "caption": "A conversation in Cognos — saved and encrypted as you go."
+                }
               }
             ]
           },
@@ -2286,6 +2293,13 @@
               },
               {
                 "p": "Save it during signup — that's the one reliable moment. In that same first session you may still re-open it from <a href=\"https://app.cognos.io/account/security\">Security & keys</a>, but once the session ends Cognos genuinely can't show it again. So don't treat that as a way to put it off — save the Emergency Kit straight away."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/account-key-settings.png",
+                  "alt": "The Security & keys page, where the Account Key and Emergency Kit are managed.",
+                  "caption": "Security & keys, where you can re-open your Emergency Kit in the same session."
+                }
               }
             ]
           },
@@ -2410,6 +2424,13 @@
                     "body": "If you've turned on <a href=\"/docs/multi-factor-authentication\">two-factor authentication</a>, type the 6-digit code from your authenticator app."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/login.png",
+                  "alt": "The Cognos login page with email and password fields.",
+                  "caption": "The login page at app.cognos.io/auth/login."
+                }
               }
             ]
           },
@@ -2457,6 +2478,13 @@
                 "note": {
                   "variant": "tip",
                   "body": "Unlocking does some deliberate cryptographic work, so it can take a second or two on an older device — that's normal, not a freeze."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/unlock-dialog.png",
+                  "alt": "The Unlock backup dialog asking for the Account Key on a new device.",
+                  "caption": "Unlocking a new device with your Account Key."
                 }
               }
             ]
@@ -2541,6 +2569,13 @@
                 "note": {
                   "variant": "tip",
                   "body": "Don't want it saved? Turn on a <a href=\"/docs/temporary-conversations\">temporary conversation</a> before you start."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-exchange.png",
+                  "alt": "A sent message and the assistant's reply in a conversation.",
+                  "caption": "Your message and the reply — saved and encrypted automatically."
                 }
               }
             ]
@@ -2768,6 +2803,13 @@
             "blocks": [
               {
                 "p": "On models that support it, each answer has a <b>Show reasoning</b> toggle. The thinking streams live, then tucks away once the answer arrives. It's <a href=\"/docs/your-privacy\">encrypted</a> like the rest of your message and never logged."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/reasoning-effort.png",
+                  "alt": "The reasoning effort control showing selectable levels.",
+                  "caption": "Dial how much effort a capable model spends thinking."
+                }
               }
             ]
           },
@@ -2813,6 +2855,13 @@
             "blocks": [
               {
                 "p": "Open the <b>Tools</b> menu in the message box and enable <b>Web search</b>. If the model you picked can't search, the option says so and is simply skipped."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "The Tools menu with the Web search toggle.",
+                  "caption": "Switch on Web search from the Tools menu."
+                }
               }
             ]
           },
@@ -2851,6 +2900,13 @@
             "blocks": [
               {
                 "p": "On a new, unsaved chat, turn on the <b>Temporary chat</b> toggle. Nothing is written as a saved Conversation — the messages live only in this browser."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/temporary-chat.png",
+                  "alt": "The Temporary chat toggle on a new, unsaved conversation.",
+                  "caption": "The Temporary chat toggle on a new conversation."
+                }
               }
             ]
           },
@@ -2916,6 +2972,13 @@
                 "note": {
                   "variant": "tip",
                   "body": "A file you attached stays in your <a href=\"/docs/attachments\">Library</a> even after the message that used it disappears."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/disappearing-dialog.png",
+                  "alt": "The Disappearing messages dialog with expiry duration options.",
+                  "caption": "Choosing how long messages last."
                 }
               }
             ]
@@ -3015,6 +3078,13 @@
                   "variant": "info",
                   "body": "When you <a href=\"/docs/sharing-conversations\">share a conversation</a>, a redacted-only link keeps values hidden; an include-sensitive link lets recipients reveal them. Choose carefully."
                 }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/redaction-reveal.png",
+                  "alt": "The Personal information redacted modal comparing what you see with what the model saw.",
+                  "caption": "What you see versus what the model saw."
+                }
               }
             ]
           }
@@ -3044,6 +3114,13 @@
                     "body": "Choose <b>Upload</b> for a new file, or <b>From library</b> to reuse one. Unsupported file types are turned away rather than half-uploaded."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/first-chat-composer.png",
+                  "alt": "The message box with the paperclip button for attaching a file.",
+                  "caption": "Attach a file from the message box."
+                }
               }
             ]
           },
@@ -3098,6 +3175,13 @@
             "blocks": [
               {
                 "p": "Use the download option on any assistant reply and pick a format — Word, PDF, or Markdown. The file is built on your device; the bytes never touch Cognos servers."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "The Tools menu with the Create documents toggle.",
+                  "caption": "Turn on Create documents in the Tools menu."
+                }
               }
             ]
           },
@@ -3147,6 +3231,13 @@
                     "body": "Write your prompt and send."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/chat-tools-menu.png",
+                  "alt": "The Tools menu with the Generate image toggle.",
+                  "caption": "Turn on Generate image in the Tools menu."
+                }
               }
             ]
           },
@@ -3189,6 +3280,13 @@
                     "body": "Give it a name, and optionally an icon, colour, and a default model."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/projects.png",
+                  "alt": "The Projects page listing projects.",
+                  "caption": "The Projects page."
+                }
               }
             ]
           },
@@ -3242,6 +3340,13 @@
             "blocks": [
               {
                 "p": "Open <a href=\"https://app.cognos.io/account/bookmarks\">Bookmarks</a> to see them all, and select one to jump back to the exact spot in its conversation."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/bookmarks.png",
+                  "alt": "The Bookmarks page listing saved highlights.",
+                  "caption": "Your bookmarks, browsable in one place."
+                }
               }
             ]
           },
@@ -3273,6 +3378,13 @@
             "blocks": [
               {
                 "p": "Use the <b>Search</b> box in the sidebar (three characters or more). It matches conversation titles instantly and searches recent message content too, with title matches ranked first."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/search.png",
+                  "alt": "The sidebar search box with matching conversations.",
+                  "caption": "Searching your conversations from the sidebar."
+                }
               }
             ]
           },
@@ -3320,6 +3432,13 @@
                     "body": "Check the preview counts so you know exactly what will come across, then confirm."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/import.png",
+                  "alt": "The import page with source options for ChatGPT and Claude.",
+                  "caption": "The import page."
+                }
               }
             ]
           },
@@ -3405,6 +3524,13 @@
                 "note": {
                   "variant": "warning",
                   "body": "Include-sensitive means anyone with the link can see the real <a href=\"/docs/redaction\">redacted</a> values. Use redacted-only unless you truly mean to share them."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/share-public.png",
+                  "alt": "A public, read-only view of a shared conversation with sensitive values hidden.",
+                  "caption": "A shared link in redacted-only mode — sensitive values stay hidden."
                 }
               }
             ]
@@ -3510,6 +3636,13 @@
             "blocks": [
               {
                 "p": "When you enable <a href=\"/docs/multi-factor-authentication\">two-factor authentication</a>, Cognos shows 10 recovery codes <b>once</b>. Copy or download them and store them safely — they can't be shown again."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mfa-setup.png",
+                  "alt": "The two-factor authentication card where recovery codes are set up.",
+                  "caption": "Recovery codes are set up alongside two-factor authentication."
+                }
               }
             ]
           },
@@ -3565,6 +3698,13 @@
                     "body": "Set it and you're done."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/forgot-password.png",
+                  "alt": "The reset your password page with an email field.",
+                  "caption": "Request a reset link by email."
+                }
               }
             ]
           },
@@ -3622,6 +3762,13 @@
             "blocks": [
               {
                 "p": "The <b>Security</b> button on a conversation shows, for each answer, which model and provider handled it and where — so you can verify it matches your settings."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/redaction-reveal.png",
+                  "alt": "A modal comparing what the account holder sees with what the model saw.",
+                  "caption": "You always see your real values; the model only saw placeholders."
+                }
               }
             ]
           },
@@ -3695,6 +3842,13 @@
                   "variant": "info",
                   "body": "Memory is opt-in — Cognos doesn't build a picture of you unless you add one. Editing or deleting an entry only affects future messages."
                 }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/memory.png",
+                  "alt": "The Memory settings page.",
+                  "caption": "Manage what the AI remembers on the Memory page."
+                }
               }
             ]
           }
@@ -3723,6 +3877,13 @@
             "blocks": [
               {
                 "p": "To end other sessions without logging yourself out here, use <b>Sign out other devices</b> on <a href=\"https://app.cognos.io/account/security\">Security & keys</a>."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/sign-out-devices.png",
+                  "alt": "The Sign out other devices card on the Security & keys page.",
+                  "caption": "Sign other devices out without logging yourself out here."
+                }
               }
             ]
           },
@@ -3781,6 +3942,13 @@
                     "body": "Your personal data is removed."
                   }
                 ]
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/delete-account.png",
+                  "alt": "The Danger zone with the delete account controls.",
+                  "caption": "The Danger zone on your Account page."
+                }
               }
             ]
           },
@@ -3889,6 +4057,13 @@
             "blocks": [
               {
                 "p": "A small starting balance lands on your account automatically at <a href=\"/docs/create-account\">signup</a>. You can spend it once your email is verified, and the amount left is shown in the sidebar."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/trial-credit.png",
+                  "alt": "The trial credit card in the sidebar showing the remaining balance.",
+                  "caption": "Your trial balance, shown in the sidebar."
+                }
               }
             ]
           },
@@ -3923,6 +4098,13 @@
             "blocks": [
               {
                 "p": "<a href=\"https://app.cognos.io/account/billing\">Plan & billing</a> shows your current plan, usage this period, payment method, and invoice history with PDF downloads. Payments and the payment portal are handled by Paddle."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/billing.png",
+                  "alt": "The Plan & billing page with the current plan and invoices.",
+                  "caption": "The Plan & billing page."
+                }
               }
             ]
           },
@@ -3980,6 +4162,13 @@
                 "note": {
                   "variant": "info",
                   "body": "Organisations are available to selected design partners today."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/team.png",
+                  "alt": "The Team settings page for an Organisation.",
+                  "caption": "The Team page, where Organisations manage members."
                 }
               }
             ]
@@ -4040,6 +4229,13 @@
             "blocks": [
               {
                 "p": "Every active membership takes one seat, billed at CHF 15 per seat per month. An Organisation is always billed for at least three seats (CHF 45 a month), even with fewer active people."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/team.png",
+                  "alt": "The Team settings page showing members and seats.",
+                  "caption": "Members and seats on the Team page."
+                }
               }
             ]
           },
@@ -4084,6 +4280,13 @@
             "blocks": [
               {
                 "p": "Only active members can be added to an Organisation project, each as a Viewer, Editor, or Admin. Organisation Admins are Admins on every Organisation project automatically. The mechanics are the same as personal <a href=\"/docs/projects\">Projects</a>."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/projects.png",
+                  "alt": "The Projects page listing projects.",
+                  "caption": "Projects — personal or Organisation-owned."
+                }
               }
             ]
           },
@@ -4111,6 +4314,127 @@
           }
         ],
         "related": ["organisations-overview", "seats-and-billing", "projects"]
+      },
+      "branches": {
+        "navTitle": "Edit, regenerate & versions",
+        "metaTitle": "Editing, regenerating & versions — Cognos Docs",
+        "metaDescription": "Change a question or ask for another answer — Cognos keeps every version so you can switch between them any time.",
+        "title": "Editing, regenerating & versions",
+        "lead": "Change a question or ask for another answer, and Cognos keeps every version — switch between them whenever you like.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Edit a message",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Hover the message you sent",
+                    "body": "Its actions appear."
+                  },
+                  {
+                    "title": "Choose Edit message",
+                    "body": "Change the wording."
+                  },
+                  {
+                    "title": "Send it again",
+                    "body": "Your original question and its answer stay put — the edit starts a new version alongside them."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Regenerate an answer",
+            "blocks": [
+              {
+                "p": "Ask the model for another take and the new answer sits alongside the first, rather than replacing it."
+              }
+            ]
+          },
+          {
+            "heading": "Switch between versions",
+            "blocks": [
+              {
+                "p": "When a turn has more than one version, a small <code>&lsaquo; 1/2 &rsaquo;</code> control appears. Use the arrows to move between them — the rest of the conversation follows whichever version you're viewing."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Switching only changes what you see and what the AI uses for context. Nothing is deleted — every version stays in your history."
+                }
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/forked-chats.png",
+                  "alt": "A conversation turn showing a version switcher with previous and next arrows.",
+                  "caption": "The version switcher appears when a turn has more than one version."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["your-first-chat", "choosing-a-model", "searching-conversations"]
+      },
+      "exporting-your-data": {
+        "navTitle": "Export your data",
+        "metaTitle": "Export your data — Cognos Docs",
+        "metaDescription": "Your conversations are yours. Download them any time in a readable format — no lock-in, and the export happens on your device.",
+        "title": "Export your data",
+        "lead": "Your conversations are yours. Download them any time, in a readable format — no lock-in.",
+        "time": "2 min",
+        "updated": "22 July 2026",
+        "sections": [
+          {
+            "heading": "Download your conversations",
+            "blocks": [
+              {
+                "p": "On <a href=\"https://app.cognos.io/account\">your Account page</a>, the <b>Your data</b> section lets you export and download your conversations. They're decrypted in your browser and saved straight to your device."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/export-data.png",
+                  "alt": "The Your data card on the Account page with export and download options.",
+                  "caption": "The Your data section on your Account page."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "What you get",
+            "blocks": [
+              {
+                "ul": [
+                  "Your conversations in a portable file you can keep or move elsewhere (a <code>.zip</code> when a chat includes images).",
+                  "Any single answer, on demand, as a Word, PDF, or Markdown file — see <a href=\"/docs/generating-documents\">generating documents</a>.",
+                  "The export runs on your device — nothing extra is sent to us to produce it."
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "The model's <a href=\"/docs/reasoning\">reasoning</a> (its “thinking”) isn't included in exports yet — only your messages and the answers."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Never locked in",
+            "blocks": [
+              {
+                "p": "Because you can export any time — and neither your password nor your plan locks your data — you're never stuck. Even if your plan lapses, your existing chats stay readable; you just can't send new messages until you pick a <a href=\"/docs/plans-and-pricing\">plan</a>."
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Exporting keeps your data; <a href=\"/docs/deleting-your-account\">deleting your account</a> removes it. They're separate choices."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["your-privacy", "generating-documents", "deleting-your-account"]
       }
     }
   }

@@ -72,6 +72,7 @@ export const docGroups: DocGroup[] = [
     icon: 'MessagesSquare',
     pages: [
       'your-first-chat',
+      'branches',
       'choosing-a-model',
       'privacy-tiers',
       'personas',
@@ -106,6 +107,7 @@ export const docGroups: DocGroup[] = [
       'resetting-your-password',
       'your-privacy',
       'account-memory',
+      'exporting-your-data',
       'sessions-and-logout',
       'deleting-your-account',
     ],

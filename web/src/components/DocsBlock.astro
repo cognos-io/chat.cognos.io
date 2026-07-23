@@ -16,9 +16,20 @@ const h = (html: string) => localizeHtml(html, lang);
 // A figure renders only once its screenshot exists under public/ — so a page
 // stays clean (no broken image) until the screenshot has been captured.
 // cwd is the web/ project root during `astro dev`/`astro build`.
-const figureReady =
-  'figure' in block &&
-  (/^https?:/.test(block.figure.src) || existsSync(join(process.cwd(), 'public', block.figure.src)));
+//
+// Localised screenshots live under public/docs-media/<lang>/<name>.png; when one
+// exists for the active locale it wins, otherwise the English (root) shot is
+// used, so a French reader never sees English chrome once its capture lands.
+const publicDir = join(process.cwd(), 'public');
+function resolveFigure(src: string): string | null {
+  if (/^https?:/.test(src)) return src;
+  if (lang !== 'en') {
+    const localised = src.replace('/docs-media/', `/docs-media/${lang}/`);
+    if (existsSync(join(publicDir, localised))) return localised;
+  }
+  return existsSync(join(publicDir, src)) ? src : null;
+}
+const figureSrc = 'figure' in block ? resolveFigure(block.figure.src) : null;
 
 // Callout variants map to a tint + a leading icon. `security` is the strongest,
 // reserved for "you can lose your data" warnings around the Account Key.
@@ -76,9 +87,9 @@ const noteIcons: Record<string, string> = {
 }
 
 {
-  'figure' in block && figureReady && (
+  'figure' in block && figureSrc && (
     <figure class="docs-figure">
-      <img src={block.figure.src} alt={block.figure.alt} loading="lazy" decoding="async" />
+      <img src={figureSrc} alt={block.figure.alt} loading="lazy" decoding="async" />
       {block.figure.caption && <figcaption set:html={block.figure.caption} />}
     </figure>
   )
