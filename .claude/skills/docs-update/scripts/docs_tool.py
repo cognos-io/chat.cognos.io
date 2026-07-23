@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Maintain the /docs catalogue (`docs.*`) in web/src/i18n/locales/<lang>.json.
 
 The docs content lives inside the i18n catalogues. This tool edits only the

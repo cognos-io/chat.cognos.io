@@ -6,22 +6,22 @@ It is data-driven: components render entirely from the i18n catalogues, so
 
 ## Where things live
 
-| Thing | Path |
-| --- | --- |
-| Nav tree (groups → page slugs, order, icons) | `web/src/lib/docs.ts` (`docGroups`) |
-| Page content (all locales) | `web/src/i18n/locales/<lang>.json` under the `docs` key |
-| Components (don't usually touch) | `web/src/components/DocsPage.astro`, `DocsSidebar.astro`, `DocsBlock.astro` |
-| Styles (all `--cog-*` tokens) | `web/src/styles/docs.css` |
-| Routes | `web/src/pages/docs/[slug].astro`, `web/src/pages/[lang]/docs/[slug].astro` |
-| Screenshots | `web/public/docs-media/*.png` (en) and `docs-media/<lang>/*.png` (localised) |
-| Screenshot capture script | `web/scripts/capture-docs-screenshots.mjs` |
+| Thing                                        | Path                                                                         |
+| -------------------------------------------- | ---------------------------------------------------------------------------- |
+| Nav tree (groups → page slugs, order, icons) | `web/src/lib/docs.ts` (`docGroups`)                                          |
+| Page content (all locales)                   | `web/src/i18n/locales/<lang>.json` under the `docs` key                      |
+| Components (don't usually touch)             | `web/src/components/DocsPage.astro`, `DocsSidebar.astro`, `DocsBlock.astro`  |
+| Styles (all `--cog-*` tokens)                | `web/src/styles/docs.css`                                                    |
+| Routes                                       | `web/src/pages/docs/[slug].astro`, `web/src/pages/[lang]/docs/[slug].astro`  |
+| Screenshots                                  | `web/public/docs-media/*.png` (en) and `docs-media/<lang>/*.png` (localised) |
+| Screenshot capture script                    | `web/scripts/capture-docs-screenshots.mjs`                                   |
 
 `docGroups` and `docSlugs` in `docs.ts` are the single ordering source (sidebar,
 prev/next). Every slug **must** have a `docs.pages.<slug>` entry in `en.json`.
 
 ## Content model (`docs` catalogue shape)
 
-```
+```text
 docs:
   meta: { …chrome labels… }        # rarely changes
   nav:  { <groupId>: "Group label" }
@@ -38,7 +38,7 @@ docs:
 
 ### Block types (a section's `blocks[]`)
 
-```
+```text
 { "p": "prose, trusted inline <b>/<a href>/<code> HTML" }
 { "h3": "sub-heading" }
 { "ul": ["item", …] }

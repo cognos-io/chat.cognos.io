@@ -8,15 +8,19 @@ splice each result back with a structure check.
 ## Steps
 
 1. Extract the current English docs:
+
+   ```text
+   uv run --script .claude/skills/docs-update/scripts/docs_tool.py extract en -o /tmp/docs_en.json
    ```
-   python3 .claude/skills/docs-update/scripts/docs_tool.py extract en -o /tmp/docs_en.json
-   ```
+
 2. Spawn 5 `fast-worker` subagents in parallel (one per locale) with the prompt
    template below. Each writes `/tmp/<lang>.json`.
 3. Splice each with the parity guard (refuses on key-tree mismatch):
+
+   ```text
+   uv run --script .claude/skills/docs-update/scripts/docs_tool.py replace <lang> /tmp/<lang>.json
    ```
-   python3 .claude/skills/docs-update/scripts/docs_tool.py replace <lang> /tmp/<lang>.json
-   ```
+
 4. `cd web && pnpm build && pnpm test`; then `docs_tool.py check`.
 
 For a **tiny** English change (a sentence or two), skip the subagents: translate
@@ -25,13 +29,13 @@ the changed strings yourself and edit the locale files directly (or via
 
 ## Per-locale variant rules
 
-| Lang | Variant | Watch out for |
-| --- | --- | --- |
-| de | Swiss Standard German (de-CH) | **`ss`, never `ß`**; informal **du** |
-| fr | French (fr-CH/standard) | polite **vous** |
-| es | European Spanish (es-ES) | `ordenador`/`móvil`; informal **tú** |
-| pt | European Portuguese (pt-PT) | `ecrã`/`palavra-passe`/`contacto`; informal **tu**, not você |
-| it | Italian (it-CH/standard) | informal **tu** |
+| Lang | Variant                       | Watch out for                                                |
+| ---- | ----------------------------- | ------------------------------------------------------------ |
+| de   | Swiss Standard German (de-CH) | **`ss`, never `ß`**; informal **du**                         |
+| fr   | French (fr-CH/standard)       | polite **vous**                                              |
+| es   | European Spanish (es-ES)      | `ordenador`/`móvil`; informal **tú**                         |
+| pt   | European Portuguese (pt-PT)   | `ecrã`/`palavra-passe`/`contacto`; informal **tu**, not você |
+| it   | Italian (it-CH/standard)      | informal **tu**                                              |
 
 ## Subagent prompt template
 
