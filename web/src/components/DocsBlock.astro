@@ -1,6 +1,6 @@
 ---
 import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import Icon from './Icon.astro';
 import { localizeHtml, type DocsBlock } from '../lib/docs';
 import type { Lang } from '../i18n/ui';
@@ -15,10 +15,10 @@ const h = (html: string) => localizeHtml(html, lang);
 
 // A figure renders only once its screenshot exists under public/ — so a page
 // stays clean (no broken image) until the screenshot has been captured.
-const publicDir = fileURLToPath(new URL('../../public', import.meta.url));
+// cwd is the web/ project root during `astro dev`/`astro build`.
 const figureReady =
   'figure' in block &&
-  (/^https?:/.test(block.figure.src) || existsSync(publicDir + block.figure.src));
+  (/^https?:/.test(block.figure.src) || existsSync(join(process.cwd(), 'public', block.figure.src)));
 
 // Callout variants map to a tint + a leading icon. `security` is the strongest,
 // reserved for "you can lose your data" warnings around the Account Key.
