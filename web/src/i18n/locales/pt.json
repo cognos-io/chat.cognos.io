@@ -2005,13 +2005,6 @@
             "blocks": [
               {
                 "p": "Os ficheiros pertencem-te <b>a ti</b>, não à conversa — uma conversa apenas aponta para um ficheiro. Gere-os em <a href=\"https://app.cognos.io/account/library\">Biblioteca de ficheiros</a>: renomeia, transfere ou remove."
-              },
-              {
-                "figure": {
-                  "src": "/docs-media/library.png",
-                  "alt": "A página Biblioteca de ficheiros a mostrar os ficheiros carregados numa grelha.",
-                  "caption": "A tua Biblioteca de ficheiros, reutilizável em todas as conversas."
-                }
               }
             ]
           },
@@ -3286,6 +3279,12 @@
                   "Qualquer resposta individual, a pedido, como um ficheiro Word, PDF ou Markdown — consulta <a href=\"/docs/generating-documents\">gerar documentos</a>.",
                   "A exportação acontece no teu dispositivo — nada de extra nos é enviado para a produzir."
                 ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "O <a href=\"/docs/reasoning\">raciocínio</a> do modelo (o seu «pensamento») ainda não é incluído nas exportações — apenas as tuas mensagens e as respostas."
+                }
               }
             ]
           },

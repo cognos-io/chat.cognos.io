@@ -2003,13 +2003,6 @@
             "blocks": [
               {
                 "p": "Les fichiers vous appartiennent, à <b>vous</b>, pas à la discussion — une conversation ne fait que pointer vers un fichier. Gérez-les depuis <a href=\"https://app.cognos.io/account/library\">Bibliothèque de fichiers</a> : renommez, téléchargez ou supprimez."
-              },
-              {
-                "figure": {
-                  "src": "/docs-media/library.png",
-                  "alt": "La page Bibliothèque de fichiers affichant les fichiers téléversés dans une grille.",
-                  "caption": "Votre bibliothèque de fichiers, réutilisable dans toutes vos discussions."
-                }
               }
             ]
           },
@@ -3284,6 +3277,12 @@
                   "N'importe quelle réponse individuelle, à la demande, sous forme de fichier Word, PDF ou Markdown — consultez <a href=\"/docs/generating-documents\">générer des documents</a>.",
                   "L'export s'exécute sur votre appareil — rien de plus ne nous est envoyé pour le produire."
                 ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Le <a href=\"/docs/reasoning\">raisonnement</a> du modèle (sa « réflexion ») n'est pas encore inclus dans les exports — uniquement vos messages et les réponses."
+                }
               }
             ]
           },

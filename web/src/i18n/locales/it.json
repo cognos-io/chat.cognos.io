@@ -1999,13 +1999,6 @@
             "blocks": [
               {
                 "p": "I file appartengono a <b>te</b>, non alla chat — una conversazione punta solo a un file. Gestiscili in <a href=\"https://app.cognos.io/account/library\">Libreria file</a>: rinomina, scarica o rimuovi."
-              },
-              {
-                "figure": {
-                  "src": "/docs-media/library.png",
-                  "alt": "La pagina Libreria file che mostra i file caricati in una griglia.",
-                  "caption": "La tua Libreria file, riutilizzabile in ogni chat."
-                }
               }
             ]
           },
@@ -3280,6 +3273,12 @@
                   "Qualsiasi singola risposta, su richiesta, come file Word, PDF o Markdown — consulta <a href=\"/docs/generating-documents\">generare documenti</a>.",
                   "L'esportazione viene eseguita sul tuo dispositivo — non ci viene inviato nulla in più per produrla."
                 ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Il <a href=\"/docs/reasoning\">ragionamento</a> del modello (il suo «pensiero») non è ancora incluso nelle esportazioni — solo i tuoi messaggi e le risposte."
+                }
               }
             ]
           },

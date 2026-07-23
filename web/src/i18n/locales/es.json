@@ -2009,13 +2009,6 @@
             "blocks": [
               {
                 "p": "Los archivos te pertenecen a <b>ti</b>, no al chat — una conversación solo apunta a un archivo. Gestiónalos en <a href=\"https://app.cognos.io/account/library\">Biblioteca de archivos</a>: renombra, descarga o elimina."
-              },
-              {
-                "figure": {
-                  "src": "/docs-media/library.png",
-                  "alt": "La página Biblioteca de archivos mostrando los archivos subidos en una cuadrícula.",
-                  "caption": "Tu Biblioteca de archivos, reutilizable en todos los chats."
-                }
               }
             ]
           },
@@ -3290,6 +3283,12 @@
                   "Cualquier respuesta concreta, cuando la necesites, como archivo Word, PDF o Markdown — consulta <a href=\"/docs/generating-documents\">generar documentos</a>.",
                   "La exportación se ejecuta en tu dispositivo — no se nos envía nada adicional para producirla."
                 ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "El <a href=\"/docs/reasoning\">razonamiento</a> del modelo (su «pensamiento») todavía no se incluye en las exportaciones — solo tus mensajes y las respuestas."
+                }
               }
             ]
           },

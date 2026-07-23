@@ -347,6 +347,9 @@
     box-shadow 0.16s var(--ease),
     transform 0.16s var(--ease);
 }
+.text-page__body .docs-card {
+  text-decoration: none;
+}
 .docs-card:hover {
   border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
   box-shadow: 0 16px 34px -26px color-mix(in srgb, var(--brand) 60%, transparent);
@@ -361,6 +364,7 @@
   font-family: var(--ff-display);
   font-weight: var(--cog-fw-semibold);
   font-size: var(--cog-fs-body);
+  text-decoration: underline;
 }
 .docs-card__body {
   color: var(--ink-sub);

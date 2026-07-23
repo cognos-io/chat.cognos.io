@@ -30,7 +30,9 @@ const anchor = (hash: string) => homeAnchor(lang, path, hash);
     <div class="nav-center">
       <ul class="nav-links">
         <li><a class="nav-link" href={anchor('#how')}>{t('nav.how')}</a></li>
-        <li><a class="nav-link" href={anchor('#compare')}>{t('nav.compare')}</a></li>
+        <li>
+          <a class="nav-link" href={localizedPath(lang, '/docs')}>{t('docs.meta.navLabel')}</a>
+        </li>
         <li><a class="nav-link" href={anchor('#features')}>{t('nav.features')}</a></li>
         <li><a class="nav-link" href={anchor('#audience')}>{t('nav.pricing')}</a></li>
         <li><a class="nav-link" href={anchor('#security')}>{t('nav.security')}</a></li>

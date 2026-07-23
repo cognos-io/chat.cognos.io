@@ -2003,13 +2003,6 @@
             "blocks": [
               {
                 "p": "Dateien gehören <b>dir</b>, nicht dem Chat — eine Konversation verweist nur auf eine Datei. Verwalte sie unter <a href=\"https://app.cognos.io/account/library\">Dateibibliothek</a>: umbenennen, herunterladen oder entfernen."
-              },
-              {
-                "figure": {
-                  "src": "/docs-media/library.png",
-                  "alt": "Die Seite Dateibibliothek mit hochgeladenen Dateien in einem Raster.",
-                  "caption": "Deine Dateibibliothek, wiederverwendbar in jedem Chat."
-                }
               }
             ]
           },
@@ -3284,6 +3277,12 @@
                   "Jede einzelne Antwort auf Wunsch als Word-, PDF- oder Markdown-Datei — siehe <a href=\"/docs/generating-documents\">Dokumente erstellen</a>.",
                   "Der Export läuft auf deinem Gerät — dafür wird nichts Zusätzliches an uns gesendet."
                 ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Die <a href=\"/docs/reasoning\">Überlegungen</a> des Modells (sein „Denken“) sind noch nicht in Exporten enthalten — nur deine Nachrichten und die Antworten."
+                }
               }
             ]
           },

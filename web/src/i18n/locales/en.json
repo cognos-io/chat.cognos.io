@@ -3129,13 +3129,6 @@
             "blocks": [
               {
                 "p": "Files belong to <b>you</b>, not to the chat — a conversation only points at a file. Manage them at <a href=\"https://app.cognos.io/account/library\">File library</a>: rename, download, or remove."
-              },
-              {
-                "figure": {
-                  "src": "/docs-media/library.png",
-                  "alt": "The File library page showing uploaded files in a grid.",
-                  "caption": "Your File library, reusable across every chat."
-                }
               }
             ]
           },
