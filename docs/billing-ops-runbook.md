@@ -18,7 +18,8 @@ The production Paddle catalogue and every customer-facing surface must use these
 
 Prices exclude applicable tax/VAT, which Paddle calculates at checkout. Subscriptions renew for
 the same billing period until cancelled. Cancellation stops the next renewal; access continues to
-the end of the paid period. The advertised 60-day money-back guarantee is limited to one refund per
+the end of the paid period. The published Refund Policy (cognos.io/refund) offers a 60-day window
+with case-by-case review — no automatic guarantee. Discretionary refunds remain limited to one per
 Account lifetime; follow the refund procedure in §4.
 
 **Example PAYG invoice:** an Account uses CHF 22.40 of AI in a monthly cycle. Paddle has already
@@ -270,15 +271,16 @@ decisions.
 
 ## 9. Refund-abuse controls
 
-Before issuing a discretionary guarantee refund:
+Before issuing a discretionary refund:
 
 1. Verify the Paddle transaction belongs to the authenticated Account and is inside the advertised
    window. Check the lifetime `refund_used` flag and prior adjustments/chargebacks.
 2. Compare settled revenue, Provider COGS and usage percentiles. Do not inspect Message content.
 3. Require owner approval when Provider COGS is at least CHF 15, usage is above the Plan's p95,
-   there is a prior chargeback, or linked payment evidence suggests repeated guarantee use.
+   there is a prior chargeback, or linked payment evidence suggests repeated refund use.
 4. Escalate for a deny/partial-refund decision when Provider COGS equals or exceeds the refundable
-   amount, there is clear automation or fraud, or the lifetime guarantee was already used. Record
+   amount, there is clear automation or fraud, or the lifetime discretionary refund was already
+   used. Record
    the terms/legal basis; mandatory consumer rights always override this internal policy.
 5. Issue the adjustment in Paddle, verify the idempotent webhook result, set `refund_used`, and
    cancel the Subscription if service should end. Never promise that clicking “Request a refund”
