@@ -104,7 +104,10 @@
               "node_modules/prismjs/components/prism-r.min.js",
               "node_modules/prismjs/components/prism-matlab.min.js"
             ],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            "webWorkerTsConfig": "tsconfig.worker.json",
+            "define": {
+              "__COGNOS_COMMIT_SHA__": "'unknown'"
+            }
           },
           "configurations": {
             "production": {

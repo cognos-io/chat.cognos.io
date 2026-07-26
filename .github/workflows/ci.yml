@@ -247,7 +247,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: build backend image
-        run: podman build --file container/backend/Containerfile --tag cognos-backend:ci .
+        run: >
+          podman build
+          --file container/backend/Containerfile
+          --build-arg GIT_COMMIT=${{ github.sha }}
+          --tag cognos-backend:ci
+          .
 
       - name: export backend image for scanning
         run: podman save --format docker-archive --output backend-image.tar cognos-backend:ci

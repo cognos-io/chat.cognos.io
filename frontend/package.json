@@ -77,8 +77,8 @@
   "name": "@cognos/chat",
   "private": true,
   "scripts": {
-    "build": "ng build",
-    "build:e2e": "ng build --configuration e2e",
+    "build": "node ./scripts/run-ng-with-commit.mjs build",
+    "build:e2e": "node ./scripts/run-ng-with-commit.mjs build --configuration e2e",
     "extract-i18n": "ng extract-i18n --output-path=src/locale --format=xlf2",
     "format": "prettier --write \"src/**/*.{ts,js,json,html,scss,css,md}\"",
     "lint": "ng lint",
@@ -86,11 +86,11 @@
     "ng": "ng",
     "storybook": "ng run frontend:storybook",
     "build-storybook": "ng run frontend:build-storybook",
-    "start": "ng serve",
+    "start": "node ./scripts/run-ng-with-commit.mjs serve",
     "test": "ng test",
     "test:e2e": "playwright test",
     "typegen": "pocketbase-typegen --db ../backend/pb_data/data.db --out ./src/app/types/pocketbase-types.ts",
-    "watch": "ng build --watch --configuration development"
+    "watch": "node ./scripts/run-ng-with-commit.mjs build --watch --configuration development"
   },
   "version": "0.0.0",
   "scarfSettings": {

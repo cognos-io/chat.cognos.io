@@ -20,6 +20,13 @@
       "settings": "Paramètres",
       "memory": "Mémoire"
     },
+    "build": {
+      "api": "API",
+      "app": "App",
+      "aria": "Identifiants de build déployés",
+      "mismatch": "Les builds App et API diffèrent — vous voyez peut-être un déploiement partiel.",
+      "unknown": "inconnu"
+    },
     "danger": {
       "confirmFieldAria": "Saisissez DELETE pour confirmer",
       "deleteAccountConfirm": "Supprimer mon compte",

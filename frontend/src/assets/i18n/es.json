@@ -20,6 +20,13 @@
       "settings": "Ajustes",
       "memory": "Memoria"
     },
+    "build": {
+      "api": "API",
+      "app": "App",
+      "aria": "Identificadores de compilación desplegados",
+      "mismatch": "Las compilaciones de App y API difieren: puede que estés viendo un despliegue parcial.",
+      "unknown": "desconocido"
+    },
     "danger": {
       "confirmFieldAria": "Escribe DELETE para confirmar",
       "deleteAccountConfirm": "Eliminar mi cuenta",

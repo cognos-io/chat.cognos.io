@@ -147,7 +147,7 @@ elapsed since last activity.
 | Method | Path              | Scope                                                                          | Test                                 |
 | ------ | ----------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
 | GET    | `/metrics`        | **superuser only** (`RequireSuperuserAuth`) — regular users 403, anonymous 401 | `migration_characterization_test.go` |
-| GET    | `/health`         | public (DB connectivity boolean only)                                          | —                                    |
+| GET    | `/health`         | public (DB connectivity boolean + baked commit SHA)                            | —                                    |
 | POST   | `/v1/auth/logout` | any authed user (self)                                                         | `logout_test.go`                     |
 
 ## Adding a new endpoint — checklist

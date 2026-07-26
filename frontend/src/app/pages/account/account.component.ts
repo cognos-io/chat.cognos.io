@@ -35,6 +35,7 @@ import {
 } from '@app/interfaces/avatar';
 import type { RedactionMode } from '@app/redaction';
 import { AuthService } from '@app/services/auth.service';
+import { BuildIdentityService } from '@app/services/build-identity.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { ExportService } from '@app/services/export.service';
@@ -390,12 +391,66 @@ import {
             }
           </div>
         </cog-card>
+
+        <footer class="account__build" [attr.aria-label]="t('account.build.aria')">
+          <p class="account__build-line">
+            <span>{{ t('account.build.app') }}</span>
+            <code class="account__build-sha" [title]="appCommit">{{
+              formatCommitLabel(appCommit, t)
+            }}</code>
+            <span class="account__build-sep" aria-hidden="true">·</span>
+            <span>{{ t('account.build.api') }}</span>
+            <code class="account__build-sha" [title]="apiCommit() ?? ''">{{
+              formatCommitLabel(apiCommit(), t)
+            }}</code>
+          </p>
+          @if (commitsMismatch()) {
+            <p class="account__build-mismatch" role="status">
+              {{ t('account.build.mismatch') }}
+            </p>
+          }
+        </footer>
       </app-settings-page>
     </ng-container>
   `,
   styles: `
     :host {
       display: block;
+    }
+
+    .account__build {
+      margin-top: var(--cog-space-400);
+      padding-top: var(--cog-space-200);
+      border-top: var(--cog-border-width) solid var(--cog-border);
+    }
+
+    .account__build-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: var(--cog-space-100);
+      margin: 0;
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
+
+    .account__build-sha {
+      font-family: var(--cog-font-mono);
+      font-size: inherit;
+      color: var(--cog-text-subtle);
+    }
+
+    .account__build-sep {
+      color: var(--cog-text-subtlest);
+    }
+
+    .account__build-mismatch {
+      margin: var(--cog-space-100) 0 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+      text-wrap: pretty;
     }
 
     .account__redaction-control {
@@ -560,12 +615,35 @@ import {
 export class AccountComponent {
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(CognosApiService);
+  private readonly _buildIdentity = inject(BuildIdentityService);
   private readonly _conversations = inject(ConversationService);
   private readonly _export = inject(ExportService);
   private readonly _router = inject(Router);
   private readonly _toast = inject(CognosToastService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _userPreferences = inject(UserPreferencesService);
+
+  protected readonly appCommit = this._buildIdentity.appCommit;
+  protected readonly apiCommit = this._buildIdentity.apiCommit;
+  protected readonly commitsMismatch = this._buildIdentity.commitsMismatch;
+
+  constructor() {
+    this._buildIdentity.refreshApiCommit();
+  }
+
+  /** Short SHA for display; translated "unknown" when missing; em dash while loading. */
+  protected formatCommitLabel(
+    sha: string | null | undefined,
+    t: (key: string) => string,
+  ): string {
+    if (sha == null) {
+      return '—';
+    }
+    if (sha === 'unknown' || sha.trim() === '') {
+      return t('account.build.unknown');
+    }
+    return sha.length > 7 ? sha.slice(0, 7) : sha;
+  }
 
   protected readonly redactionEnabled = this._userPreferences.redactionEnabled;
   protected readonly redactionMode = this._userPreferences.redactionMode;

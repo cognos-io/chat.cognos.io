@@ -71,6 +71,8 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
+          build-args: |
+            GIT_COMMIT=${{ env.ARTIFACT_SHA }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.ARTIFACT_SHA }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
@@ -143,6 +145,8 @@ jobs:
         run: pnpm --dir frontend exec ng test --watch=false
 
       - name: build frontend
+        env:
+          COGNOS_COMMIT_SHA: ${{ env.ARTIFACT_SHA }}
         run: pnpm --dir frontend build
 
       - name: build marketing site

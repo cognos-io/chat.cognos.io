@@ -45,7 +45,7 @@ frontend: mkcert
 [working-directory("backend")]
 backend: mkcert
     @go run github.com/cosmtrek/air@v1.50.0 \
-        --build.cmd "go build -o=/tmp/bin/api ./cmd/api" \
+        --build.cmd "go build -ldflags=\"-X github.com/cognos-io/chat.cognos.io/backend/internal/buildinfo.Commit=$(git rev-parse HEAD)\" -o=/tmp/bin/api ./cmd/api" \
         --build.bin "/tmp/bin/api" \
         --build.args_bin "serve --dev --dir ./pb_data" \
         --build.delay "100" \
@@ -57,7 +57,7 @@ backend: mkcert
 [working-directory("backend")]
 backend-test:
     @go run github.com/cosmtrek/air@v1.50.0 \
-        --build.cmd "go build -o=/tmp/bin/api ./cmd/api" \
+        --build.cmd "go build -ldflags=\"-X github.com/cognos-io/chat.cognos.io/backend/internal/buildinfo.Commit=$(git rev-parse HEAD)\" -o=/tmp/bin/api ./cmd/api" \
         --build.bin "/tmp/bin/api" \
         --build.args_bin "serve --dev --dir ./testdata/pb_data" \
         --build.delay "100" \

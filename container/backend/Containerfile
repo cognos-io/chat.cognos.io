@@ -8,7 +8,13 @@ COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 COPY backend ./
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/cognos-api ./cmd/api
+
+# GIT_COMMIT is the full git SHA of the application revision being built.
+# Deploy pipelines pass it explicitly because the build context has no .git.
+ARG GIT_COMMIT=unknown
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath \
+    -ldflags="-s -w -X github.com/cognos-io/chat.cognos.io/backend/internal/buildinfo.Commit=${GIT_COMMIT}" \
+    -o /out/cognos-api ./cmd/api
 
 FROM alpine:3.23.5@sha256:fd791d74b68913cbb027c6546007b3f0d3bc45125f797758156952bc2d6daf40
 

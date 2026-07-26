@@ -220,10 +220,14 @@ Mount `/app/pb_data` as the durable, exclusively owned PocketBase volume. With a
 filesystem, `/tmp` and `/run/cognos` are the only other writable paths. Run as UID/GID `1001:1001`,
 drop all capabilities and prohibit privilege escalation.
 
-The liveness probe is `GET /health`. The deployment repository must also implement readiness as a
-smoke transaction that confirms the API can read its data store and that expected migrations have
-completed before routing traffic; `/health` alone is not a database-readiness guarantee. Start one
-writer, wait for migration completion and readiness, then enable traffic.
+The liveness probe is `GET /health`. The response includes a `commit` field (and every API response
+sets `X-Cognos-Commit`) with the git SHA baked into the binary at image build time via the
+`GIT_COMMIT` build-arg. The Angular app bakes the same SHA at static-site build time
+(`COGNOS_COMMIT_SHA`) so Account settings can show App vs API identity when deploys diverge. The
+deployment repository must also implement readiness as a smoke transaction that confirms the API can
+read its data store and that expected migrations have completed before routing traffic; `/health`
+alone is not a database-readiness guarantee. Start one writer, wait for migration completion and
+readiness, then enable traffic.
 
 ## Backup, restore and release checks
 

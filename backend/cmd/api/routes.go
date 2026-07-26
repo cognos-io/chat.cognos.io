@@ -3,12 +3,14 @@ package main
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/analytics"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/buildinfo"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/compaction"
@@ -48,6 +50,39 @@ func resetRouteRateLimiters() {
 	routeRateLimiters.mu.Lock()
 	routeRateLimiters.entries = map[string]*rateLimiterEntry{}
 	routeRateLimiters.mu.Unlock()
+}
+
+// commitIdentityMiddleware sets X-Cognos-Commit on every response and exposes
+// it to cross-origin browsers (PocketBase's default CORS ExposeHeaders is empty).
+func commitIdentityMiddleware() *hook.Handler[*core.RequestEvent] {
+	return &hook.Handler[*core.RequestEvent]{
+		Id: "cognosCommitIdentity",
+		Func: func(e *core.RequestEvent) error {
+			commit := buildinfo.ResolvedCommit()
+			e.Response.Header().Set(buildinfo.CommitHeader, commit)
+
+			existing := e.Response.Header().Get("Access-Control-Expose-Headers")
+			if existing == "" {
+				e.Response.Header().Set("Access-Control-Expose-Headers", buildinfo.CommitHeader)
+			} else if !headerListContains(existing, buildinfo.CommitHeader) {
+				e.Response.Header().Set(
+					"Access-Control-Expose-Headers",
+					existing+","+buildinfo.CommitHeader,
+				)
+			}
+
+			return e.Next()
+		},
+	}
+}
+
+func headerListContains(headerList, name string) bool {
+	for _, part := range strings.Split(headerList, ",") {
+		if strings.EqualFold(strings.TrimSpace(part), name) {
+			return true
+		}
+	}
+	return false
 }
 
 func rateLimiterMiddleware(app core.App) *hook.Handler[*core.RequestEvent] {
@@ -132,6 +167,10 @@ func addPocketBaseRoutes(
 	mfaKeyring *mfa.SeedKeyring,
 	paddlePriceOrgSeat string,
 ) {
+	// Bake the API commit into every response so operators (and the SPA) can
+	// tell which binary is serving traffic — FE and API deploys can diverge.
+	e.Router.Bind(commitIdentityMiddleware())
+
 	// Shared MFA dependencies for the auth-completion and management endpoints.
 	mfaStore := mfa.NewStore(app)
 	mfaIssuer := app.Settings().Meta.AppName
@@ -1302,10 +1341,13 @@ func addPocketBaseRoutes(
 		"/health",
 		func(re *core.RequestEvent) error {
 			type HealthResponse struct {
-				IsDatabaseConnected bool `json:"is_database_connected"`
+				IsDatabaseConnected bool   `json:"is_database_connected"`
+				Commit              string `json:"commit"`
 			}
 
-			resp := HealthResponse{}
+			resp := HealthResponse{
+				Commit: buildinfo.ResolvedCommit(),
+			}
 			status := http.StatusOK
 
 			if _, err := app.CountRecords("users"); err != nil {
