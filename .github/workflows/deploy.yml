@@ -43,6 +43,15 @@ jobs:
         with:
           ref: ${{ env.ARTIFACT_SHA }}
 
+      - name: connect to Tailscale
+        if: ${{ env.INFRASTRUCTURE_PROVIDER == 'forgejo' }}
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:cognos-deploy
+          ping: ${{ vars.FORGEJO_TAILSCALE_HOST }}
+
       - name: setup Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
@@ -81,15 +90,6 @@ jobs:
         with:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
-
-      - name: connect to Tailscale
-        if: ${{ env.INFRASTRUCTURE_PROVIDER == 'forgejo' }}
-        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          audience: ${{ secrets.TS_AUDIENCE }}
-          tags: tag:cognos-deploy
-          ping: ${{ vars.FORGEJO_TAILSCALE_HOST }}
 
       - name: open infrastructure promotion pull request
         working-directory: backend
