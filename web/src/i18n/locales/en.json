@@ -329,7 +329,7 @@
         },
         {
           "label": "Privacy contact",
-          "value": "privacy@cognos.io"
+          "value": "support@cognos.io"
         }
       ],
       "intro": [
@@ -340,7 +340,7 @@
           "p": "We built Cognos for private, useful AI conversations. This policy explains what we collect, what we do with it, and what we deliberately do not do."
         },
         {
-          "p": "For privacy questions, contact us at <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+          "p": "For privacy questions, contact us at <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
         }
       ],
       "sections": [
@@ -378,7 +378,7 @@
               "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
             },
             {
-              "p": "Email: <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>"
+              "p": "Email: <a href=\"mailto:support@cognos.io\">support@cognos.io</a>"
             },
             {
               "p": "We have not appointed a Data Protection Officer. We have not confirmed an EU or UK representative. This section may be updated after legal review."
@@ -867,7 +867,7 @@
               "p": "Cognos supports browser-side export for conversations and data. You can also delete conversations and manage account settings in the app."
             },
             {
-              "p": "To make a privacy request, email <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+              "p": "To make a privacy request, email <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
             },
             {
               "p": "We may need to verify your identity before fulfilling a request."
@@ -912,7 +912,7 @@
           "heading": "Children",
           "blocks": [
             {
-              "p": "Cognos is not intended for children under 16. If you believe a child has used Cognos in violation of this policy, contact us at <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+              "p": "Cognos is not intended for children under 16. If you believe a child has used Cognos in violation of this policy, contact us at <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
             }
           ]
         },
@@ -948,7 +948,7 @@
         },
         {
           "label": "Legal contact",
-          "value": "legal@cognos.io"
+          "value": "support@cognos.io"
         }
       ],
       "intro": [
@@ -997,7 +997,7 @@
               "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
             },
             {
-              "p": "Legal contact: <a href=\"mailto:legal@cognos.io\">legal@cognos.io</a>"
+              "p": "Legal contact: <a href=\"mailto:support@cognos.io\">support@cognos.io</a>"
             },
             {
               "p": "Company registration number: <a href=\"https://lu.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=CHE-372.115.477#\">CHE-372.115.477</a>"
@@ -1457,7 +1457,7 @@
               "p": "For legal questions about these Terms, contact:"
             },
             {
-              "p": "<a href=\"mailto:legal@cognos.io\">legal@cognos.io</a>"
+              "p": "<a href=\"mailto:support@cognos.io\">support@cognos.io</a>"
             },
             {
               "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
@@ -1610,7 +1610,7 @@
         },
         {
           "label": "Privacy contact",
-          "value": "privacy@cognos.io"
+          "value": "support@cognos.io"
         }
       ],
       "intro": [
@@ -1729,7 +1729,7 @@
               "p": "Where the law requires it, we put agreements in place with these providers, including data-processing agreements and protections for any data handled outside Switzerland or the EU."
             },
             {
-              "p": "This list changes as Cognos grows. When it does, we update this page. Questions? Email <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+              "p": "This list changes as Cognos grows. When it does, we update this page. Questions? Email <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
             }
           ]
         }
@@ -1750,7 +1750,7 @@
         },
         {
           "label": "Privacy contact",
-          "value": "privacy@cognos.io"
+          "value": "support@cognos.io"
         }
       ],
       "intro": [

@@ -22,9 +22,9 @@ interface Channel {
 const channels = t.raw<Channel[]>(`${base}.channels`);
 const channelMeta = [
   { icon: 'LifeBuoy', email: CONTACT_EMAILS.support, pgp: false },
-  { icon: 'Building2', email: CONTACT_EMAILS.sales, pgp: false },
-  { icon: 'ShieldAlert', email: CONTACT_EMAILS.security, pgp: true },
-  { icon: 'Newspaper', email: CONTACT_EMAILS.press, pgp: false },
+  { icon: 'Building2', email: CONTACT_EMAILS.support, pgp: false },
+  { icon: 'ShieldAlert', email: CONTACT_EMAILS.support, pgp: true },
+  { icon: 'Newspaper', email: CONTACT_EMAILS.support, pgp: false },
 ] as const;
 ---
 
@@ -161,7 +161,7 @@ const channelMeta = [
 <script>
   // The site is static, so "send" composes the message in the visitor's own
   // email app — nothing passes through (or is stored on) this website. The
-  // topic select routes to the matching team address.
+  // topic select only changes the subject prefix; all topics share one inbox.
   const form = document.querySelector<HTMLFormElement>('.contact-form');
   form?.addEventListener('submit', (event) => {
     event.preventDefault();

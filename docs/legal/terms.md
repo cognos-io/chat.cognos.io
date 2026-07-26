@@ -42,7 +42,7 @@ St. Niklausenstrasse 96
 6047 Kastanienbaum
 Switzerland
 
-Legal contact: **[legal@cognos.io](mailto:legal@cognos.io)**
+Legal contact: **[support@cognos.io](mailto:support@cognos.io)**
 
 Company registration number:
 **[CHE-372.115.477](https://lu.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=CHE-372.115.477#)**
@@ -407,7 +407,7 @@ consumer rights, nothing in these Terms removes rights that cannot legally be wa
 
 For legal questions about these Terms, contact:
 
-**[legal@cognos.io](mailto:legal@cognos.io)**
+**[support@cognos.io](mailto:support@cognos.io)**
 
 Climacrux GmbH
 St. Niklausenstrasse 96

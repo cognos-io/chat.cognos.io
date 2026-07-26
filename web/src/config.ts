@@ -24,13 +24,10 @@ export function signUpUrl(location: CtaLocation): string {
   return `${SIGN_UP_URL}?ref=${location}`;
 }
 
-// Contact channels, in the order they appear on /contact. The addresses live
-// here (not in the i18n catalogs) because they are the same in every locale.
+// Contact channels, in the order they appear on /contact. One shared inbox —
+// topic labels still differentiate sales / security / press in the UI.
 export const CONTACT_EMAILS = {
   support: 'support@cognos.io',
-  sales: 'sales@cognos.io',
-  security: 'security@cognos.io',
-  press: 'press@cognos.io',
 } as const;
 
 // Legal entity behind Cognos, shown in the /contact imprint (legal notice) and

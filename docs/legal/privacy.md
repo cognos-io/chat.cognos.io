@@ -8,7 +8,7 @@ Kastanienbaum, Switzerland.
 We built Cognos for private, useful AI conversations. This policy explains what we collect, what we
 do with it, and what we deliberately do not do.
 
-For privacy questions, contact us at **[privacy@cognos.io](mailto:privacy@cognos.io)**.
+For privacy questions, contact us at **[support@cognos.io](mailto:support@cognos.io)**.
 
 ## The short version
 
@@ -37,7 +37,7 @@ St. Niklausenstrasse 96
 6047 Kastanienbaum
 Switzerland
 
-Email: **[privacy@cognos.io](mailto:privacy@cognos.io)**
+Email: **[support@cognos.io](mailto:support@cognos.io)**
 
 Privacy enquiries and data-rights requests are handled through the contact above. Cognos publishes
 any legally required additional representative or privacy contact before offering the service in a
@@ -405,7 +405,7 @@ Depending on where you live, you may have rights to:
 Cognos supports browser-side export for conversations and data. You can also delete conversations
 and manage account settings in the app.
 
-To make a privacy request, email **[privacy@cognos.io](mailto:privacy@cognos.io)**.
+To make a privacy request, email **[support@cognos.io](mailto:support@cognos.io)**.
 
 We may need to verify your identity before fulfilling a request.
 
@@ -436,7 +436,7 @@ subject to normal operational and legal processes.
 ## Children
 
 Cognos is not intended for children under 16. If you believe a child has used Cognos in violation of
-this policy, contact us at **[privacy@cognos.io](mailto:privacy@cognos.io)**.
+this policy, contact us at **[support@cognos.io](mailto:support@cognos.io)**.
 
 ## Changes to this policy
 
