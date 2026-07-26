@@ -11,7 +11,7 @@ export const environment = {
   suggestedImageModelId: 'gemini-2-5-flash-image',
   // Paddle.js: client-side token (publishable) + environment. Empty token
   // disables the overlay and falls back to the hosted checkout URL.
-  paddleClientToken: '',
+  paddleClientToken: 'live_dc8e669e83bffa09427953c13bd',
   paddleEnvironment: 'production' as 'sandbox' | 'production',
   // Privacy-respecting product analytics (docs/business_processes/product-analytics.md).
   // Keep production disabled until docs/operations/analytics-dashboard.md
