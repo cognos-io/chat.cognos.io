@@ -188,6 +188,17 @@ async function run(lang) {
     if (!(await rc.count())) throw new Error('no reasoning control for this model');
     await rc.click(); await p.waitForTimeout(600); await overlay(p, out('reasoning-effort.png'));
   });
+  await step('mobile-home-screen', 'all', async () => {
+    // Phone-sized shot for the "Cognos on your phone" article. Same logged-in
+    // page, temporarily squeezed to a phone viewport, then restored.
+    await p.setViewportSize({ width: 390, height: 844 });
+    await p.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await p.waitForSelector('textarea');
+    await p.waitForTimeout(1000);
+    await dismiss(p);
+    await p.screenshot({ path: out('mobile-home-screen.png') });
+    await p.setViewportSize({ width: 1280, height: 900 });
+  });
   await step('redaction-reveal', 'all', async () => {
     await send(p, 'Please file my IBAN CH93 0076 2011 6238 5295 7 against the March invoice.');
     await p.locator('.cog-user-message .cog-redacted-text').first().click({ timeout: 6000 });

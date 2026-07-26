@@ -4558,6 +4558,96 @@
           }
         ],
         "related": ["your-privacy", "generating-documents", "deleting-your-account"]
+      },
+      "cognos-on-your-phone": {
+        "navTitle": "Cognos on your phone",
+        "metaTitle": "Cognos on your phone — Cognos Docs",
+        "metaDescription": "There's no Cognos app in the app stores yet, but you can pin Cognos to your phone's home screen for one-tap access on iPhone and Android.",
+        "title": "Cognos on your phone",
+        "lead": "There's no Cognos app in the app stores yet — and you don't need one. Pin Cognos to your home screen and it opens with one tap, in its own window, just like an app.",
+        "time": "2 min",
+        "updated": "26 July 2026",
+        "sections": [
+          {
+            "heading": "On iPhone or iPad (Safari)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open Cognos in Safari",
+                    "body": "Go to <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Tap the Share button",
+                    "body": "The square with an arrow pointing up, at the bottom of the screen (top right on iPad)."
+                  },
+                  {
+                    "title": "Tap <b>Add to Home Screen</b>",
+                    "body": "Scroll down the share sheet if you don't see it straight away."
+                  },
+                  {
+                    "title": "Tap <b>Add</b>",
+                    "body": "The Cognos icon appears on your home screen."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "On Android (Chrome)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Open Cognos in Chrome",
+                    "body": "Go to <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Tap the three-dot menu",
+                    "body": "In the top-right corner of the browser."
+                  },
+                  {
+                    "title": "Tap <b>Add to Home screen</b>",
+                    "body": "On some phones this is labelled <b>Install app</b> — both do the same thing."
+                  },
+                  {
+                    "title": "Confirm with <b>Add</b>",
+                    "body": "The Cognos icon appears on your home screen."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Using a different browser? Most browsers have a similar option — look for <b>Add to Home screen</b> or <b>Install</b> in the browser's menu or share sheet."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "What to expect",
+            "blocks": [
+              {
+                "p": "Tapping the icon opens Cognos in its own window, without the browser's address bar or tabs. It's the same Cognos as on your computer — your chats, projects and settings are all there, and you always get the latest version without updating anything."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mobile-home-screen.png",
+                  "alt": "The Cognos chat screen shown at phone size, with the sidebar collapsed and the message box at the bottom.",
+                  "caption": "Cognos adapts to your phone's screen."
+                }
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "title": "Have your Account Key ready the first time",
+                  "body": "On iPhone, the pinned Cognos keeps its own storage, separate from Safari — so the first time you open it, you'll <a href=\"/docs/signing-in\">log in</a> and enter your <a href=\"/docs/account-key\">Account Key</a> once. On Android you're usually still signed in from Chrome. Either way, after that first unlock it behaves like any other device you've unlocked."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
   }

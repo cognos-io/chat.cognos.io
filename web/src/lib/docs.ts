@@ -65,6 +65,7 @@ export const docGroups: DocGroup[] = [
       'emergency-kit',
       'signing-in',
       'unlock-and-lock',
+      'cognos-on-your-phone',
     ],
   },
   {
