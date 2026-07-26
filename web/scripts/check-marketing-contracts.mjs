@@ -130,6 +130,9 @@ const optionalUntilTranslated = new Set([
   'pages.terms.facts[]',
   'pages.terms.intro[]',
   'pages.terms.sections[]',
+  'pages.refund.facts[]',
+  'pages.refund.intro[]',
+  'pages.refund.sections[]',
 ]);
 
 /** Key subtrees translated incrementally, English-only until native copy lands.

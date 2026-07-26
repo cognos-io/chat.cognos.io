@@ -22,7 +22,7 @@
     "lead": "A IA pode ajudar com a tua saúde, o teu dinheiro e as tuas preocupações — precisamente o que talvez não queiras num histórico legível. O Cognos guarda as tuas conversas de uma forma que não conseguimos ler. Antes de um pedido em direto a um fornecedor de IA aprovado, o Cognos esconde os dados pessoais que deteta.",
     "ctaPrimary": "Começar",
     "ctaSecondary": "Ver como funciona",
-    "finehint": "Experimenta primeiro — saldo inicial grátis, sem cartão · A partir de CHF 15/mês · Garantia de reembolso de 60 dias",
+    "finehint": "Experimenta primeiro — saldo inicial grátis, sem cartão · A partir de CHF 15/mês · Cancela quando quiseres",
     "assure": {
       "zeroKnowledge": "Nenhuma cópia que consigamos ler",
       "swiss": "Guardado na Suíça ou na Europa",
@@ -216,7 +216,7 @@
     "eyebrow": "Preços simples",
     "titleLine1": "Paga pela IA.",
     "titleLine2": "A privacidade é grátis.",
-    "lead": "Duas formas de pagar. A mesma privacidade nas duas. Não é para ti? Tens 60 dias para receber o teu dinheiro de volta.",
+    "lead": "Duas formas de pagar. A mesma privacidade nas duas. Não é para ti? Cancela quando quiseres — e podes pedir um reembolso no prazo de 60 dias.",
     "vatNote": "Preços em CHF, IVA acrescentado no pagamento.",
     "individuals": {
       "title": "Paga conforme usas",
@@ -304,6 +304,7 @@
       "about": "Sobre",
       "privacy": "Privacidade",
       "terms": "Termos",
+      "refunds": "Reembolsos",
       "contact": "Contacto",
       "security": "Segurança",
       "subprocessors": "Subcontratantes"
@@ -331,6 +332,15 @@
       "lead": "O acordo entre ti e a Cognos quando utilizas o serviço.",
       "effectiveLabel": "Em vigor desde",
       "effectiveDate": "2 de julho de 2026"
+    },
+    "refund": {
+      "metaTitle": "Política de reembolso — Cognos",
+      "metaDescription": "Como funcionam o cancelamento e os reembolsos na Cognos. Cancela quando quiseres; os pedidos de reembolso no prazo de 60 dias são analisados caso a caso.",
+      "eyebrow": "Reembolsos",
+      "title": "Política de reembolso",
+      "lead": "Cancela quando quiseres. Pede um reembolso no prazo de 60 dias após um pagamento — analisamos cada pedido caso a caso.",
+      "effectiveLabel": "Em vigor desde",
+      "effectiveDate": "26 de julho de 2026"
     },
     "subprocessors": {
       "metaTitle": "Subcontratantes — Cognos",

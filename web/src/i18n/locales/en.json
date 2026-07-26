@@ -22,7 +22,7 @@
     "lead": "AI can be useful for your health, money and worries — exactly the things you may not want sitting in a readable history. Cognos saves your chats in a form we can't read. Before a live request goes to an approved AI provider, Cognos hides the personal details it detects.",
     "ctaPrimary": "Get started",
     "ctaSecondary": "See how it works",
-    "finehint": "Try it first — free starter credit, no card needed · From CHF 15/month · 60-day money-back guarantee",
+    "finehint": "Try it first — free starter credit, no card needed · From CHF 15/month · Cancel anytime",
     "assure": {
       "zeroKnowledge": "No copy we can read",
       "swiss": "Kept in Switzerland or Europe",
@@ -216,7 +216,7 @@
     "eyebrow": "Simple pricing",
     "titleLine1": "Pay for the AI.",
     "titleLine2": "The privacy comes free.",
-    "lead": "Two ways to pay. The same privacy either way. Not for you? You have 60 days to get your money back.",
+    "lead": "Two ways to pay. The same privacy either way. Not for you? Cancel anytime — and you can request a refund within 60 days.",
     "vatNote": "Prices in CHF, VAT added at checkout.",
     "individuals": {
       "title": "Pay as you go",
@@ -304,6 +304,7 @@
       "about": "About",
       "privacy": "Privacy",
       "terms": "Terms",
+      "refunds": "Refunds",
       "contact": "Contact",
       "security": "Security",
       "subprocessors": "Subprocessors"
@@ -1223,7 +1224,7 @@
               "p": "Prices, plan features, usage limits, fair-use thresholds, supported models, and billing terms are shown in the app, at checkout, or in an applicable order form. We avoid listing exact prices in these Terms because plans may change."
             },
             {
-              "p": "Payments may be processed by a third-party payment provider or merchant of record, such as Paddle. Payment processing, taxes, invoices, chargebacks, and some refund handling may be subject to that provider’s terms and processes."
+              "p": "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Payment processing, taxes, invoices, chargebacks, and some refund handling are subject to Paddle’s terms and processes."
             },
             {
               "p": "Paid subscriptions renew automatically unless cancelled before renewal. You can cancel anytime, usually effective at the end of the current billing period unless the checkout page or applicable plan terms say otherwise."
@@ -1240,10 +1241,10 @@
           "heading": "Refunds",
           "blocks": [
             {
-              "p": "We may offer a money-back guarantee, refund window, trial credit, or similar promotion for certain plans. Where offered, the applicable terms will be shown in the app, checkout page, plan page, or refund policy."
+              "p": "How refunds work is described in our <a href=\"/refund\">Refund Policy</a>. In short: you can request a refund within 60 days of a payment, and we review every request individually, case by case. Refunds are not automatic."
             },
             {
-              "p": "A refund or money-back guarantee may depend on fair use. We may deny refund requests where we reasonably believe there has been abuse, excessive usage, fraud, breach of these Terms, repeated refund requests, chargeback abuse, or other unfair use of the refund policy."
+              "p": "Refund decisions depend on fair use. We may decline requests where we reasonably believe there has been abuse, excessive usage, fraud, breach of these Terms, repeated refund requests, chargeback abuse, or other unfair use of the refund process."
             },
             {
               "p": "Nothing in these Terms limits mandatory refund, withdrawal, cancellation, or consumer rights that apply under the law where you live."
@@ -1460,6 +1461,135 @@
             },
             {
               "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
+            }
+          ]
+        }
+      ]
+    },
+    "refund": {
+      "metaTitle": "Refund Policy — Cognos",
+      "metaDescription": "How cancelling and refunds work at Cognos. Cancel anytime; refund requests within 60 days are reviewed case by case.",
+      "eyebrow": "Refunds",
+      "title": "Refund Policy",
+      "lead": "Cancel anytime. Ask for a refund within 60 days of a payment — we review every request, case by case.",
+      "effectiveLabel": "Effective",
+      "effectiveDate": "26 July 2026",
+      "facts": [
+        {
+          "label": "Provider",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Refund window",
+          "value": "60 days"
+        },
+        {
+          "label": "Contact",
+          "value": "support@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos is an encrypted AI chat application provided by <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Switzerland."
+        },
+        {
+          "p": "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders, and refunds are paid back through Paddle to your original payment method."
+        },
+        {
+          "p": "This policy explains how to cancel, how to ask for a refund, and how we decide. If anything is unclear, write to <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "The short version",
+          "blocks": [
+            {
+              "ul": [
+                "You can cancel any plan yourself, anytime, in the app. Your plan then runs to the end of the period you have already paid for.",
+                "You can request a refund within 60 days of a payment.",
+                "We review every refund request individually, case by case — refunds are not automatic.",
+                "Refunds are paid through Paddle to your original payment method.",
+                "Your statutory consumer rights always apply on top of this policy."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Cancelling your plan",
+          "blocks": [
+            {
+              "p": "Cancelling is self-serve: open your billing settings in the app and cancel there. No email, no phone call, no retention tricks."
+            },
+            {
+              "p": "Cancellation stops the next renewal. You keep full access until the end of the period you have paid for, and nothing renews after that."
+            },
+            {
+              "p": "On pay as you go, the monthly minimum for the billing month already under way still applies, along with any usage above it."
+            }
+          ]
+        },
+        {
+          "heading": "Requesting a refund",
+          "blocks": [
+            {
+              "p": "You can request a refund within <b>60 days</b> of the payment concerned."
+            },
+            {
+              "p": "Use the “Request a refund” option in the app, or email <a href=\"mailto:support@cognos.io\">support@cognos.io</a> from your account email address. Please include the invoice or receipt reference so we can find the payment."
+            },
+            {
+              "p": "We aim to reply within a few business days. If we grant the refund, Paddle pays it back to your original payment method; how long that takes depends on your bank or card provider."
+            }
+          ]
+        },
+        {
+          "heading": "How we decide",
+          "blocks": [
+            {
+              "p": "We look at every request individually. There is no automatic guarantee, and no hidden rules — this is what we consider:"
+            },
+            {
+              "ul": [
+                "How much of the service you used. AI answers cost us real money with the AI providers, so heavy usage weighs against a full refund.",
+                "Whether we have refunded you before. We normally grant at most one goodwill refund per account.",
+                "Signs of abuse — for example automated usage, fraud, chargeback history, or a breach of our Terms."
+              ]
+            },
+            {
+              "p": "Depending on the case, we may grant a full refund, a partial refund, or decline the request — and we will tell you why."
+            },
+            {
+              "p": "We never read your chats to make this decision. Refund reviews use billing and usage amounts only; your conversations stay locked."
+            }
+          ]
+        },
+        {
+          "heading": "Usage charges, credit, and trials",
+          "blocks": [
+            {
+              "p": "On pay as you go, charges reflect AI usage that has already happened and has already cost us money with the providers. That usage is part of the case-by-case review above."
+            },
+            {
+              "p": "Free starter credit and promotional credit have no cash value and cannot be refunded or paid out."
+            }
+          ]
+        },
+        {
+          "heading": "Your statutory rights",
+          "blocks": [
+            {
+              "p": "Nothing in this policy limits mandatory refund, withdrawal, cancellation, or other consumer rights that apply under the law where you live. Where those rights go further than this policy, they come first."
+            },
+            {
+              "p": "Because Paddle is the Merchant of Record, you can also raise payment questions with Paddle directly via the receipt they emailed you."
+            }
+          ]
+        },
+        {
+          "heading": "Changes to this policy",
+          "blocks": [
+            {
+              "p": "We may update this policy from time to time. The current version always lives at this address, and we will announce material changes in the app or by email."
             }
           ]
         }

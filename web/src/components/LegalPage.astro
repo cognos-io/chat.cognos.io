@@ -7,7 +7,7 @@ import type { LegalBlock as Block, LegalSection } from '../lib/legal';
 interface Props {
   lang: Lang;
   /** Which standalone page to render — keys live under `pages.<page>`. */
-  page: 'privacy' | 'terms' | 'subprocessors' | 'security';
+  page: 'privacy' | 'terms' | 'refund' | 'subprocessors' | 'security';
 }
 const { lang, page } = Astro.props;
 const t = useTranslations(lang);
@@ -33,6 +33,11 @@ const legalTabs = [
     label: t('pages.terms.title'),
     href: localizedPath(lang, '/terms'),
     current: page === 'terms',
+  },
+  {
+    label: t('pages.refund.title'),
+    href: localizedPath(lang, '/refund'),
+    current: page === 'refund',
   },
   {
     label: t('pages.subprocessors.title'),

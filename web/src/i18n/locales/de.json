@@ -22,7 +22,7 @@
     "lead": "KI kann bei Gesundheit, Geld und Sorgen helfen — genau bei den Dingen, die du vielleicht nicht in einem lesbaren Verlauf willst. Cognos speichert deine Chats in einer Form, die wir nicht lesen können. Vor einer Live-Anfrage an einen geprüften KI-Anbieter versteckt Cognos die persönlichen Angaben, die es erkennt.",
     "ctaPrimary": "Loslegen",
     "ctaSecondary": "So funktioniert's",
-    "finehint": "Probier es zuerst aus — Startguthaben geschenkt, keine Karte nötig · Ab CHF 15/Monat · 60 Tage Geld-zurück-Garantie",
+    "finehint": "Probier es zuerst aus — Startguthaben geschenkt, keine Karte nötig · Ab CHF 15/Monat · Jederzeit kündbar",
     "assure": {
       "zeroKnowledge": "Keine lesbare Kopie",
       "swiss": "In der Schweiz oder in Europa",
@@ -216,7 +216,7 @@
     "eyebrow": "Einfache Preise",
     "titleLine1": "Bezahl für die KI.",
     "titleLine2": "Die Privatsphäre gibt's gratis.",
-    "lead": "Zwei Wege zu zahlen. Die gleiche Privatsphäre bei beiden. Nichts für dich? Du hast 60 Tage, um dein Geld zurückzubekommen.",
+    "lead": "Zwei Wege zu zahlen. Die gleiche Privatsphäre bei beiden. Nichts für dich? Kündige jederzeit — und innerhalb von 60 Tagen kannst du eine Rückerstattung beantragen.",
     "vatNote": "Preise in CHF, MwSt. beim Checkout berechnet.",
     "individuals": {
       "title": "Zahl nach Verbrauch",
@@ -304,6 +304,7 @@
       "about": "Über uns",
       "privacy": "Datenschutz",
       "terms": "Bedingungen",
+      "refunds": "Rückerstattung",
       "contact": "Kontakt",
       "security": "Sicherheit",
       "subprocessors": "Unterauftragsverarbeiter"
@@ -331,6 +332,15 @@
       "lead": "Die Vereinbarung zwischen dir und Cognos, wenn du den Dienst nutzt.",
       "effectiveLabel": "Gültig ab",
       "effectiveDate": "2. Juli 2026"
+    },
+    "refund": {
+      "metaTitle": "Rückerstattungsrichtlinie — Cognos",
+      "metaDescription": "So funktionieren Kündigung und Rückerstattung bei Cognos. Jederzeit kündbar; Rückerstattungsanträge innerhalb von 60 Tagen prüfen wir Fall für Fall.",
+      "eyebrow": "Rückerstattung",
+      "title": "Rückerstattungsrichtlinie",
+      "lead": "Kündige jederzeit. Beantrage innerhalb von 60 Tagen nach einer Zahlung eine Rückerstattung — wir prüfen jeden Antrag einzeln, Fall für Fall.",
+      "effectiveLabel": "Gültig ab",
+      "effectiveDate": "26. Juli 2026"
     },
     "subprocessors": {
       "metaTitle": "Unterauftragsverarbeiter — Cognos",

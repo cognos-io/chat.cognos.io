@@ -22,7 +22,7 @@
     "lead": "L'IA può aiutarti con salute, soldi e preoccupazioni — proprio ciò che potresti non volere in una cronologia leggibile. Cognos salva le tue chat in una forma che non possiamo leggere. Prima di una richiesta in diretta a un fornitore di IA approvato, Cognos nasconde i dati personali che rileva.",
     "ctaPrimary": "Inizia ora",
     "ctaSecondary": "Guarda come funziona",
-    "finehint": "Provalo prima — credito iniziale in regalo, senza carta · Da CHF 15/mese · Soddisfatti o rimborsati entro 60 giorni",
+    "finehint": "Provalo prima — credito iniziale in regalo, senza carta · Da CHF 15/mese · Disdici quando vuoi",
     "assure": {
       "zeroKnowledge": "Nessuna copia leggibile",
       "swiss": "Tenuta in Svizzera o in Europa",
@@ -216,7 +216,7 @@
     "eyebrow": "Prezzi semplici",
     "titleLine1": "Paghi per l'IA.",
     "titleLine2": "La privacy è inclusa.",
-    "lead": "Due modi per pagare. La stessa privacy in entrambi i casi. Non fa per te? Hai 60 giorni per riavere i tuoi soldi.",
+    "lead": "Due modi per pagare. La stessa privacy in entrambi i casi. Non fa per te? Disdici quando vuoi — e puoi chiedere un rimborso entro 60 giorni.",
     "vatNote": "Prezzi in CHF, IVA aggiunta al pagamento.",
     "individuals": {
       "title": "Paghi quanto usi",
@@ -304,6 +304,7 @@
       "about": "Chi siamo",
       "privacy": "Privacy",
       "terms": "Termini",
+      "refunds": "Rimborsi",
       "contact": "Contatti",
       "security": "Sicurezza",
       "subprocessors": "Subincaricati"
@@ -331,6 +332,15 @@
       "lead": "L'accordo tra te e Cognos quando usi il servizio.",
       "effectiveLabel": "In vigore dal",
       "effectiveDate": "2 luglio 2026"
+    },
+    "refund": {
+      "metaTitle": "Politica di rimborso — Cognos",
+      "metaDescription": "Come funzionano disdetta e rimborsi su Cognos. Disdici quando vuoi; le richieste di rimborso entro 60 giorni sono valutate caso per caso.",
+      "eyebrow": "Rimborsi",
+      "title": "Politica di rimborso",
+      "lead": "Disdici quando vuoi. Chiedi un rimborso entro 60 giorni da un pagamento — valutiamo ogni richiesta caso per caso.",
+      "effectiveLabel": "In vigore dal",
+      "effectiveDate": "26 luglio 2026"
     },
     "subprocessors": {
       "metaTitle": "Subincaricati — Cognos",

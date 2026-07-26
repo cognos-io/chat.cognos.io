@@ -22,7 +22,7 @@
     "lead": "L'IA peut vous aider avec votre santé, votre argent et vos soucis — précisément ce que vous ne voulez peut-être pas conserver dans un historique lisible. Cognos enregistre vos conversations sous une forme que nous ne pouvons pas lire. Avant une demande en direct à un fournisseur d'IA approuvé, Cognos masque les informations personnelles qu'il détecte.",
     "ctaPrimary": "Commencer",
     "ctaSecondary": "Voir comment ça marche",
-    "finehint": "Essayez d'abord — crédit de départ offert, sans carte · À partir de CHF 15/mois · Satisfait ou remboursé 60 jours",
+    "finehint": "Essayez d'abord — crédit de départ offert, sans carte · À partir de CHF 15/mois · Résiliable à tout moment",
     "assure": {
       "zeroKnowledge": "Aucune copie lisible",
       "swiss": "Gardé en Suisse ou en Europe",
@@ -216,7 +216,7 @@
     "eyebrow": "Des tarifs simples",
     "titleLine1": "Payez pour l'IA.",
     "titleLine2": "La confidentialité est offerte.",
-    "lead": "Deux façons de payer. La même confidentialité dans les deux cas. Pas convaincu ? Vous avez 60 jours pour être remboursé.",
+    "lead": "Deux façons de payer. La même confidentialité dans les deux cas. Pas convaincu ? Résiliez à tout moment — et vous pouvez demander un remboursement sous 60 jours.",
     "vatNote": "Prix en CHF, TVA ajoutée au paiement.",
     "individuals": {
       "title": "À l'usage",
@@ -304,6 +304,7 @@
       "about": "À propos",
       "privacy": "Confidentialité",
       "terms": "Conditions",
+      "refunds": "Remboursements",
       "contact": "Contact",
       "security": "Sécurité",
       "subprocessors": "Sous-traitants"
@@ -331,6 +332,15 @@
       "lead": "L'accord entre vous et Cognos lorsque vous utilisez le service.",
       "effectiveLabel": "En vigueur depuis",
       "effectiveDate": "2 juillet 2026"
+    },
+    "refund": {
+      "metaTitle": "Politique de remboursement — Cognos",
+      "metaDescription": "Comment fonctionnent la résiliation et les remboursements chez Cognos. Résiliez à tout moment ; les demandes de remboursement sous 60 jours sont examinées au cas par cas.",
+      "eyebrow": "Remboursements",
+      "title": "Politique de remboursement",
+      "lead": "Résiliez à tout moment. Demandez un remboursement dans les 60 jours suivant un paiement — nous examinons chaque demande au cas par cas.",
+      "effectiveLabel": "En vigueur depuis",
+      "effectiveDate": "26 juillet 2026"
     },
     "subprocessors": {
       "metaTitle": "Sous-traitants — Cognos",
