@@ -172,6 +172,7 @@ is not mounted; pointing at a missing file intentionally fails startup.
 | `COGNOS_BILLING_MARGIN_BPS`                      | Required when paid AI is enabled                     | No     | Provider-cost markup                                        |
 | `COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN`   | Required when web search is enabled                  | No     | Per-search floor                                            |
 | `BILLING_FX_RATE_FALLBACK_USD_CHF`               | Required commercial decision                         | No     | Exchange-rate fallback                                      |
+| `COGNOS_CUSTOM_STORAGE_QUOTA_BYTES`              | Optional; defaults to 100 MB                         | No     | Free-tier cap on sealed custom-provider Message ciphertext  |
 | `COGNOS_PADDLE_API_BASE`                         | Required when billing is enabled                     | No     | Production Paddle API origin                                |
 | `COGNOS_PADDLE_API_KEY_FILE`                     | Required when billing is enabled                     | Yes    | Mounted Paddle server credential                            |
 | `COGNOS_PADDLE_WEBHOOK_SECRET_FILE`              | Required when billing is enabled                     | Yes    | Mounted webhook verifier secret                             |
