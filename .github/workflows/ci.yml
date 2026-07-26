@@ -29,7 +29,9 @@ jobs:
           cache-dependency-path: backend/go.sum
 
       - name: run go tests
-        run: go test ./...
+        # cmd/api boots a PocketBase app per scenario and already takes ~10
+        # minutes — the go test default timeout — so give it headroom.
+        run: go test -timeout 20m ./...
 
       - name: run go vet
         run: go vet ./...
