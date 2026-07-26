@@ -3312,6 +3312,96 @@
           }
         ],
         "related": ["your-privacy", "generating-documents", "deleting-your-account"]
+      },
+      "cognos-on-your-phone": {
+        "navTitle": "Cognos auf dem Handy",
+        "metaTitle": "Cognos auf dem Handy — Cognos-Dokumentation",
+        "metaDescription": "Es gibt noch keine Cognos-App in den App Stores, aber du kannst Cognos auf dem Home-Bildschirm deines Handys anheften — für Zugriff mit einem Tap auf iPhone und Android.",
+        "title": "Cognos auf dem Handy",
+        "lead": "Es gibt noch keine Cognos-App in den App Stores — und du brauchst auch keine. Hefte Cognos an deinen Home-Bildschirm an, dann öffnet es sich mit einem Tap in einem eigenen Fenster, genau wie eine App.",
+        "time": "2 Min.",
+        "updated": "26. Juli 2026",
+        "sections": [
+          {
+            "heading": "Auf iPhone oder iPad (Safari)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Öffne Cognos in Safari",
+                    "body": "Gehe zu <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Tippe auf die Teilen-Schaltfläche",
+                    "body": "Das Quadrat mit dem Pfeil nach oben, unten am Bildschirmrand (bei iPad oben rechts)."
+                  },
+                  {
+                    "title": "Tippe auf <b>Zum Home-Bildschirm</b>",
+                    "body": "Scrolle im Teilen-Menü nach unten, falls du die Option nicht sofort siehst."
+                  },
+                  {
+                    "title": "Tippe auf <b>Hinzufügen</b>",
+                    "body": "Das Cognos-Symbol erscheint auf deinem Home-Bildschirm."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Auf Android (Chrome)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Öffne Cognos in Chrome",
+                    "body": "Gehe zu <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Tippe auf das Drei-Punkte-Menü",
+                    "body": "Oben rechts in der Browser-Ecke."
+                  },
+                  {
+                    "title": "Tippe auf <b>Zum Startbildschirm hinzufügen</b>",
+                    "body": "Auf manchen Handys heisst das <b>App installieren</b> — beides macht dasselbe."
+                  },
+                  {
+                    "title": "Bestätige mit <b>Hinzufügen</b>",
+                    "body": "Das Cognos-Symbol erscheint auf deinem Home-Bildschirm."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Nutzt du einen anderen Browser? Die meisten Browser haben eine ähnliche Option — such im Menü oder Teilen-Menü des Browsers nach <b>Zum Startbildschirm hinzufügen</b> oder <b>Installieren</b>."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Was dich erwartet",
+            "blocks": [
+              {
+                "p": "Wenn du auf das Symbol tippst, öffnet sich Cognos in einem eigenen Fenster, ohne Adressleiste oder Tabs des Browsers. Es ist dasselbe Cognos wie auf deinem Computer — deine Chats, Projekte und Einstellungen sind alle da, und du bekommst immer die neueste Version, ohne etwas zu aktualisieren."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mobile-home-screen.png",
+                  "alt": "Der Cognos-Chat-Bildschirm in Handygrösse, mit eingeklappter Seitenleiste und dem Nachrichtenfeld unten.",
+                  "caption": "Cognos passt sich an die Bildschirmgrösse deines Handys an."
+                }
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "title": "Halte deinen Account-Schlüssel beim ersten Mal bereit",
+                  "body": "Auf dem iPhone hat das angeheftete Cognos einen eigenen Speicher, getrennt von Safari — beim ersten Öffnen musst du dich deshalb <a href=\"/docs/signing-in\">anmelden</a> und einmal deinen <a href=\"/docs/account-key\">Account-Schlüssel</a> eingeben. Auf Android bist du meist noch von Chrome aus angemeldet. So oder so verhält es sich nach diesem ersten Entsperren wie jedes andere Gerät, das du schon entsperrt hast."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
   }

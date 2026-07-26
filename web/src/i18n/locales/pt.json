@@ -3314,6 +3314,96 @@
           }
         ],
         "related": ["your-privacy", "generating-documents", "deleting-your-account"]
+      },
+      "cognos-on-your-phone": {
+        "navTitle": "O Cognos no teu telemóvel",
+        "metaTitle": "O Cognos no teu telemóvel — Documentação Cognos",
+        "metaDescription": "Ainda não há uma aplicação do Cognos nas lojas de aplicações, mas podes fixar o Cognos no ecrã principal do teu telemóvel para um acesso num só toque, no iPhone e no Android.",
+        "title": "O Cognos no teu telemóvel",
+        "lead": "Ainda não há uma aplicação do Cognos nas lojas de aplicações — e não precisas de uma. Fixa o Cognos no ecrã principal e ele abre com um só toque, na sua própria janela, tal como uma aplicação.",
+        "time": "2 min",
+        "updated": "26 de julho de 2026",
+        "sections": [
+          {
+            "heading": "No iPhone ou iPad (Safari)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Abre o Cognos no Safari",
+                    "body": "Vai a <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Toca no botão Partilhar",
+                    "body": "O quadrado com uma seta a apontar para cima, na parte inferior do ecrã (no canto superior direito no iPad)."
+                  },
+                  {
+                    "title": "Toca em <b>Adicionar ao ecrã principal</b>",
+                    "body": "Desliza para baixo no menu de partilha se não o vires logo de início."
+                  },
+                  {
+                    "title": "Toca em <b>Adicionar</b>",
+                    "body": "O ícone do Cognos aparece no teu ecrã principal."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "No Android (Chrome)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Abre o Cognos no Chrome",
+                    "body": "Vai a <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Toca no menu de três pontos",
+                    "body": "No canto superior direito do navegador."
+                  },
+                  {
+                    "title": "Toca em <b>Adicionar ao ecrã principal</b>",
+                    "body": "Nalguns telemóveis isto aparece como <b>Instalar aplicação</b> — ambos fazem o mesmo."
+                  },
+                  {
+                    "title": "Confirma com <b>Adicionar</b>",
+                    "body": "O ícone do Cognos aparece no teu ecrã principal."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Estás a usar outro navegador? A maioria dos navegadores tem uma opção semelhante — procura <b>Adicionar ao ecrã principal</b> ou <b>Instalar</b> no menu ou no menu de partilha do navegador."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "O que esperar",
+            "blocks": [
+              {
+                "p": "Ao tocar no ícone, o Cognos abre na sua própria janela, sem a barra de endereço nem os separadores do navegador. É o mesmo Cognos que tens no computador — as tuas conversas, projetos e definições estão todos lá, e tens sempre a versão mais recente sem precisares de atualizar nada."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mobile-home-screen.png",
+                  "alt": "O ecrã de conversa do Cognos apresentado no tamanho de telemóvel, com a barra lateral fechada e a caixa de mensagens na parte inferior.",
+                  "caption": "O Cognos adapta-se ao ecrã do teu telemóvel."
+                }
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "title": "Tem a tua Chave de Conta à mão da primeira vez",
+                  "body": "No iPhone, o Cognos fixado mantém o seu próprio armazenamento, separado do Safari — por isso, da primeira vez que o abrires, vais <a href=\"/docs/signing-in\">iniciar sessão</a> e introduzir a tua <a href=\"/docs/account-key\">Chave de Conta</a> uma vez. No Android, normalmente ainda tens sessão iniciada a partir do Chrome. De qualquer forma, depois desse primeiro desbloqueio, comporta-se como qualquer outro dispositivo que já tenhas desbloqueado."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
   }

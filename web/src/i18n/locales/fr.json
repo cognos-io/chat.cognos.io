@@ -3312,6 +3312,96 @@
           }
         ],
         "related": ["your-privacy", "generating-documents", "deleting-your-account"]
+      },
+      "cognos-on-your-phone": {
+        "navTitle": "Cognos sur votre téléphone",
+        "metaTitle": "Cognos sur votre téléphone — Documentation Cognos",
+        "metaDescription": "Il n'existe pas encore d'application Cognos dans les stores, mais vous pouvez épingler Cognos à l'écran d'accueil de votre téléphone pour y accéder en un geste, sur iPhone comme sur Android.",
+        "title": "Cognos sur votre téléphone",
+        "lead": "Il n'existe pas encore d'application Cognos dans les stores — et vous n'en avez pas besoin. Épinglez Cognos à votre écran d'accueil : il s'ouvre en un geste, dans sa propre fenêtre, comme une application.",
+        "time": "2 min",
+        "updated": "26 juillet 2026",
+        "sections": [
+          {
+            "heading": "Sur iPhone ou iPad (Safari)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Ouvrez Cognos dans Safari",
+                    "body": "Allez sur <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Appuyez sur le bouton Partager",
+                    "body": "Le carré avec une flèche vers le haut, en bas de l'écran (en haut à droite sur iPad)."
+                  },
+                  {
+                    "title": "Appuyez sur <b>Sur l'écran d'accueil</b>",
+                    "body": "Faites défiler la feuille de partage si vous ne le voyez pas immédiatement."
+                  },
+                  {
+                    "title": "Appuyez sur <b>Ajouter</b>",
+                    "body": "L'icône Cognos apparaît sur votre écran d'accueil."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Sur Android (Chrome)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Ouvrez Cognos dans Chrome",
+                    "body": "Allez sur <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Appuyez sur le menu à trois points",
+                    "body": "Dans le coin supérieur droit du navigateur."
+                  },
+                  {
+                    "title": "Appuyez sur <b>Ajouter à l'écran d'accueil</b>",
+                    "body": "Sur certains téléphones, cette option s'appelle <b>Installer l'application</b> — les deux reviennent au même."
+                  },
+                  {
+                    "title": "Confirmez avec <b>Ajouter</b>",
+                    "body": "L'icône Cognos apparaît sur votre écran d'accueil."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Vous utilisez un autre navigateur ? La plupart des navigateurs proposent une option similaire — recherchez <b>Ajouter à l'écran d'accueil</b> ou <b>Installer</b> dans le menu ou la feuille de partage du navigateur."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "À quoi vous attendre",
+            "blocks": [
+              {
+                "p": "En appuyant sur l'icône, Cognos s'ouvre dans sa propre fenêtre, sans la barre d'adresse ni les onglets du navigateur. C'est le même Cognos que sur votre ordinateur — vos discussions, projets et paramètres sont tous là, et vous disposez toujours de la dernière version sans rien avoir à mettre à jour."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mobile-home-screen.png",
+                  "alt": "L'écran de discussion Cognos affiché à la taille d'un téléphone, avec la barre latérale repliée et la zone de message en bas.",
+                  "caption": "Cognos s'adapte à l'écran de votre téléphone."
+                }
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "title": "Ayez votre clé de compte à portée de main la première fois",
+                  "body": "Sur iPhone, Cognos épinglé conserve son propre espace de stockage, distinct de celui de Safari — la première fois que vous l'ouvrez, vous devrez donc <a href=\"/docs/signing-in\">vous connecter</a> et saisir votre <a href=\"/docs/account-key\">clé de compte</a> une fois. Sur Android, vous êtes généralement toujours connecté depuis Chrome. Dans les deux cas, après ce premier déverrouillage, il se comporte comme n'importe quel autre appareil que vous avez déverrouillé."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
   }

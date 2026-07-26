@@ -3308,6 +3308,96 @@
           }
         ],
         "related": ["your-privacy", "generating-documents", "deleting-your-account"]
+      },
+      "cognos-on-your-phone": {
+        "navTitle": "Cognos sul tuo telefono",
+        "metaTitle": "Cognos sul tuo telefono — Documentazione Cognos",
+        "metaDescription": "Non esiste ancora un'app Cognos negli store, ma puoi aggiungere Cognos alla schermata Home del tuo telefono per un accesso con un tocco su iPhone e Android.",
+        "title": "Cognos sul tuo telefono",
+        "lead": "Non esiste ancora un'app Cognos negli store — e non ne hai bisogno. Aggiungi Cognos alla schermata Home e si apre con un tocco, in una finestra tutta sua, proprio come un'app.",
+        "time": "2 min",
+        "updated": "26 luglio 2026",
+        "sections": [
+          {
+            "heading": "Su iPhone o iPad (Safari)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Apri Cognos in Safari",
+                    "body": "Vai su <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Tocca il pulsante Condividi",
+                    "body": "Il quadrato con la freccia verso l'alto, in fondo allo schermo (in alto a destra su iPad)."
+                  },
+                  {
+                    "title": "Tocca <b>Aggiungi alla schermata Home</b>",
+                    "body": "Scorri verso il basso nel foglio di condivisione se non lo vedi subito."
+                  },
+                  {
+                    "title": "Tocca <b>Aggiungi</b>",
+                    "body": "L'icona di Cognos appare sulla tua schermata Home."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Su Android (Chrome)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Apri Cognos in Chrome",
+                    "body": "Vai su <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Tocca il menu a tre puntini",
+                    "body": "Nell'angolo in alto a destra del browser."
+                  },
+                  {
+                    "title": "Tocca <b>Aggiungi a schermata Home</b>",
+                    "body": "Su alcuni telefoni è indicato come <b>Installa app</b> — fanno entrambi la stessa cosa."
+                  },
+                  {
+                    "title": "Conferma con <b>Aggiungi</b>",
+                    "body": "L'icona di Cognos appare sulla tua schermata Home."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Usi un browser diverso? La maggior parte dei browser ha un'opzione simile — cerca <b>Aggiungi a schermata Home</b> o <b>Installa</b> nel menu o nel foglio di condivisione del browser."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Cosa aspettarti",
+            "blocks": [
+              {
+                "p": "Toccando l'icona, Cognos si apre in una finestra tutta sua, senza la barra degli indirizzi o le schede del browser. È lo stesso Cognos del tuo computer — le tue chat, i progetti e le impostazioni sono tutti lì, e hai sempre l'ultima versione senza dover aggiornare nulla."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mobile-home-screen.png",
+                  "alt": "La schermata di chat di Cognos mostrata in formato telefono, con la barra laterale ridotta e il campo messaggio in basso.",
+                  "caption": "Cognos si adatta allo schermo del tuo telefono."
+                }
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "title": "Tieni pronta la tua Chiave dell'account la prima volta",
+                  "body": "Su iPhone, Cognos aggiunto alla schermata Home mantiene una propria memoria, separata da Safari — quindi la prima volta che lo apri dovrai <a href=\"/docs/signing-in\">accedere</a> e inserire la tua <a href=\"/docs/account-key\">Chiave dell'account</a> una volta. Su Android di solito risulti già connesso da Chrome. In entrambi i casi, dopo quel primo sblocco si comporta come qualsiasi altro dispositivo che hai già sbloccato."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
   }

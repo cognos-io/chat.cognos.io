@@ -3318,6 +3318,96 @@
           }
         ],
         "related": ["your-privacy", "generating-documents", "deleting-your-account"]
+      },
+      "cognos-on-your-phone": {
+        "navTitle": "Cognos en tu móvil",
+        "metaTitle": "Cognos en tu móvil — Documentación de Cognos",
+        "metaDescription": "Todavía no hay una aplicación de Cognos en las tiendas de aplicaciones, pero puedes anclar Cognos a la pantalla de inicio de tu móvil para acceder con un toque en iPhone y Android.",
+        "title": "Cognos en tu móvil",
+        "lead": "Todavía no hay una aplicación de Cognos en las tiendas de aplicaciones — y no la necesitas. Ancla Cognos a tu pantalla de inicio y se abrirá con un solo toque, en su propia ventana, igual que una aplicación.",
+        "time": "2 min",
+        "updated": "26 de julio de 2026",
+        "sections": [
+          {
+            "heading": "En iPhone o iPad (Safari)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Abre Cognos en Safari",
+                    "body": "Ve a <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Toca el botón Compartir",
+                    "body": "El cuadrado con una flecha hacia arriba, en la parte inferior de la pantalla (arriba a la derecha en iPad)."
+                  },
+                  {
+                    "title": "Toca <b>Añadir a pantalla de inicio</b>",
+                    "body": "Desplázate hacia abajo en el menú para compartir si no lo ves enseguida."
+                  },
+                  {
+                    "title": "Toca <b>Añadir</b>",
+                    "body": "El icono de Cognos aparecerá en tu pantalla de inicio."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "En Android (Chrome)",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Abre Cognos en Chrome",
+                    "body": "Ve a <a href=\"https://app.cognos.io\">app.cognos.io</a>."
+                  },
+                  {
+                    "title": "Toca el menú de los tres puntos",
+                    "body": "En la esquina superior derecha del navegador."
+                  },
+                  {
+                    "title": "Toca <b>Añadir a pantalla de inicio</b>",
+                    "body": "En algunos móviles aparece como <b>Instalar aplicación</b> — ambas opciones hacen lo mismo."
+                  },
+                  {
+                    "title": "Confirma con <b>Añadir</b>",
+                    "body": "El icono de Cognos aparecerá en tu pantalla de inicio."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "¿Usas otro navegador? La mayoría tienen una opción similar — busca <b>Añadir a pantalla de inicio</b> o <b>Instalar</b> en el menú del navegador o en el menú para compartir."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Qué esperar",
+            "blocks": [
+              {
+                "p": "Al tocar el icono, Cognos se abre en su propia ventana, sin la barra de direcciones ni las pestañas del navegador. Es el mismo Cognos que en tu ordenador — tus chats, proyectos y ajustes están todos ahí, y siempre tienes la última versión sin necesidad de actualizar nada."
+              },
+              {
+                "figure": {
+                  "src": "/docs-media/mobile-home-screen.png",
+                  "alt": "La pantalla de chat de Cognos mostrada a tamaño de móvil, con la barra lateral contraída y el cuadro de mensaje en la parte inferior.",
+                  "caption": "Cognos se adapta a la pantalla de tu móvil."
+                }
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "title": "Ten a mano tu Clave de cuenta la primera vez",
+                  "body": "En iPhone, la versión anclada de Cognos mantiene su propio almacenamiento, independiente de Safari — así que la primera vez que la abras, tendrás que <a href=\"/docs/signing-in\">iniciar sesión</a> e introducir tu <a href=\"/docs/account-key\">Clave de cuenta</a> una vez. En Android normalmente seguirás con la sesión iniciada desde Chrome. En cualquier caso, después de ese primer desbloqueo se comportará como cualquier otro dispositivo que ya hayas desbloqueado."
+                }
+              }
+            ]
+          }
+        ],
+        "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
   }
