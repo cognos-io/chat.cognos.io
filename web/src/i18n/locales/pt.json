@@ -1047,17 +1047,41 @@
       "create-account": {
         "navTitle": "Cria a tua conta",
         "metaTitle": "Cria a tua conta — Documentação Cognos",
-        "metaDescription": "Regista-te no Cognos com um e-mail e uma palavra-passe e depois guarda a tua Chave de Conta. Um guia passo a passo que demora poucos minutos.",
+        "metaDescription": "Regista-te no Cognos com e-mail e palavra-passe ou Continuar com o Google, e depois guarda a tua Chave de Conta.",
         "title": "Cria a tua conta",
-        "lead": "Regista-te com um e-mail e uma palavra-passe e depois guarda a tua Chave de Conta. Tudo isto demora poucos minutos.",
+        "lead": "Cria uma conta com e-mail e palavra-passe, ou escolhe Continuar com o Google — e depois guarda a tua Chave de Conta. O passo da Chave de Conta é o mesmo em ambos os casos.",
         "time": "2 min",
-        "updated": "22 de julho de 2026",
+        "updated": "26 de julho de 2026",
         "needs": [
-          "Um endereço de e-mail que possas consultar agora",
-          "Uma palavra-passe com pelo menos 12 caracteres",
+          "Um endereço de e-mail, ou uma conta Google",
+          "Uma palavra-passe com pelo menos 12 caracteres se te registares com e-mail",
           "Um local seguro para guardar um pequeno ficheiro de texto (um gestor de palavras-passe é ideal)"
         ],
         "sections": [
+          {
+            "heading": "Duas formas de criar uma conta",
+            "blocks": [
+              {
+                "p": "Podes:"
+              },
+              {
+                "ul": [
+                  "Registar-te com <b>e-mail e palavra-passe</b>, ou",
+                  "Escolher <b>Continuar com o Google</b> na página de registo ou de início de sessão."
+                ]
+              },
+              {
+                "p": "De qualquer forma, o Cognos pede-te depois para guardares a tua <a href=\"/docs/account-key\">Chave de Conta</a>. O Google nunca recebe essa chave, e o Cognos nunca guarda uma cópia que consiga ler."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "Já tens uma conta com palavra-passe?",
+                  "body": "Se o Google usar o mesmo e-mail que uma conta com palavra-passe existente, o Cognos não as funde automaticamente. Inicia sessão com a tua palavra-passe e depois liga o Google em <a href=\"https://app.cognos.io/account/security\">Segurança e chaves</a>."
+                }
+              }
+            ]
+          },
           {
             "heading": "Regista-te",
             "blocks": [
@@ -1069,7 +1093,7 @@
                   },
                   {
                     "title": "Introduz o teu e-mail e uma palavra-passe",
-                    "body": "Usa pelo menos 12 caracteres. A tua palavra-passe só serve para iniciar sessão — nunca desbloqueia os teus dados, e podes repô-la mais tarde por e-mail."
+                    "body": "Usa pelo menos 12 caracteres. A tua palavra-passe só serve para iniciar sessão — nunca desbloqueia os teus dados, e podes repô-la mais tarde por e-mail. Ou salta este passo e escolhe <b>Continuar com o Google</b>."
                   },
                   {
                     "title": "Seleciona Criar conta",
@@ -1282,14 +1306,31 @@
       "signing-in": {
         "navTitle": "Iniciar sessão",
         "metaTitle": "Iniciar sessão — Documentação Cognos",
-        "metaDescription": "Inicia sessão no Cognos com o teu e-mail e palavra-passe. Num novo dispositivo, também vais introduzir a tua Chave de Conta para desbloquear os teus dados.",
+        "metaDescription": "Inicia sessão no Cognos com e-mail e palavra-passe ou Continuar com o Google. Num novo dispositivo, também vais introduzir a tua Chave de Conta.",
         "title": "Iniciar sessão",
-        "lead": "Inicia sessão com o teu e-mail e palavra-passe. Num novo dispositivo, também vais introduzir a tua Chave de Conta para desbloquear os teus dados.",
+        "lead": "Inicia sessão com o teu e-mail e palavra-passe, ou escolhe Continuar com o Google. Num novo dispositivo, também vais introduzir a tua Chave de Conta para desbloquear os teus dados.",
         "time": "2 min",
-        "updated": "22 de julho de 2026",
+        "updated": "26 de julho de 2026",
         "sections": [
           {
-            "heading": "Inicia sessão",
+            "heading": "Iniciar sessão com o Google",
+            "blocks": [
+              {
+                "p": "Na <a href=\"https://app.cognos.io/auth/login\">página de início de sessão</a>, escolhe <b>Continuar com o Google</b>. Depois de o Google confirmar quem és, o Cognos inicia a tua sessão."
+              },
+              {
+                "p": "Se for a primeira vez, ainda passas pelos passos da Chave de Conta e do Kit de Emergência — igual ao registo por e-mail."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "O Google fica a saber que usas o Cognos quando inicias sessão desta forma. A tua Chave de Conta e o conteúdo das tuas conversas nunca são enviados ao Google."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Iniciar sessão com e-mail e palavra-passe",
             "blocks": [
               {
                 "steps": [
@@ -2438,7 +2479,7 @@
         "title": "Autenticação de dois fatores",
         "lead": "Adiciona um segundo passo ao início de sessão — um código de 6 dígitos de uma aplicação de autenticação. Protege o teu início de sessão, não os teus dados.",
         "time": "4 min de leitura",
-        "updated": "22 de julho de 2026",
+        "updated": "26 de julho de 2026",
         "sections": [
           {
             "heading": "Ativa-a",
@@ -2495,6 +2536,17 @@
                   "variant": "security",
                   "body": "Não há reposição da autenticação de dois fatores. Se perderes tanto a tua aplicação de autenticação como todos os teus <a href=\"/docs/recovery-codes\">códigos de recuperação</a>, não vais conseguir iniciar sessão — por isso mantém esses códigos em segurança."
                 }
+              }
+            ]
+          },
+          {
+            "heading": "Início de sessão com o Google",
+            "blocks": [
+              {
+                "p": "A autenticação de dois fatores com aplicação aplica-se quando inicias sessão com o teu <b>e-mail e palavra-passe</b>. Iniciar sessão com o Google não pede atualmente um código de autenticação Cognos."
+              },
+              {
+                "p": "Contas só com Google não configuram a autenticação de dois fatores Cognos (não há palavra-passe Cognos para confirmar a inscrição)."
               }
             ]
           }
@@ -2555,9 +2607,9 @@
         "metaTitle": "Repor a tua palavra-passe — Documentação Cognos",
         "metaDescription": "Esqueceste-te da palavra-passe? Repõe-na por e-mail. Isto nunca afeta as tuas conversas encriptadas nem a tua Chave de Conta.",
         "title": "Repor a tua palavra-passe",
-        "lead": "Esqueceste-te da palavra-passe? Repõe-na por e-mail. Isto nunca afeta as tuas conversas encriptadas nem a tua Chave de Conta.",
+        "lead": "Esqueceste-te da palavra-passe do Cognos? Repõe-na por e-mail. Isto nunca afeta as tuas conversas encriptadas nem a tua Chave de Conta. Contas só com Google recuperam o acesso através do Google, não pela reposição de palavra-passe do Cognos.",
         "time": "2 min",
-        "updated": "22 de julho de 2026",
+        "updated": "26 de julho de 2026",
         "sections": [
           {
             "heading": "Repõe-na",
@@ -2601,6 +2653,17 @@
                 "p": "Se tiveres a <a href=\"/docs/multi-factor-authentication\">autenticação de dois fatores</a> ativada, repor a palavra-passe não a contorna — vais continuar a precisar do teu código."
               }
             ]
+          },
+          {
+            "heading": "Contas só com Google",
+            "blocks": [
+              {
+                "p": "Se só usares <b>Continuar com o Google</b> e nunca definiste uma palavra-passe Cognos, não há nada para repor aqui. Usa a <a href=\"https://accounts.google.com/signin/recovery\">recuperação da conta Google</a> se não conseguires aceder à tua conta Google."
+              },
+              {
+                "p": "Se tiveres tanto uma palavra-passe Cognos como o Google ligado, a reposição de palavra-passe continua a funcionar para a palavra-passe Cognos como descrito acima."
+              }
+            ]
           }
         ],
         "related": ["signing-in", "account-key", "multi-factor-authentication"]
@@ -2612,13 +2675,24 @@
         "title": "A tua privacidade",
         "lead": "Um resumo em linguagem simples do que o Cognos pode e não pode ver — e dos controlos que mantêm isso assim.",
         "time": "3 min de leitura",
-        "updated": "22 de julho de 2026",
+        "updated": "26 de julho de 2026",
         "sections": [
           {
             "heading": "O que não conseguimos ver",
             "blocks": [
               {
                 "p": "O conteúdo das tuas conversas guardadas, <a href=\"/docs/attachments\">anexos</a>, <a href=\"/docs/bookmarks\">marcadores</a> e <a href=\"/docs/account-memory\">memória</a> é mantido numa forma que não conseguimos ler. Só é desbloqueado no teu dispositivo, com a tua <a href=\"/docs/account-key\">Chave de Conta</a>."
+              }
+            ]
+          },
+          {
+            "heading": "Iniciar sessão com o Google",
+            "blocks": [
+              {
+                "p": "Se escolheres Continuar com o Google, o Google vê que usas o Cognos e os identificadores necessários para iniciar a tua sessão. O Cognos continua a nunca receber a tua Chave de Conta, e as conversas guardadas permanecem encriptadas para que o Cognos não as consiga ler."
+              },
+              {
+                "p": "Mais detalhes na <a href=\"/privacy\">Política de Privacidade</a>."
               }
             ]
           },
@@ -2786,11 +2860,11 @@
       "deleting-your-account": {
         "navTitle": "Eliminar a tua conta",
         "metaTitle": "Eliminar a tua conta — Documentação Cognos",
-        "metaDescription": "Elimina permanentemente a tua conta Cognos e todos os teus dados pessoais. O que fazer primeiro, o que é removido e o que é mantido.",
+        "metaDescription": "Elimina permanentemente a tua conta Cognos. Contas com palavra-passe confirmam com a palavra-passe; contas só com Google voltam a autenticar-se com o Google.",
         "title": "Eliminar a tua conta",
         "lead": "Podes eliminar permanentemente a tua conta e todos os teus dados pessoais. Isto não pode ser anulado.",
         "time": "3 min de leitura",
-        "updated": "22 de julho de 2026",
+        "updated": "26 de julho de 2026",
         "sections": [
           {
             "heading": "Antes de começares",
@@ -2800,6 +2874,32 @@
                   "Cancela primeiro qualquer <a href=\"/docs/managing-your-subscription\">subscrição</a> paga.",
                   "Se fores dono de uma <a href=\"/docs/organisations-overview\">Organização</a>, transfere-a ou dissolve-a primeiro."
                 ]
+              }
+            ]
+          },
+          {
+            "heading": "Se te registaste só com o Google",
+            "blocks": [
+              {
+                "p": "Contas só com Google não têm palavra-passe Cognos. Para eliminar:"
+              },
+              {
+                "steps": [
+                  {
+                    "title": "Escreve DELETE para confirmar",
+                    "body": "A mesma frase de confirmação que numa conta com palavra-passe."
+                  },
+                  {
+                    "title": "Continuar com o Google",
+                    "body": "O Cognos pede ao Google para confirmar que ainda és tu e depois conclui a eliminação."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Uma sessão iniciada por si só não chega — tens de concluir o passo do Google."
+                }
               }
             ]
           },

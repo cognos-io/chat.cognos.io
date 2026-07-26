@@ -1041,17 +1041,41 @@
       "create-account": {
         "navTitle": "Crea il tuo account",
         "metaTitle": "Crea il tuo account — Documentazione Cognos",
-        "metaDescription": "Registrati su Cognos con un'email e una password, poi salva la tua Chiave dell'account. Una guida passo dopo passo che richiede un paio di minuti.",
+        "metaDescription": "Registrati su Cognos con email e password o Continua con Google, poi salva la tua Chiave dell'account.",
         "title": "Crea il tuo account",
-        "lead": "Registrati con un'email e una password, poi salva la tua Chiave dell'account. Il tutto richiede un paio di minuti.",
+        "lead": "Crea un account con email e password, o scegli Continua con Google — poi salva la tua Chiave dell'account. Il passaggio della Chiave dell'account è lo stesso in entrambi i casi.",
         "time": "2 min",
-        "updated": "22 luglio 2026",
+        "updated": "26 luglio 2026",
         "needs": [
-          "Un indirizzo email che puoi controllare subito",
-          "Una password di almeno 12 caratteri",
+          "Un indirizzo email, o un account Google",
+          "Una password di almeno 12 caratteri se ti registri con email",
           "Un posto sicuro dove conservare un piccolo file di testo (un gestore di password è l'ideale)"
         ],
         "sections": [
+          {
+            "heading": "Due modi per creare un account",
+            "blocks": [
+              {
+                "p": "Puoi:"
+              },
+              {
+                "ul": [
+                  "Registrarti con <b>email e password</b>, oppure",
+                  "Scegliere <b>Continua con Google</b> nella pagina di registrazione o di accesso."
+                ]
+              },
+              {
+                "p": "In entrambi i casi, Cognos ti chiede poi di salvare la tua <a href=\"/docs/account-key\">Chiave dell'account</a>. Google non riceve mai quella chiave, e Cognos non conserva mai una copia che possa leggere."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "Hai già un account con password?",
+                  "body": "Se Google usa la stessa email di un account con password esistente, Cognos non li unirà automaticamente. Accedi con la tua password, poi collega Google in <a href=\"https://app.cognos.io/account/security\">Sicurezza e chiavi</a>."
+                }
+              }
+            ]
+          },
           {
             "heading": "Registrati",
             "blocks": [
@@ -1063,7 +1087,7 @@
                   },
                   {
                     "title": "Inserisci la tua email e una password",
-                    "body": "Usa almeno 12 caratteri. La tua password serve solo per accedere — non sblocca mai i tuoi dati, e potrai reimpostarla in seguito via email."
+                    "body": "Usa almeno 12 caratteri. La tua password serve solo per accedere — non sblocca mai i tuoi dati, e potrai reimpostarla in seguito via email. Oppure salta questo passaggio e scegli <b>Continua con Google</b>."
                   },
                   {
                     "title": "Seleziona Crea account",
@@ -1276,14 +1300,31 @@
       "signing-in": {
         "navTitle": "Accesso",
         "metaTitle": "Accesso — Documentazione Cognos",
-        "metaDescription": "Accedi a Cognos con la tua email e password. Su un nuovo dispositivo dovrai anche inserire la tua Chiave dell'account per sbloccare i tuoi dati.",
+        "metaDescription": "Accedi a Cognos con email e password o Continua con Google. Su un nuovo dispositivo dovrai anche inserire la tua Chiave dell'account.",
         "title": "Accesso",
-        "lead": "Accedi con la tua email e password. Su un nuovo dispositivo, dovrai anche inserire la tua Chiave dell'account per sbloccare i tuoi dati.",
+        "lead": "Accedi con la tua email e password, o scegli Continua con Google. Su un nuovo dispositivo, dovrai anche inserire la tua Chiave dell'account per sbloccare i tuoi dati.",
         "time": "2 min",
-        "updated": "22 luglio 2026",
+        "updated": "26 luglio 2026",
         "sections": [
           {
-            "heading": "Accedi",
+            "heading": "Accedere con Google",
+            "blocks": [
+              {
+                "p": "Nella <a href=\"https://app.cognos.io/auth/login\">pagina di accesso</a>, scegli <b>Continua con Google</b>. Dopo che Google conferma chi sei, Cognos ti connette."
+              },
+              {
+                "p": "Se è la prima volta, passi comunque per i passaggi della Chiave dell'account e del kit di emergenza — come con la registrazione via email."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Google viene a sapere che usi Cognos quando accedi in questo modo. La tua Chiave dell'account e il contenuto delle tue chat non vengono mai inviati a Google."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Accedere con email e password",
             "blocks": [
               {
                 "steps": [
@@ -2432,7 +2473,7 @@
         "title": "Autenticazione a due fattori",
         "lead": "Aggiungi un secondo passaggio all'accesso — un codice a 6 cifre da un'app di autenticazione. Protegge il tuo accesso, non i tuoi dati.",
         "time": "4 min di lettura",
-        "updated": "22 luglio 2026",
+        "updated": "26 luglio 2026",
         "sections": [
           {
             "heading": "Attivala",
@@ -2489,6 +2530,17 @@
                   "variant": "security",
                   "body": "Non esiste una reimpostazione dell'autenticazione a due fattori. Se perdi sia la tua app di autenticazione sia tutti i tuoi <a href=\"/docs/recovery-codes\">codici di recupero</a>, non potrai accedere — quindi conserva quei codici al sicuro."
                 }
+              }
+            ]
+          },
+          {
+            "heading": "Accesso con Google",
+            "blocks": [
+              {
+                "p": "L'autenticazione a due fattori con app si applica quando accedi con la tua <b>email e password</b>. Accedere con Google non chiede attualmente un codice dell'autenticatore Cognos."
+              },
+              {
+                "p": "Gli account solo Google non configurano l'autenticazione a due fattori Cognos (non c'è una password Cognos per confermare l'iscrizione)."
               }
             ]
           }
@@ -2549,9 +2601,9 @@
         "metaTitle": "Reimpostare la password — Documentazione Cognos",
         "metaDescription": "Hai dimenticato la password? Reimpostala via email. Questo non influisce mai sulle tue chat crittografate o sulla tua Chiave dell'account.",
         "title": "Reimpostare la password",
-        "lead": "Hai dimenticato la password? Reimpostala via email. Questo non influisce mai sulle tue chat crittografate o sulla tua Chiave dell'account.",
+        "lead": "Hai dimenticato la password di Cognos? Reimpostala via email. Questo non influisce mai sulle tue chat crittografate o sulla tua Chiave dell'account. Gli account solo Google recuperano l'accesso tramite Google, non con la reimpostazione della password Cognos.",
         "time": "2 min",
-        "updated": "22 luglio 2026",
+        "updated": "26 luglio 2026",
         "sections": [
           {
             "heading": "Reimpostala",
@@ -2595,6 +2647,17 @@
                 "p": "Se hai attivato l'<a href=\"/docs/multi-factor-authentication\">autenticazione a due fattori</a>, una reimpostazione della password non la aggira — avrai comunque bisogno del tuo codice."
               }
             ]
+          },
+          {
+            "heading": "Account solo Google",
+            "blocks": [
+              {
+                "p": "Se usi solo <b>Continua con Google</b> e non hai mai impostato una password Cognos, qui non c'è nulla da reimpostare. Usa il <a href=\"https://accounts.google.com/signin/recovery\">recupero dell'account Google</a> se non riesci ad accedere al tuo account Google."
+              },
+              {
+                "p": "Se hai sia una password Cognos sia Google collegato, la reimpostazione della password funziona ancora per la password Cognos come descritto sopra."
+              }
+            ]
           }
         ],
         "related": ["signing-in", "account-key", "multi-factor-authentication"]
@@ -2606,13 +2669,24 @@
         "title": "La tua privacy",
         "lead": "Un riepilogo in parole semplici di cosa Cognos può vedere e cosa no — e i controlli che lo mantengono così.",
         "time": "3 min di lettura",
-        "updated": "22 luglio 2026",
+        "updated": "26 luglio 2026",
         "sections": [
           {
             "heading": "Cosa non possiamo vedere",
             "blocks": [
               {
                 "p": "Il contenuto delle tue conversazioni salvate, <a href=\"/docs/attachments\">allegati</a>, <a href=\"/docs/bookmarks\">segnalibri</a> e <a href=\"/docs/account-memory\">memoria</a> è conservato in una forma che non possiamo leggere. Viene sbloccato solo sul tuo dispositivo, con la tua <a href=\"/docs/account-key\">Chiave dell'account</a>."
+              }
+            ]
+          },
+          {
+            "heading": "Accesso con Google",
+            "blocks": [
+              {
+                "p": "Se scegli Continua con Google, Google vede che usi Cognos e gli identificatori necessari per farti accedere. Cognos non riceve mai la tua Chiave dell'account, e le chat salvate restano crittografate così Cognos non può leggerle."
+              },
+              {
+                "p": "Maggiori dettagli nell'<a href=\"/privacy\">Informativa sulla privacy</a>."
               }
             ]
           },
@@ -2780,11 +2854,11 @@
       "deleting-your-account": {
         "navTitle": "Eliminare il tuo account",
         "metaTitle": "Eliminare il tuo account — Documentazione Cognos",
-        "metaDescription": "Elimina definitivamente il tuo account Cognos e tutti i tuoi dati personali. Cosa fare prima, cosa viene rimosso e cosa viene conservato.",
+        "metaDescription": "Elimina definitivamente il tuo account Cognos. Gli account con password confermano con la password; gli account solo Google si riautenticano con Google.",
         "title": "Eliminare il tuo account",
         "lead": "Puoi eliminare definitivamente il tuo account e tutti i tuoi dati personali. Questo non può essere annullato.",
         "time": "3 min di lettura",
-        "updated": "22 luglio 2026",
+        "updated": "26 luglio 2026",
         "sections": [
           {
             "heading": "Prima di iniziare",
@@ -2794,6 +2868,32 @@
                   "Annulla prima qualsiasi <a href=\"/docs/managing-your-subscription\">abbonamento</a> a pagamento.",
                   "Se possiedi un'<a href=\"/docs/organisations-overview\">Organizzazione</a>, trasferiscila o scioglila prima."
                 ]
+              }
+            ]
+          },
+          {
+            "heading": "Se ti sei registrato solo con Google",
+            "blocks": [
+              {
+                "p": "Gli account solo Google non hanno una password Cognos. Per eliminare:"
+              },
+              {
+                "steps": [
+                  {
+                    "title": "Digita DELETE per confermare",
+                    "body": "La stessa frase di conferma di un account con password."
+                  },
+                  {
+                    "title": "Continua con Google",
+                    "body": "Cognos chiede a Google di confermare che sei ancora tu, poi completa l'eliminazione."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Una sessione attiva da sola non basta — devi completare il passaggio Google."
+                }
               }
             ]
           },

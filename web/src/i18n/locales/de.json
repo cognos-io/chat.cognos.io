@@ -1041,17 +1041,41 @@
       "create-account": {
         "navTitle": "Erstelle dein Konto",
         "metaTitle": "Erstelle dein Konto — Cognos-Dokumentation",
-        "metaDescription": "Registriere dich bei Cognos mit E-Mail und Passwort und speichere danach deinen Account-Schlüssel. Eine Schritt-für-Schritt-Anleitung, die ein paar Minuten dauert.",
+        "metaDescription": "Registriere dich bei Cognos mit E-Mail und Passwort oder Mit Google fortfahren, und speichere danach deinen Account-Schlüssel.",
         "title": "Erstelle dein Konto",
-        "lead": "Registriere dich mit E-Mail und Passwort und speichere danach deinen Account-Schlüssel. Das Ganze dauert nur ein paar Minuten.",
+        "lead": "Erstelle ein Konto mit E-Mail und Passwort oder wähle Mit Google fortfahren — speichere danach deinen Account-Schlüssel. Der Account-Schlüssel-Schritt ist in beiden Fällen derselbe.",
         "time": "2 Min.",
-        "updated": "22. Juli 2026",
+        "updated": "26. Juli 2026",
         "needs": [
-          "Eine E-Mail-Adresse, die du jetzt abrufen kannst",
-          "Ein Passwort mit mindestens 12 Zeichen",
+          "Eine E-Mail-Adresse oder ein Google-Konto",
+          "Ein Passwort mit mindestens 12 Zeichen, wenn du dich per E-Mail registrierst",
           "Einen sicheren Ort für eine kleine Textdatei (ein Passwortmanager ist ideal)"
         ],
         "sections": [
+          {
+            "heading": "Zwei Wege, ein Konto zu erstellen",
+            "blocks": [
+              {
+                "p": "Du kannst:"
+              },
+              {
+                "ul": [
+                  "Dich mit <b>E-Mail und Passwort</b> registrieren, oder",
+                  "<b>Mit Google fortfahren</b> auf der Registrierungs- oder Anmeldeseite wählen."
+                ]
+              },
+              {
+                "p": "In beiden Fällen bittet Cognos dich danach, deinen <a href=\"/docs/account-key\">Account-Schlüssel</a> zu speichern. Google erhält diesen Schlüssel nie, und Cognos speichert keine lesbare Kopie."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "Hast du schon ein Passwort-Konto?",
+                  "body": "Wenn Google dieselbe E-Mail-Adresse wie ein bestehendes Passwort-Konto nutzt, führt Cognos sie nicht automatisch zusammen. Melde dich mit deinem Passwort an und verbinde Google unter <a href=\"https://app.cognos.io/account/security\">Sicherheit &amp; Schlüssel</a>."
+                }
+              }
+            ]
+          },
           {
             "heading": "Registrieren",
             "blocks": [
@@ -1063,7 +1087,7 @@
                   },
                   {
                     "title": "Gib deine E-Mail-Adresse und ein Passwort ein",
-                    "body": "Verwende mindestens 12 Zeichen. Dein Passwort meldet dich nur an — es entsperrt nie deine Daten, und du kannst es später per E-Mail zurücksetzen."
+                    "body": "Verwende mindestens 12 Zeichen. Dein Passwort meldet dich nur an — es entsperrt nie deine Daten, und du kannst es später per E-Mail zurücksetzen. Oder überspring das und wähle stattdessen <b>Mit Google fortfahren</b>."
                   },
                   {
                     "title": "Wähle Konto erstellen",
@@ -1276,14 +1300,31 @@
       "signing-in": {
         "navTitle": "Anmelden",
         "metaTitle": "Anmelden — Cognos-Dokumentation",
-        "metaDescription": "Melde dich bei Cognos mit E-Mail und Passwort an. Auf einem neuen Gerät gibst du zusätzlich deinen Account-Schlüssel ein, um deine Daten zu entsperren.",
+        "metaDescription": "Melde dich bei Cognos mit E-Mail und Passwort oder Mit Google fortfahren an. Auf einem neuen Gerät gibst du zusätzlich deinen Account-Schlüssel ein.",
         "title": "Anmelden",
-        "lead": "Melde dich mit E-Mail und Passwort an. Auf einem neuen Gerät gibst du zusätzlich deinen Account-Schlüssel ein, um deine Daten zu entsperren.",
+        "lead": "Melde dich mit E-Mail und Passwort an oder wähle Mit Google fortfahren. Auf einem neuen Gerät gibst du zusätzlich deinen Account-Schlüssel ein, um deine Daten zu entsperren.",
         "time": "2 Min.",
-        "updated": "22. Juli 2026",
+        "updated": "26. Juli 2026",
         "sections": [
           {
-            "heading": "Anmelden",
+            "heading": "Mit Google anmelden",
+            "blocks": [
+              {
+                "p": "Auf der <a href=\"https://app.cognos.io/auth/login\">Anmeldeseite</a> wählst du <b>Mit Google fortfahren</b>. Nachdem Google bestätigt hat, wer du bist, meldet Cognos dich an."
+              },
+              {
+                "p": "Beim ersten Mal durchläufst du weiterhin die Schritte für Account-Schlüssel und Notfall-Kit — wie bei der E-Mail-Registrierung."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Google erfährt, dass du Cognos nutzt, wenn du dich so anmeldest. Dein Account-Schlüssel und deine Chat-Inhalte werden nie an Google gesendet."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Mit E-Mail und Passwort anmelden",
             "blocks": [
               {
                 "steps": [
@@ -2436,7 +2477,7 @@
         "title": "Zwei-Faktor-Authentifizierung",
         "lead": "Füge der Anmeldung einen zweiten Schritt hinzu — einen 6-stelligen Code aus einer Authenticator-App. Das schützt deine Anmeldung, nicht deine Daten.",
         "time": "4 Min. Lesezeit",
-        "updated": "22. Juli 2026",
+        "updated": "26. Juli 2026",
         "sections": [
           {
             "heading": "Aktivieren",
@@ -2493,6 +2534,17 @@
                   "variant": "security",
                   "body": "Es gibt kein Zurücksetzen für Zwei-Faktor. Verlierst du sowohl deine Authenticator-App als auch alle <a href=\"/docs/recovery-codes\">Wiederherstellungscodes</a>, kannst du dich nicht mehr anmelden — bewahre diese Codes also sicher auf."
                 }
+              }
+            ]
+          },
+          {
+            "heading": "Google-Anmeldung",
+            "blocks": [
+              {
+                "p": "Authenticator-App-MFA gilt, wenn du dich mit <b>E-Mail und Passwort</b> anmeldest. Bei der Anmeldung mit Google wird derzeit kein Cognos-Authenticator-Code abgefragt."
+              },
+              {
+                "p": "Nur-Google-Konten richten kein Cognos-MFA ein (es gibt kein Cognos-Passwort zur Bestätigung der Registrierung)."
               }
             ]
           }
@@ -2553,9 +2605,9 @@
         "metaTitle": "Dein Passwort zurücksetzen — Cognos-Dokumentation",
         "metaDescription": "Passwort vergessen? Setze es per E-Mail zurück. Das betrifft nie deine verschlüsselten Chats oder deinen Account-Schlüssel.",
         "title": "Dein Passwort zurücksetzen",
-        "lead": "Passwort vergessen? Setze es per E-Mail zurück. Das betrifft nie deine verschlüsselten Chats oder deinen Account-Schlüssel.",
+        "lead": "Passwort vergessen? Setze es per E-Mail zurück. Das betrifft nie deine verschlüsselten Chats oder deinen Account-Schlüssel. Nur-Google-Konten stellen den Zugang über Google wieder her, nicht über ein Cognos-Passwort-Reset.",
         "time": "2 Min.",
-        "updated": "22. Juli 2026",
+        "updated": "26. Juli 2026",
         "sections": [
           {
             "heading": "Setze es zurück",
@@ -2599,6 +2651,17 @@
                 "p": "Ist bei dir die <a href=\"/docs/multi-factor-authentication\">Zwei-Faktor-Authentifizierung</a> aktiv, umgeht ein Passwort-Reset sie nicht — du brauchst weiterhin deinen Code."
               }
             ]
+          },
+          {
+            "heading": "Nur-Google-Konten",
+            "blocks": [
+              {
+                "p": "Wenn du nur <b>Mit Google fortfahren</b> nutzt und nie ein Cognos-Passwort festgelegt hast, gibt es hier nichts zurückzusetzen. Nutze die <a href=\"https://accounts.google.com/signin/recovery\">Google-Kontowiederherstellung</a>, wenn du nicht auf dein Google-Konto zugreifen kannst."
+              },
+              {
+                "p": "Wenn du sowohl ein Cognos-Passwort als auch Google verbunden hast, funktioniert das Passwort-Reset weiterhin für das Cognos-Passwort wie oben beschrieben."
+              }
+            ]
           }
         ],
         "related": ["signing-in", "account-key", "multi-factor-authentication"]
@@ -2610,13 +2673,24 @@
         "title": "Deine Privatsphäre",
         "lead": "Eine leicht verständliche Zusammenfassung dessen, was Cognos sehen kann und was nicht — und der Kontrollen, die das so halten.",
         "time": "3 Min. Lesezeit",
-        "updated": "22. Juli 2026",
+        "updated": "26. Juli 2026",
         "sections": [
           {
             "heading": "Was wir nicht sehen können",
             "blocks": [
               {
                 "p": "Der Inhalt deiner gespeicherten Konversationen, <a href=\"/docs/attachments\">Anhänge</a>, <a href=\"/docs/bookmarks\">Lesezeichen</a> und deines <a href=\"/docs/account-memory\">Gedächtnisses</a> wird in einer für uns nicht lesbaren Form gehalten. Entsperrt wird er nur auf deinem Gerät, mit deinem <a href=\"/docs/account-key\">Account-Schlüssel</a>."
+              }
+            ]
+          },
+          {
+            "heading": "Anmeldung mit Google",
+            "blocks": [
+              {
+                "p": "Wenn du Mit Google fortfahren wählst, erfährt Google, dass du Cognos nutzt, und die Kennungen, die nötig sind, um dich anzumelden. Cognos erhält deinen Account-Schlüssel weiterhin nie, und gespeicherte Chats bleiben verschlüsselt, sodass Cognos sie nicht lesen kann."
+              },
+              {
+                "p": "Mehr Details findest du in der <a href=\"/privacy\">Datenschutzerklärung</a>."
               }
             ]
           },
@@ -2784,11 +2858,11 @@
       "deleting-your-account": {
         "navTitle": "Dein Konto löschen",
         "metaTitle": "Dein Konto löschen — Cognos-Dokumentation",
-        "metaDescription": "Lösche dein Cognos-Konto und alle deine persönlichen Daten dauerhaft. Was du zuerst tun solltest, was entfernt wird und was bleibt.",
+        "metaDescription": "Lösche dein Cognos-Konto dauerhaft. Passwort-Konten bestätigen mit Passwort; Nur-Google-Konten authentifizieren sich erneut mit Google.",
         "title": "Dein Konto löschen",
         "lead": "Du kannst dein Konto und alle deine persönlichen Daten dauerhaft löschen. Das kann nicht rückgängig gemacht werden.",
         "time": "3 Min. Lesezeit",
-        "updated": "22. Juli 2026",
+        "updated": "26. Juli 2026",
         "sections": [
           {
             "heading": "Bevor du beginnst",
@@ -2798,6 +2872,32 @@
                   "Kündige zuerst ein bezahltes <a href=\"/docs/managing-your-subscription\">Abonnement</a>.",
                   "Gehört dir eine <a href=\"/docs/organisations-overview\">Organisation</a>, übertrage oder löse sie zuerst auf."
                 ]
+              }
+            ]
+          },
+          {
+            "heading": "Wenn du dich nur mit Google registriert hast",
+            "blocks": [
+              {
+                "p": "Nur-Google-Konten haben kein Cognos-Passwort. Zum Löschen:"
+              },
+              {
+                "steps": [
+                  {
+                    "title": "Gib DELETE zur Bestätigung ein",
+                    "body": "Dieselbe Bestätigungsphrase wie bei einem Passwort-Konto."
+                  },
+                  {
+                    "title": "Mit Google fortfahren",
+                    "body": "Cognos bittet Google, zu bestätigen, dass du es noch bist, und schliesst dann die Löschung ab."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Eine angemeldete Sitzung allein reicht nicht — du musst den Google-Schritt abschliessen."
+                }
               }
             ]
           },

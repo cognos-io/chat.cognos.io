@@ -1041,17 +1041,41 @@
       "create-account": {
         "navTitle": "Créez votre compte",
         "metaTitle": "Créez votre compte — Documentation Cognos",
-        "metaDescription": "Inscrivez-vous à Cognos avec un e-mail et un mot de passe, puis enregistrez votre clé de compte. Un guide étape par étape qui prend quelques minutes.",
+        "metaDescription": "Inscrivez-vous à Cognos avec un e-mail et un mot de passe ou Continuer avec Google, puis enregistrez votre clé de compte.",
         "title": "Créez votre compte",
-        "lead": "Inscrivez-vous avec un e-mail et un mot de passe, puis enregistrez votre clé de compte. Le tout prend quelques minutes.",
+        "lead": "Créez un compte avec un e-mail et un mot de passe, ou choisissez Continuer avec Google — puis enregistrez votre clé de compte. L'étape de la clé de compte est la même dans les deux cas.",
         "time": "2 min",
-        "updated": "22 juillet 2026",
+        "updated": "26 juillet 2026",
         "needs": [
-          "Une adresse e-mail que vous pouvez consulter maintenant",
-          "Un mot de passe d'au moins 12 caractères",
+          "Une adresse e-mail ou un compte Google",
+          "Un mot de passe d'au moins 12 caractères si vous vous inscrivez par e-mail",
           "Un endroit sûr pour conserver un petit fichier texte (un gestionnaire de mots de passe est idéal)"
         ],
         "sections": [
+          {
+            "heading": "Deux façons de créer un compte",
+            "blocks": [
+              {
+                "p": "Vous pouvez :"
+              },
+              {
+                "ul": [
+                  "Vous inscrire avec un <b>e-mail et un mot de passe</b>, ou",
+                  "Choisir <b>Continuer avec Google</b> sur la page d'inscription ou de connexion."
+                ]
+              },
+              {
+                "p": "Dans les deux cas, Cognos vous demande ensuite d'enregistrer votre <a href=\"/docs/account-key\">clé de compte</a>. Google ne reçoit jamais cette clé, et Cognos ne stocke aucune copie lisible."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "Vous avez déjà un compte avec mot de passe ?",
+                  "body": "Si Google utilise la même adresse e-mail qu'un compte avec mot de passe existant, Cognos ne les fusionnera pas automatiquement. Connectez-vous avec votre mot de passe, puis connectez Google depuis <a href=\"https://app.cognos.io/account/security\">Sécurité et clés</a>."
+                }
+              }
+            ]
+          },
           {
             "heading": "Inscription",
             "blocks": [
@@ -1063,7 +1087,7 @@
                   },
                   {
                     "title": "Saisissez votre e-mail et un mot de passe",
-                    "body": "Utilisez au moins 12 caractères. Votre mot de passe sert uniquement à vous connecter — il ne déverrouille jamais vos données, et vous pouvez le réinitialiser plus tard par e-mail."
+                    "body": "Utilisez au moins 12 caractères. Votre mot de passe sert uniquement à vous connecter — il ne déverrouille jamais vos données, et vous pouvez le réinitialiser plus tard par e-mail. Ou ignorez cette étape et choisissez plutôt <b>Continuer avec Google</b>."
                   },
                   {
                     "title": "Sélectionnez Créer un compte",
@@ -1276,14 +1300,31 @@
       "signing-in": {
         "navTitle": "Se connecter",
         "metaTitle": "Se connecter — Documentation Cognos",
-        "metaDescription": "Connectez-vous à Cognos avec votre e-mail et votre mot de passe. Sur un nouvel appareil, vous saisirez également votre clé de compte pour déverrouiller vos données.",
+        "metaDescription": "Connectez-vous à Cognos avec votre e-mail et votre mot de passe ou Continuer avec Google. Sur un nouvel appareil, vous saisirez également votre clé de compte.",
         "title": "Se connecter",
-        "lead": "Connectez-vous avec votre e-mail et votre mot de passe. Sur un nouvel appareil, vous saisirez également votre clé de compte pour déverrouiller vos données.",
+        "lead": "Connectez-vous avec votre e-mail et votre mot de passe, ou choisissez Continuer avec Google. Sur un nouvel appareil, vous saisirez également votre clé de compte pour déverrouiller vos données.",
         "time": "2 min",
-        "updated": "22 juillet 2026",
+        "updated": "26 juillet 2026",
         "sections": [
           {
-            "heading": "Se connecter",
+            "heading": "Se connecter avec Google",
+            "blocks": [
+              {
+                "p": "Sur la <a href=\"https://app.cognos.io/auth/login\">page de connexion</a>, choisissez <b>Continuer avec Google</b>. Après que Google a confirmé votre identité, Cognos vous connecte."
+              },
+              {
+                "p": "Si c'est votre première fois, vous passerez quand même par les étapes de la clé de compte et du kit d'urgence — comme pour l'inscription par e-mail."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Google apprend que vous utilisez Cognos lorsque vous vous connectez de cette façon. Votre clé de compte et le contenu de vos discussions ne sont jamais envoyés à Google."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Se connecter avec e-mail et mot de passe",
             "blocks": [
               {
                 "steps": [
@@ -2436,7 +2477,7 @@
         "title": "Authentification à deux facteurs",
         "lead": "Ajoutez une deuxième étape à la connexion — un code à 6 chiffres provenant d'une application d'authentification. Elle protège votre connexion, pas vos données.",
         "time": "4 min de lecture",
-        "updated": "22 juillet 2026",
+        "updated": "26 juillet 2026",
         "sections": [
           {
             "heading": "Activez-la",
@@ -2493,6 +2534,17 @@
                   "variant": "security",
                   "body": "Il n'existe aucune réinitialisation de l'authentification à deux facteurs. Si vous perdez à la fois votre application d'authentification et tous vos <a href=\"/docs/recovery-codes\">codes de récupération</a>, vous ne pourrez plus vous connecter — conservez donc ces codes en lieu sûr."
                 }
+              }
+            ]
+          },
+          {
+            "heading": "Connexion Google",
+            "blocks": [
+              {
+                "p": "L'authentification à deux facteurs par application s'applique lorsque vous vous connectez avec votre <b>e-mail et mot de passe</b>. Se connecter avec Google ne demande actuellement pas de code d'authentification Cognos."
+              },
+              {
+                "p": "Les comptes Google uniquement ne configurent pas l'authentification à deux facteurs Cognos (il n'y a pas de mot de passe Cognos pour confirmer l'inscription)."
               }
             ]
           }
@@ -2553,9 +2605,9 @@
         "metaTitle": "Réinitialiser votre mot de passe — Documentation Cognos",
         "metaDescription": "Mot de passe oublié ? Réinitialisez-le par e-mail. Cela n'affecte jamais vos discussions chiffrées ni votre clé de compte.",
         "title": "Réinitialiser votre mot de passe",
-        "lead": "Mot de passe oublié ? Réinitialisez-le par e-mail. Cela n'affecte jamais vos discussions chiffrées ni votre clé de compte.",
+        "lead": "Mot de passe oublié ? Réinitialisez-le par e-mail. Cela n'affecte jamais vos discussions chiffrées ni votre clé de compte. Les comptes Google uniquement récupèrent l'accès via Google, pas via la réinitialisation du mot de passe Cognos.",
         "time": "2 min",
-        "updated": "22 juillet 2026",
+        "updated": "26 juillet 2026",
         "sections": [
           {
             "heading": "Réinitialisez-le",
@@ -2599,6 +2651,17 @@
                 "p": "Si l'<a href=\"/docs/multi-factor-authentication\">authentification à deux facteurs</a> est activée, une réinitialisation du mot de passe ne la contourne pas — vous aurez toujours besoin de votre code."
               }
             ]
+          },
+          {
+            "heading": "Comptes Google uniquement",
+            "blocks": [
+              {
+                "p": "Si vous n'utilisez que <b>Continuer avec Google</b> et n'avez jamais défini de mot de passe Cognos, il n'y a rien à réinitialiser ici. Utilisez la <a href=\"https://accounts.google.com/signin/recovery\">récupération de compte Google</a> si vous ne pouvez pas accéder à votre compte Google."
+              },
+              {
+                "p": "Si vous avez à la fois un mot de passe Cognos et Google connecté, la réinitialisation du mot de passe fonctionne toujours pour le mot de passe Cognos comme décrit ci-dessus."
+              }
+            ]
           }
         ],
         "related": ["signing-in", "account-key", "multi-factor-authentication"]
@@ -2610,13 +2673,24 @@
         "title": "Votre confidentialité",
         "lead": "Un résumé en langage simple de ce que Cognos peut et ne peut pas voir — et des contrôles qui préservent cet état de fait.",
         "time": "3 min de lecture",
-        "updated": "22 juillet 2026",
+        "updated": "26 juillet 2026",
         "sections": [
           {
             "heading": "Ce que nous ne pouvons pas voir",
             "blocks": [
               {
                 "p": "Le contenu de vos conversations enregistrées, <a href=\"/docs/attachments\">pièces jointes</a>, <a href=\"/docs/bookmarks\">signets</a> et <a href=\"/docs/account-memory\">mémoire</a> est conservé sous une forme que nous ne pouvons pas lire. Il n'est déverrouillé que sur votre appareil, avec votre <a href=\"/docs/account-key\">clé de compte</a>."
+              }
+            ]
+          },
+          {
+            "heading": "Connexion avec Google",
+            "blocks": [
+              {
+                "p": "Si vous choisissez Continuer avec Google, Google voit que vous utilisez Cognos et les identifiants nécessaires pour vous connecter. Cognos ne reçoit toujours jamais votre clé de compte, et les discussions enregistrées restent chiffrées de sorte que Cognos ne peut pas les lire."
+              },
+              {
+                "p": "Plus de détails se trouvent dans la <a href=\"/privacy\">politique de confidentialité</a>."
               }
             ]
           },
@@ -2784,11 +2858,11 @@
       "deleting-your-account": {
         "navTitle": "Supprimer votre compte",
         "metaTitle": "Supprimer votre compte — Documentation Cognos",
-        "metaDescription": "Supprimez définitivement votre compte Cognos et toutes vos données personnelles. Ce qu'il faut faire d'abord, ce qui est supprimé et ce qui est conservé.",
+        "metaDescription": "Supprimez définitivement votre compte Cognos. Les comptes avec mot de passe se confirment par mot de passe ; les comptes Google uniquement se réauthentifient avec Google.",
         "title": "Supprimer votre compte",
         "lead": "Vous pouvez supprimer définitivement votre compte et toutes vos données personnelles. Cette action est irréversible.",
         "time": "3 min de lecture",
-        "updated": "22 juillet 2026",
+        "updated": "26 juillet 2026",
         "sections": [
           {
             "heading": "Avant de commencer",
@@ -2798,6 +2872,32 @@
                   "Annulez d'abord tout <a href=\"/docs/managing-your-subscription\">abonnement</a> payant.",
                   "Si vous possédez une <a href=\"/docs/organisations-overview\">organisation</a>, transférez-la ou dissolvez-la d'abord."
                 ]
+              }
+            ]
+          },
+          {
+            "heading": "Si vous vous êtes inscrit uniquement avec Google",
+            "blocks": [
+              {
+                "p": "Les comptes Google uniquement n'ont pas de mot de passe Cognos. Pour supprimer :"
+              },
+              {
+                "steps": [
+                  {
+                    "title": "Saisissez DELETE pour confirmer",
+                    "body": "La même phrase de confirmation qu'un compte avec mot de passe."
+                  },
+                  {
+                    "title": "Continuer avec Google",
+                    "body": "Cognos demande à Google de confirmer qu'il s'agit bien de vous, puis finalise la suppression."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Une session connectée ne suffit pas — vous devez terminer l'étape Google."
+                }
               }
             ]
           },

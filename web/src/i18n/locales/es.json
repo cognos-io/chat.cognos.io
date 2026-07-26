@@ -1047,17 +1047,41 @@
       "create-account": {
         "navTitle": "Crea tu cuenta",
         "metaTitle": "Crea tu cuenta — Documentación de Cognos",
-        "metaDescription": "Regístrate en Cognos con un correo y una contraseña, y luego guarda tu Clave de cuenta. Una guía paso a paso que lleva un par de minutos.",
+        "metaDescription": "Regístrate en Cognos con correo y contraseña o Continuar con Google, y luego guarda tu Clave de cuenta.",
         "title": "Crea tu cuenta",
-        "lead": "Regístrate con un correo y una contraseña, y luego guarda tu Clave de cuenta. Todo el proceso lleva un par de minutos.",
+        "lead": "Crea una cuenta con correo y contraseña, o elige Continuar con Google — y luego guarda tu Clave de cuenta. El paso de la Clave de cuenta es el mismo en ambos casos.",
         "time": "2 min",
-        "updated": "22 de julio de 2026",
+        "updated": "26 de julio de 2026",
         "needs": [
-          "Una dirección de correo que puedas revisar ahora",
-          "Una contraseña de al menos 12 caracteres",
+          "Una dirección de correo, o una cuenta de Google",
+          "Una contraseña de al menos 12 caracteres si te registras con correo",
           "Un lugar seguro donde guardar un pequeño archivo de texto (un gestor de contraseñas es ideal)"
         ],
         "sections": [
+          {
+            "heading": "Dos formas de crear una cuenta",
+            "blocks": [
+              {
+                "p": "Puedes:"
+              },
+              {
+                "ul": [
+                  "Registrarte con <b>correo y contraseña</b>, o",
+                  "Elegir <b>Continuar con Google</b> en la página de registro o de inicio de sesión."
+                ]
+              },
+              {
+                "p": "En ambos casos, Cognos te pide después que guardes tu <a href=\"/docs/account-key\">Clave de cuenta</a>. Google nunca recibe esa clave, y Cognos nunca almacena una copia que pueda leer."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "¿Ya tienes una cuenta con contraseña?",
+                  "body": "Si Google usa el mismo correo que una cuenta con contraseña existente, Cognos no las fusionará automáticamente. Inicia sesión con tu contraseña y luego conecta Google en <a href=\"https://app.cognos.io/account/security\">Seguridad y claves</a>."
+                }
+              }
+            ]
+          },
           {
             "heading": "Regístrate",
             "blocks": [
@@ -1069,7 +1093,7 @@
                   },
                   {
                     "title": "Introduce tu correo y una contraseña",
-                    "body": "Usa al menos 12 caracteres. Tu contraseña solo sirve para iniciar sesión — nunca desbloquea tus datos, y puedes restablecerla más tarde por correo."
+                    "body": "Usa al menos 12 caracteres. Tu contraseña solo sirve para iniciar sesión — nunca desbloquea tus datos, y puedes restablecerla más tarde por correo. O salta este paso y elige <b>Continuar con Google</b>."
                   },
                   {
                     "title": "Selecciona Crear cuenta",
@@ -1286,14 +1310,31 @@
       "signing-in": {
         "navTitle": "Iniciar sesión",
         "metaTitle": "Iniciar sesión — Documentación de Cognos",
-        "metaDescription": "Inicia sesión en Cognos con tu correo y contraseña. En un dispositivo nuevo, también introducirás tu Clave de cuenta para desbloquear tus datos.",
+        "metaDescription": "Inicia sesión en Cognos con correo y contraseña o Continuar con Google. En un dispositivo nuevo, también introducirás tu Clave de cuenta.",
         "title": "Iniciar sesión",
-        "lead": "Inicia sesión con tu correo y contraseña. En un dispositivo nuevo, también introducirás tu Clave de cuenta para desbloquear tus datos.",
+        "lead": "Inicia sesión con tu correo y contraseña, o elige Continuar con Google. En un dispositivo nuevo, también introducirás tu Clave de cuenta para desbloquear tus datos.",
         "time": "2 min",
-        "updated": "22 de julio de 2026",
+        "updated": "26 de julio de 2026",
         "sections": [
           {
-            "heading": "Inicia sesión",
+            "heading": "Iniciar sesión con Google",
+            "blocks": [
+              {
+                "p": "En la <a href=\"https://app.cognos.io/auth/login\">página de inicio de sesión</a>, elige <b>Continuar con Google</b>. Cuando Google confirma quién eres, Cognos inicia tu sesión."
+              },
+              {
+                "p": "Si es la primera vez, igualmente pasarás por los pasos de la Clave de cuenta y el Kit de emergencia — igual que con el registro por correo."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Google sabe que usas Cognos cuando inicias sesión de esta forma. Tu Clave de cuenta y el contenido de tus chats nunca se envían a Google."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Iniciar sesión con correo y contraseña",
             "blocks": [
               {
                 "steps": [
@@ -2442,7 +2483,7 @@
         "title": "Autenticación de dos factores",
         "lead": "Añade un segundo paso al iniciar sesión — un código de 6 dígitos de una aplicación de autenticación. Protege tu inicio de sesión, no tus datos.",
         "time": "4 min de lectura",
-        "updated": "22 de julio de 2026",
+        "updated": "26 de julio de 2026",
         "sections": [
           {
             "heading": "Actívala",
@@ -2499,6 +2540,17 @@
                   "variant": "security",
                   "body": "No existe un restablecimiento de la autenticación de dos factores. Si pierdes tanto tu aplicación de autenticación como todos tus <a href=\"/docs/recovery-codes\">códigos de recuperación</a>, no podrás iniciar sesión — así que guarda esos códigos a salvo."
                 }
+              }
+            ]
+          },
+          {
+            "heading": "Inicio de sesión con Google",
+            "blocks": [
+              {
+                "p": "La autenticación de dos factores con aplicación se aplica cuando inicias sesión con tu <b>correo y contraseña</b>. Iniciar sesión con Google no pide actualmente un código de autenticación de Cognos."
+              },
+              {
+                "p": "Las cuentas solo con Google no configuran la autenticación de dos factores de Cognos (no hay contraseña de Cognos para confirmar la inscripción)."
               }
             ]
           }
@@ -2559,9 +2611,9 @@
         "metaTitle": "Restablecer tu contraseña — Documentación de Cognos",
         "metaDescription": "¿Has olvidado tu contraseña? Restablécela por correo. Esto nunca afecta a tus chats cifrados ni a tu Clave de cuenta.",
         "title": "Restablecer tu contraseña",
-        "lead": "¿Has olvidado tu contraseña? Restablécela por correo. Esto nunca afecta a tus chats cifrados ni a tu Clave de cuenta.",
+        "lead": "¿Has olvidado tu contraseña de Cognos? Restablécela por correo. Esto nunca afecta a tus chats cifrados ni a tu Clave de cuenta. Las cuentas solo con Google recuperan el acceso a través de Google, no con el restablecimiento de contraseña de Cognos.",
         "time": "2 min",
-        "updated": "22 de julio de 2026",
+        "updated": "26 de julio de 2026",
         "sections": [
           {
             "heading": "Restablécela",
@@ -2605,6 +2657,17 @@
                 "p": "Si tienes activada la <a href=\"/docs/multi-factor-authentication\">autenticación de dos factores</a>, restablecer la contraseña no la salta — seguirás necesitando tu código."
               }
             ]
+          },
+          {
+            "heading": "Cuentas solo con Google",
+            "blocks": [
+              {
+                "p": "Si solo usas <b>Continuar con Google</b> y nunca estableciste una contraseña de Cognos, aquí no hay nada que restablecer. Usa la <a href=\"https://accounts.google.com/signin/recovery\">recuperación de la cuenta de Google</a> si no puedes acceder a tu cuenta de Google."
+              },
+              {
+                "p": "Si tienes tanto una contraseña de Cognos como Google conectado, el restablecimiento de contraseña sigue funcionando para la contraseña de Cognos como se describe arriba."
+              }
+            ]
           }
         ],
         "related": ["signing-in", "account-key", "multi-factor-authentication"]
@@ -2616,13 +2679,24 @@
         "title": "Tu privacidad",
         "lead": "Un resumen en lenguaje sencillo de lo que Cognos puede y no puede ver — y los controles que lo mantienen así.",
         "time": "3 min de lectura",
-        "updated": "22 de julio de 2026",
+        "updated": "26 de julio de 2026",
         "sections": [
           {
             "heading": "Lo que no podemos ver",
             "blocks": [
               {
                 "p": "El contenido de tus conversaciones guardadas, <a href=\"/docs/attachments\">archivos adjuntos</a>, <a href=\"/docs/bookmarks\">marcadores</a> y <a href=\"/docs/account-memory\">memoria</a> se guarda en una forma que no podemos leer. Solo se desbloquea en tu dispositivo, con tu <a href=\"/docs/account-key\">Clave de cuenta</a>."
+              }
+            ]
+          },
+          {
+            "heading": "Iniciar sesión con Google",
+            "blocks": [
+              {
+                "p": "Si eliges Continuar con Google, Google ve que usas Cognos y los identificadores necesarios para iniciar tu sesión. Cognos sigue sin recibir nunca tu Clave de cuenta, y los chats almacenados permanecen cifrados para que Cognos no pueda leerlos."
+              },
+              {
+                "p": "Más detalles en la <a href=\"/privacy\">Política de privacidad</a>."
               }
             ]
           },
@@ -2790,11 +2864,11 @@
       "deleting-your-account": {
         "navTitle": "Eliminar tu cuenta",
         "metaTitle": "Eliminar tu cuenta — Documentación de Cognos",
-        "metaDescription": "Elimina permanentemente tu cuenta de Cognos y todos tus datos personales. Qué hacer primero, qué se elimina y qué se conserva.",
+        "metaDescription": "Elimina permanentemente tu cuenta de Cognos. Las cuentas con contraseña confirman con la contraseña; las cuentas solo con Google se vuelven a autenticar con Google.",
         "title": "Eliminar tu cuenta",
         "lead": "Puedes eliminar permanentemente tu cuenta y todos tus datos personales. Esto no se puede deshacer.",
         "time": "3 min de lectura",
-        "updated": "22 de julio de 2026",
+        "updated": "26 de julio de 2026",
         "sections": [
           {
             "heading": "Antes de empezar",
@@ -2804,6 +2878,32 @@
                   "Cancela primero cualquier <a href=\"/docs/managing-your-subscription\">suscripción</a> de pago.",
                   "Si eres propietario de una <a href=\"/docs/organisations-overview\">Organización</a>, transfiérela o disuélvela primero."
                 ]
+              }
+            ]
+          },
+          {
+            "heading": "Si te registraste solo con Google",
+            "blocks": [
+              {
+                "p": "Las cuentas solo con Google no tienen contraseña de Cognos. Para eliminar:"
+              },
+              {
+                "steps": [
+                  {
+                    "title": "Escribe DELETE para confirmar",
+                    "body": "La misma frase de confirmación que en una cuenta con contraseña."
+                  },
+                  {
+                    "title": "Continuar con Google",
+                    "body": "Cognos pide a Google que confirme que sigues siendo tú y luego completa la eliminación."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Una sesión iniciada por sí sola no basta — debes completar el paso de Google."
+                }
               }
             ]
           },

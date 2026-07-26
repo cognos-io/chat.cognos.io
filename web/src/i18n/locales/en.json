@@ -2304,17 +2304,41 @@
       "create-account": {
         "navTitle": "Create your account",
         "metaTitle": "Create your account — Cognos Docs",
-        "metaDescription": "Sign up for Cognos with an email and password, then save your Account Key. A step-by-step guide that takes a couple of minutes.",
+        "metaDescription": "Sign up for Cognos with email and password or Continue with Google, then save your Account Key.",
         "title": "Create your account",
-        "lead": "Sign up with an email and a password, then save your Account Key. The whole thing takes a couple of minutes.",
+        "lead": "Create an Account with email and password, or Continue with Google — then save your Account Key. The Account Key step is the same either way.",
         "time": "2 min",
-        "updated": "22 July 2026",
+        "updated": "26 July 2026",
         "needs": [
-          "An email address you can check now",
-          "A password of at least 12 characters",
-          "Somewhere safe to keep a small text file (a password manager is ideal)"
+          "An email address, or a Google account",
+          "A password of at least 12 characters if you sign up with email",
+          "A safe place to store a short text file (a password manager is ideal)"
         ],
         "sections": [
+          {
+            "heading": "Two ways to create an account",
+            "blocks": [
+              {
+                "p": "You can:"
+              },
+              {
+                "ul": [
+                  "Sign up with <b>email and password</b>, or",
+                  "Choose <b>Continue with Google</b> on the create-account or sign-in page."
+                ]
+              },
+              {
+                "p": "Either way, Cognos then asks you to save your <a href=\"/docs/account-key\">Account Key</a>. Google never receives that key, and Cognos never stores a copy it can read."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "title": "Already have a password Account?",
+                  "body": "If Google uses the same email as an existing password Account, Cognos will not merge them automatically. Sign in with your password, then connect Google under <a href=\"https://app.cognos.io/account/security\">Security &amp; keys</a>."
+                }
+              }
+            ]
+          },
           {
             "heading": "Sign up",
             "blocks": [
@@ -2326,7 +2350,7 @@
                   },
                   {
                     "title": "Enter your email and a password",
-                    "body": "Use at least 12 characters. Your password only signs you in — it never unlocks your data, and you can reset it later by email."
+                    "body": "Use at least 12 characters. Your password is only for signing in — it never unlocks your data, and you can reset it later by email. Or skip this and choose <b>Continue with Google</b> instead."
                   },
                   {
                     "title": "Select Create account",
@@ -2539,14 +2563,31 @@
       "signing-in": {
         "navTitle": "Signing in",
         "metaTitle": "Signing in — Cognos Docs",
-        "metaDescription": "Log in to Cognos with your email and password. On a new device you'll also enter your Account Key to unlock your data.",
+        "metaDescription": "Sign in to Cognos with email and password or Continue with Google. On a new device you also enter your Account Key.",
         "title": "Signing in",
-        "lead": "Log in with your email and password. On a new device, you'll also enter your Account Key to unlock your data.",
+        "lead": "Sign in with your email and password, or Continue with Google. On a new device, you also enter your Account Key to unlock your data.",
         "time": "2 min",
-        "updated": "22 July 2026",
+        "updated": "26 July 2026",
         "sections": [
           {
-            "heading": "Log in",
+            "heading": "Sign in with Google",
+            "blocks": [
+              {
+                "p": "On the <a href=\"https://app.cognos.io/auth/login\">sign-in page</a>, choose <b>Continue with Google</b>. After Google confirms who you are, Cognos signs you in."
+              },
+              {
+                "p": "If this is your first time, you still go through the Account Key and Emergency Kit steps — same as email signup."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Google learns that you use Cognos when you sign in this way. Your Account Key and chat contents are never sent to Google."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Sign in with email and password",
             "blocks": [
               {
                 "steps": [
@@ -3691,7 +3732,7 @@
         "title": "Two-factor authentication",
         "lead": "Add a second step to signing in — a 6-digit code from an authenticator app. It protects your login, not your data.",
         "time": "4 min read",
-        "updated": "22 July 2026",
+        "updated": "26 July 2026",
         "sections": [
           {
             "heading": "Turn it on",
@@ -3748,6 +3789,17 @@
                   "variant": "security",
                   "body": "There's no two-factor reset. If you lose both your authenticator app and all your <a href=\"/docs/recovery-codes\">recovery codes</a>, you won't be able to sign in — so keep those codes safe."
                 }
+              }
+            ]
+          },
+          {
+            "heading": "Google sign-in",
+            "blocks": [
+              {
+                "p": "Authenticator-app MFA applies when you sign in with your <b>email and password</b>. Signing in with Google does not currently ask for a Cognos authenticator code."
+              },
+              {
+                "p": "Google-only Accounts do not set up Cognos MFA (there is no Cognos password to confirm enrolment)."
               }
             ]
           }
@@ -3808,9 +3860,9 @@
         "metaTitle": "Resetting your password — Cognos Docs",
         "metaDescription": "Forgot your password? Reset it by email. This never affects your encrypted chats or your Account Key.",
         "title": "Resetting your password",
-        "lead": "Forgot your password? Reset it by email. This never affects your encrypted chats or your Account Key.",
+        "lead": "Forgot your Cognos password? Reset it by email. This never affects your encrypted chats or your Account Key. Google-only Accounts recover access through Google, not Cognos password reset.",
         "time": "2 min",
-        "updated": "22 July 2026",
+        "updated": "26 July 2026",
         "sections": [
           {
             "heading": "Reset it",
@@ -3854,6 +3906,17 @@
                 "p": "If you have <a href=\"/docs/multi-factor-authentication\">two-factor authentication</a> on, a password reset doesn't bypass it — you'll still need your code."
               }
             ]
+          },
+          {
+            "heading": "Google-only Accounts",
+            "blocks": [
+              {
+                "p": "If you only use <b>Continue with Google</b> and never set a Cognos password, there is nothing to reset here. Use <a href=\"https://accounts.google.com/signin/recovery\">Google account recovery</a> if you cannot reach your Google account."
+              },
+              {
+                "p": "If you have both a Cognos password and Google connected, password reset still works for the Cognos password as described above."
+              }
+            ]
           }
         ],
         "related": ["signing-in", "account-key", "multi-factor-authentication"]
@@ -3865,13 +3928,24 @@
         "title": "Your privacy",
         "lead": "A plain-language summary of what Cognos can and can't see — and the controls that keep it that way.",
         "time": "3 min read",
-        "updated": "22 July 2026",
+        "updated": "26 July 2026",
         "sections": [
           {
             "heading": "What we can't see",
             "blocks": [
               {
                 "p": "The content of your saved conversations, <a href=\"/docs/attachments\">attachments</a>, <a href=\"/docs/bookmarks\">bookmarks</a> and <a href=\"/docs/account-memory\">memory</a> is kept in a form we can't read. It's unlocked only on your device, with your <a href=\"/docs/account-key\">Account Key</a>."
+              }
+            ]
+          },
+          {
+            "heading": "Signing in with Google",
+            "blocks": [
+              {
+                "p": "If you choose Continue with Google, Google sees that you use Cognos and the identifiers needed to sign you in. Cognos still never receives your Account Key, and stored chats stay encrypted so Cognos cannot read them."
+              },
+              {
+                "p": "More detail is in the <a href=\"/privacy\">Privacy Policy</a>."
               }
             ]
           },
@@ -4039,11 +4113,11 @@
       "deleting-your-account": {
         "navTitle": "Deleting your account",
         "metaTitle": "Deleting your account — Cognos Docs",
-        "metaDescription": "Permanently delete your Cognos account and all your personal data. What to do first, what's removed, and what's kept.",
+        "metaDescription": "Permanently delete your Cognos account. Password Accounts confirm with password; Google-only Accounts re-authenticate with Google.",
         "title": "Deleting your account",
         "lead": "You can permanently delete your account and all your personal data. This can't be undone.",
         "time": "3 min read",
-        "updated": "22 July 2026",
+        "updated": "26 July 2026",
         "sections": [
           {
             "heading": "Before you start",
@@ -4053,6 +4127,32 @@
                   "Cancel any paid <a href=\"/docs/managing-your-subscription\">subscription</a> first.",
                   "If you own an <a href=\"/docs/organisations-overview\">Organisation</a>, transfer it or dissolve it first."
                 ]
+              }
+            ]
+          },
+          {
+            "heading": "If you signed up with Google only",
+            "blocks": [
+              {
+                "p": "Google-only Accounts have no Cognos password. To delete:"
+              },
+              {
+                "steps": [
+                  {
+                    "title": "Type DELETE to confirm",
+                    "body": "Same confirmation phrase as a password Account."
+                  },
+                  {
+                    "title": "Continue with Google",
+                    "body": "Cognos asks Google to confirm it is still you, then completes deletion."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "A signed-in session alone is not enough — you must finish the Google step."
+                }
               }
             ]
           },
