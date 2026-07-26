@@ -30,6 +30,10 @@ var softDeleteExcludedCollections = []string{
 	"mfa_auth_sessions",
 	"mfa_recovery_codes",
 	"mfa_trusted_devices",
+	// OAuth link intents and delete step-up proofs are ephemeral auth material.
+	"oauth_link_intents",
+	"oauth_step_up_challenges",
+	"oauth_step_up_sessions",
 }
 
 func ShouldCopyDeletedRecord(collectionName string) bool {

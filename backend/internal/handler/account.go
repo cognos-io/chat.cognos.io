@@ -6,6 +6,7 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/oauth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
@@ -32,17 +33,24 @@ import (
 // orphan the Paddle subscription and keep billing a user who no longer exists.
 // The user must cancel first. Trial, inactive, or no billing row are all fine.
 type accountDeleteRequest struct {
-	Password string `json:"password"`
-	TOTPCode string `json:"totpCode"`
+	Password      string `json:"password"`
+	TOTPCode      string `json:"totpCode"`
+	OAuthStepUpId string `json:"oauthStepUpId"`
 }
 
-func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
+// AccountDeleteParams carries MFA + optional OAuth step-up dependencies.
+type AccountDeleteParams struct {
+	MFA   MFAParams
+	OAuth *oauth.Store // nil disables the OAuth-only delete path
+}
+
+func AccountDelete(params AccountDeleteParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		user := auth.ExtractUser(e)
 		if user == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
-		userRecord, err := params.App.FindRecordById("users", user.ID)
+		userRecord, err := params.MFA.App.FindRecordById("users", user.ID)
 		if err != nil {
 			return apis.NewNotFoundError("User not found", err)
 		}
@@ -51,24 +59,39 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 		if err := e.BindBody(&req); err != nil {
 			return apis.NewBadRequestError("Failed to read request data", err)
 		}
-		if !userRecord.ValidatePassword(req.Password) {
-			return apis.NewBadRequestError("Incorrect password", nil)
-		}
-		if userRecord.GetBool("mfa_enabled") {
-			totp, err := params.Store.GetTOTP(user.ID)
-			if err != nil || params.Keyring == nil {
-				return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
+
+		hasCognosPassword := userRecord.GetBool("has_cognos_password")
+		switch {
+		case !hasCognosPassword:
+			if params.OAuth == nil {
+				return apis.NewApiError(http.StatusServiceUnavailable, "OAuth step-up is not configured", nil)
 			}
-			ok, _, err := verifyTOTPRecord(params, totp, req.TOTPCode)
-			if err != nil {
-				return apis.NewApiError(http.StatusInternalServerError, "Failed to verify code", err)
+			if req.OAuthStepUpId == "" {
+				return apis.NewBadRequestError("Google re-authentication required", nil)
 			}
-			if !ok {
-				return apis.NewBadRequestError("Incorrect code", nil)
+			if err := params.OAuth.ConsumeStepUpSession(user.ID, req.OAuthStepUpId); err != nil {
+				return apis.NewBadRequestError("Invalid or expired Google re-authentication", nil)
+			}
+		default:
+			if !userRecord.ValidatePassword(req.Password) {
+				return apis.NewBadRequestError("Incorrect password", nil)
+			}
+			if userRecord.GetBool("mfa_enabled") {
+				totp, err := params.MFA.Store.GetTOTP(user.ID)
+				if err != nil || params.MFA.Keyring == nil {
+					return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
+				}
+				ok, _, err := verifyTOTPRecord(params.MFA, totp, req.TOTPCode)
+				if err != nil {
+					return apis.NewApiError(http.StatusInternalServerError, "Failed to verify code", err)
+				}
+				if !ok {
+					return apis.NewBadRequestError("Incorrect code", nil)
+				}
 			}
 		}
 
-		repo := billing.NewPocketBaseRepo(params.App)
+		repo := billing.NewPocketBaseRepo(params.MFA.App)
 		state, err := repo.StateForUser(user.ID)
 		if err != nil && !errors.Is(err, billing.ErrStateNotFound) {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load billing state", err)
@@ -82,7 +105,7 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 			)
 		}
 
-		orgRepo := organisations.NewPocketBaseRepo(params.App)
+		orgRepo := organisations.NewPocketBaseRepo(params.MFA.App)
 		userOrgs, err := orgRepo.GetForUser(user.ID)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load organisations", err)
@@ -101,7 +124,7 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 					nil,
 				)
 			}
-			affected, collectErr := collectOffboardProjects(params.App, orgRepo, userOrg.ID, user.ID)
+			affected, collectErr := collectOffboardProjects(params.MFA.App, orgRepo, userOrg.ID, user.ID)
 			if collectErr != nil {
 				if errors.Is(collectErr, errLastProjectAdmin) {
 					return apis.NewApiError(
@@ -122,7 +145,7 @@ func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 			})
 		}
 
-		if err := params.App.RunInTransaction(func(txApp core.App) error {
+		if err := params.MFA.App.RunInTransaction(func(txApp core.App) error {
 			for _, offboard := range offboards {
 				if err := applyOffboardInTx(
 					txApp,

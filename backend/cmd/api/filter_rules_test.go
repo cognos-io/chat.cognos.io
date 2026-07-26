@@ -211,6 +211,7 @@ func seedTestData(t testing.TB, app *tests.TestApp) {
 		record.Set("verified", seed.Verified)
 		record.Set("privacy_tier", seed.PrivacyTier)
 		record.Set("preferred_model_id", seed.PreferredModelID)
+		record.Set("has_cognos_password", true)
 		record.SetPassword(seed.Password)
 		if err := app.Save(record); err != nil {
 			t.Fatalf("Save(users %q) error = %v", seed.Email, err)

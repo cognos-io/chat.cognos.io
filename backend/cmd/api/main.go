@@ -22,6 +22,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/mfa"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/oauth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/retention"
 	"github.com/go-co-op/gocron/v2"
@@ -414,6 +415,7 @@ func bindAppHooks(
 			params.AttachmentMaxFileBytes,
 			params.AttachmentStorageCapBytes,
 			mfaKeyring,
+			oauth.NewStore(app),
 			paddlePriceOrgSeat,
 		)
 
@@ -432,6 +434,11 @@ func bindAppHooks(
 		// Authenticator-app MFA: withhold the auth token for enrolled users until
 		// a second factor is supplied (docs/business_processes/mfa-login.md).
 		hooks.EnforceMFALogin(app, mfa.NewStore(app))
+		// Google OAuth: no silent email merge; link-intent + step-up challenges;
+		// mark password signups with has_cognos_password.
+		oauthStore := oauth.NewStore(app)
+		hooks.EnforceOAuthRules(app, oauthStore)
+		hooks.MarkCognosPasswordOnAuthCreate(app)
 
 		if params.CronScheduler != nil {
 			expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)

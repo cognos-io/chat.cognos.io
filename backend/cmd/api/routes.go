@@ -17,6 +17,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/mfa"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/oauth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/pocketbase/pocketbase/apis"
@@ -165,6 +166,7 @@ func addPocketBaseRoutes(
 	attachmentMaxFileBytes int64,
 	attachmentStorageCapBytes int64,
 	mfaKeyring *mfa.SeedKeyring,
+	oauthStore *oauth.Store,
 	paddlePriceOrgSeat string,
 ) {
 	// Bake the API commit into every response so operators (and the SPA) can
@@ -183,6 +185,13 @@ func addPocketBaseRoutes(
 		Keyring: mfaKeyring,
 		Issuer:  mfaIssuer,
 		Logger:  logger,
+	}
+	if oauthStore == nil {
+		oauthStore = oauth.NewStore(app)
+	}
+	oauthParams := handler.OAuthParams{
+		App:   app,
+		Store: oauthStore,
 	}
 	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
 	// never drop Paddle's retries. Bad signatures are rejected before any write.
@@ -414,7 +423,42 @@ func addPocketBaseRoutes(
 
 	e.Router.DELETE(
 		"/api/v1/account",
-		handler.AccountDelete(mfaParams),
+		handler.AccountDelete(handler.AccountDeleteParams{
+			MFA:   mfaParams,
+			OAuth: oauthStore,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/account/auth-methods",
+		handler.AccountAuthMethods(oauthParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/account/oauth/link-intent",
+		handler.AccountOAuthLinkIntent(oauthParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/account/oauth/step-up/begin",
+		handler.AccountOAuthStepUpBegin(oauthParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/account/oauth/step-up/complete",
+		handler.AccountOAuthStepUpComplete(oauthParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
