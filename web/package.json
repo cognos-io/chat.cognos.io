@@ -17,10 +17,10 @@
     "@astrojs/sitemap": "^3.7.3",
     "@cognos/ui": "workspace:*",
     "astro": "^7.1.1",
-    "lucide": "^1.25.0"
+    "lucide": "catalog:"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
-    "@playwright/test": "^1.61.1"
+    "@axe-core/playwright": "catalog:",
+    "@playwright/test": "catalog:"
   }
 }
