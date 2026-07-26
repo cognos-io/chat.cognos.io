@@ -16,7 +16,9 @@ test('navbar toggle has an accessible name', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/de/');
 
-  const toggle = page.getByRole('button', { name: 'Toggle navigation' });
+  // The accessible name is translated (nav.toggle) — on /de/ it must be the
+  // German label, not the English fallback.
+  const toggle = page.getByRole('button', { name: 'Menü öffnen' });
   await expect(toggle).toBeVisible();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
 });

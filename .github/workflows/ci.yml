@@ -172,12 +172,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes mkcert
 
+      # Full suite: API specs AND the browser persona walkthroughs. The
+      # browser specs run against a production-style frontend build served
+      # by PocketBase (the config builds it when E2E_SKIP_FRONTEND is unset).
+      # Filtering to api.spec here is how the walkthroughs silently drifted
+      # from shipped behaviour for weeks — don't reintroduce it.
       - name: run e2e tests
-        run: pnpm --filter @cognos/e2e exec playwright test api.spec
+        run: pnpm --filter @cognos/e2e exec playwright test
         env:
           E2E_BASE_URL: https://127.0.0.1:8095
           E2E_POCKETBASE_URL: https://127.0.0.1:8095
-          E2E_SKIP_FRONTEND: 1
 
       - name: upload playwright report
         if: ${{ !cancelled() }}

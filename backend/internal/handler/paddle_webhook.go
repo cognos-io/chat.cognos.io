@@ -903,11 +903,9 @@ func updateOrgSubscription(
 	if sub.CurrentBillingPeriod.EndsAt != "" {
 		record.Set("paddle_cycle_end_at", sub.CurrentBillingPeriod.EndsAt)
 	}
-	// A scheduled cancellation surfaces here; its absence means any prior
-	// schedule was cleared (resume). Org billing has no plan_ends_at field.
-	if sub.ScheduledChange != nil && sub.ScheduledChange.Action == "cancel" {
-		// No-op: org_billing does not track scheduled cancellations.
-	}
+	// A scheduled cancellation would surface here (sub.ScheduledChange with
+	// action "cancel"); org_billing deliberately does not track it — there is
+	// no plan_ends_at field — and a cleared schedule (resume) needs no action.
 
 	// Sync quantity on non-rollover updates.
 	if !rolledOver && len(sub.Items) > 0 {
@@ -961,10 +959,10 @@ func reconcileOrgSeatUnderbilling(
 
 	seatUpdater, ok := params.Client.(paddle.SeatQuantityUpdater)
 	if !ok || seatUpdater == nil {
-		return reportedSeatQty, fmt.Errorf("Paddle Seat quantity updater is unavailable")
+		return reportedSeatQty, fmt.Errorf("paddle: seat quantity updater is unavailable")
 	}
 	if sub.ID == "" || sub.PriceID() == "" {
-		return reportedSeatQty, fmt.Errorf("Paddle subscription or Seat price is missing")
+		return reportedSeatQty, fmt.Errorf("paddle: subscription or seat price is missing")
 	}
 	if err := seatUpdater.UpdateSubscriptionQuantity(
 		ctx,
