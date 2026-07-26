@@ -24,10 +24,21 @@ catalog:
   typescript: ~5.9.3
   typescript-eslint: ^8.64.0
 
-pnpm:
-  overrides:
-    minimatch@<9.0.7: '>=9.0.7'
-    form-data@<4.0.6: '>=4.0.6'
-    js-yaml@<4.2.0: 4.2.0
-    node-gyp>undici: 6.27.0
-    sockjs>uuid: 11.1.1
+# NB: settings must sit at the top level of this file (like allowBuilds and
+# catalog above) — a nested `pnpm:` block is silently ignored by pnpm 10+.
+overrides:
+  # minimatch 5.x/9.x depend on brace-expansion ^2, which has no patched
+  # release for CVE-2026-14257; 10.2.3+ moves to the fixed 5.x line and also
+  # covers CVE-2026-26996/27903/27904. minimatch 3.x stays (brace-expansion 1
+  # is unaffected and 3.1.5 already carries the 3.x fixes).
+  minimatch@>=5.0.0 <10.2.3: '>=10.2.3'
+  brace-expansion@>=3.0.0 <5.0.8: '>=5.0.8'
+  axios@<1.18.0: '>=1.18.0'
+  js-yaml@>=4.0.0 <4.3.0: '>=4.3.0'
+  sharp@<0.35.0: '>=0.35.0'
+  svgo@>=4.0.0 <4.0.2: '>=4.0.2'
+  fast-uri@>=3.0.0 <3.1.4: '>=3.1.4 <4'
+  shell-quote@<1.9.0: '>=1.9.0'
+  form-data@<4.0.6: '>=4.0.6'
+  node-gyp>undici: 6.27.0
+  sockjs>uuid: 11.1.1
