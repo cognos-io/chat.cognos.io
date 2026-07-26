@@ -29,10 +29,17 @@ catalog:
 overrides:
   # minimatch 5.x/9.x depend on brace-expansion ^2, which has no patched
   # release for CVE-2026-14257; 10.2.3+ moves to the fixed 5.x line and also
-  # covers CVE-2026-26996/27903/27904. minimatch 3.x stays (brace-expansion 1
-  # is unaffected and 3.1.5 already carries the 3.x fixes).
+  # covers CVE-2026-26996/27903/27904.
   minimatch@>=5.0.0 <10.2.3: '>=10.2.3'
-  brace-expansion@>=3.0.0 <5.0.8: '>=5.0.8'
+  # GHSA-mh99-v99m-4gvg (OOM DoS) covers every brace-expansion release below
+  # 5.0.8, including the 1.x line minimatch 3.x uses — force everything up.
+  brace-expansion@<5.0.8: '>=5.0.8'
+  # GHSA-r28c-9q8g-f849: .map disclosure via sourceMappingURL path traversal.
+  postcss@<8.5.18: '>=8.5.18'
+  # GHSA-r292-9mhp-454m: stack-overflow DoS via crafted long-path tar.
+  tar@>=7.0.0 <7.5.21: '>=7.5.21'
+  # GHSA-f5vj-f2hx-8m93 / GHSA-m28w-2pqf-7qgj: CSRF + Host-header DoS.
+  webpack-dev-server@>=5.0.0 <5.2.6: '>=5.2.6 <6'
   axios@<1.18.0: '>=1.18.0'
   js-yaml@>=4.0.0 <4.3.0: '>=4.3.0'
   sharp@<0.35.0: '>=0.35.0'
