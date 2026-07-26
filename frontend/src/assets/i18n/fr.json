@@ -343,7 +343,7 @@
         "retrying": "Nouvelle tentative de paiement",
         "trial": "Essai"
       },
-      "guarantee": "Garantie satisfait ou remboursé de 60 jours",
+      "guarantee": "Fenêtre de remboursement de 60 jours",
       "heading": {
         "current": "Offre actuelle",
         "previous": "Offre précédente"
@@ -432,8 +432,8 @@
         "text": "Prix en CHF, TVA ajoutée au paiement. Des questions sur une offre ?"
       },
       "guarantee": {
-        "body": "Ce n'est pas pour vous ? Annulez dans les 60 jours suivant votre premier paiement pour un remboursement intégral — sur les deux offres, sans condition.",
-        "title": "Garantie satisfait ou remboursé de 60 jours"
+        "body": "Ce n'est pas pour vous ? Résiliez à tout moment — votre offre reste active jusqu'à la fin de la période payée. Les demandes de remboursement dans les 60 jours suivant un paiement sont examinées au cas par cas.",
+        "title": "Fenêtre de remboursement de 60 jours"
       },
       "intervalAria": "Intervalle de facturation",
       "monthly": "Mensuel",
@@ -484,7 +484,7 @@
       "currentPlan": "Offre actuelle",
       "monthly": "Mensuel",
       "monthsFree": "2 mois offerts",
-      "note": "Les changements prennent effet immédiatement. Garantie satisfait ou remboursé de 60 jours sur les deux offres.",
+      "note": "Les changements prennent effet immédiatement. Les demandes de remboursement sous 60 jours sont examinées au cas par cas.",
       "payg": {
         "desc": "Payez ce que vous utilisez, sur n'importe quel modèle. Votre facture mensuelle est d'au moins CHF 15.",
         "name": "Pay as you go",
@@ -629,7 +629,7 @@
       "locked": {
         "body": "Vous pouvez tout lire ici. Choisissez un forfait pour envoyer de nouveaux messages.",
         "comparePlans": "Comparer les forfaits",
-        "guarantee": "Garantie satisfait ou remboursé de 60 jours · annulable à tout moment",
+        "guarantee": "Fenêtre de remboursement de 60 jours · annulable à tout moment",
         "title": "L'envoi est en pause",
         "upgrade": "Passer à un forfait supérieur"
       },

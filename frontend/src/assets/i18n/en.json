@@ -343,7 +343,7 @@
         "retrying": "Retrying payment",
         "trial": "Trial"
       },
-      "guarantee": "60-day money-back guarantee",
+      "guarantee": "60-day refund window",
       "heading": {
         "current": "Current plan",
         "previous": "Previous plan"
@@ -432,8 +432,8 @@
         "text": "Prices in CHF, VAT added at checkout. Questions about a plan?"
       },
       "guarantee": {
-        "body": "Not the right fit? Cancel within 60 days of your first payment for a full refund — on either plan, no questions asked.",
-        "title": "60-day money-back guarantee"
+        "body": "Not the right fit? Cancel anytime — your plan runs to the end of what you've paid for. Refund requests within 60 days of a payment are reviewed case by case.",
+        "title": "60-day refund window"
       },
       "intervalAria": "Billing interval",
       "monthly": "Monthly",
@@ -484,7 +484,7 @@
       "currentPlan": "Current plan",
       "monthly": "Monthly",
       "monthsFree": "2 months free",
-      "note": "Changes take effect immediately. 60-day money-back guarantee on either plan.",
+      "note": "Changes take effect immediately. Refund requests within 60 days are reviewed case by case.",
       "payg": {
         "desc": "Pay for what you use on any model. Your monthly bill is at least CHF 15.",
         "name": "Pay as you go",
@@ -629,7 +629,7 @@
       "locked": {
         "body": "You can read everything here. Pick a plan to send new messages.",
         "comparePlans": "Compare plans",
-        "guarantee": "60-day money-back guarantee · cancel anytime",
+        "guarantee": "60-day refund window · cancel anytime",
         "title": "Sending is paused",
         "upgrade": "Upgrade"
       },

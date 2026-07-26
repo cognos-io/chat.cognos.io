@@ -343,7 +343,7 @@
         "retrying": "Nuovo tentativo di pagamento",
         "trial": "Prova"
       },
-      "guarantee": "Garanzia di rimborso di 60 giorni",
+      "guarantee": "Finestra di rimborso di 60 giorni",
       "heading": {
         "current": "Piano attuale",
         "previous": "Piano precedente"
@@ -432,8 +432,8 @@
         "text": "Prezzi in CHF, IVA aggiunta al pagamento. Domande su un piano?"
       },
       "guarantee": {
-        "body": "Non fa per te? Disdici entro 60 giorni dal primo pagamento per un rimborso totale — su entrambi i piani, senza domande.",
-        "title": "Garanzia di rimborso di 60 giorni"
+        "body": "Non fa per te? Disdici quando vuoi — il tuo piano resta attivo fino alla fine del periodo pagato. Le richieste di rimborso entro 60 giorni da un pagamento sono valutate caso per caso.",
+        "title": "Finestra di rimborso di 60 giorni"
       },
       "intervalAria": "Intervallo di fatturazione",
       "monthly": "Mensile",
@@ -484,7 +484,7 @@
       "currentPlan": "Piano attuale",
       "monthly": "Mensile",
       "monthsFree": "2 mesi gratis",
-      "note": "Le modifiche hanno effetto immediato. Garanzia di rimborso di 60 giorni su entrambi i piani.",
+      "note": "Le modifiche hanno effetto immediato. Le richieste di rimborso entro 60 giorni sono valutate caso per caso.",
       "payg": {
         "desc": "Paghi per ciò che usi su qualsiasi modello. La tua fattura mensile è di almeno CHF 15.",
         "name": "Pay as you go",
@@ -629,7 +629,7 @@
       "locked": {
         "body": "Puoi leggere tutto qui. Scegli un piano per inviare nuovi messaggi.",
         "comparePlans": "Confronta i piani",
-        "guarantee": "Garanzia di rimborso di 60 giorni · disdici quando vuoi",
+        "guarantee": "Finestra di rimborso di 60 giorni · disdici quando vuoi",
         "title": "L'invio è in pausa",
         "upgrade": "Esegui l'upgrade"
       },

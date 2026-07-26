@@ -343,7 +343,7 @@
         "retrying": "Reintentando el pago",
         "trial": "Prueba"
       },
-      "guarantee": "Garantía de devolución de 60 días",
+      "guarantee": "Plazo de reembolso de 60 días",
       "heading": {
         "current": "Plan actual",
         "previous": "Plan anterior"
@@ -432,8 +432,8 @@
         "text": "Precios en CHF, IVA añadido al pagar. ¿Preguntas sobre un plan?"
       },
       "guarantee": {
-        "body": "¿No es lo que buscabas? Cancela dentro de los 60 días de tu primer pago para un reembolso completo — en cualquiera de los planes, sin preguntas.",
-        "title": "Garantía de devolución de 60 días"
+        "body": "¿No es lo que buscabas? Cancela cuando quieras — tu plan sigue activo hasta el final del periodo pagado. Las solicitudes de reembolso en los 60 días siguientes a un pago se revisan caso por caso.",
+        "title": "Plazo de reembolso de 60 días"
       },
       "intervalAria": "Intervalo de facturación",
       "monthly": "Mensual",
@@ -484,7 +484,7 @@
       "currentPlan": "Plan actual",
       "monthly": "Mensual",
       "monthsFree": "2 meses gratis",
-      "note": "Los cambios surten efecto de inmediato. Garantía de devolución de 60 días en ambos planes.",
+      "note": "Los cambios surten efecto de inmediato. Las solicitudes de reembolso en un plazo de 60 días se revisan caso por caso.",
       "payg": {
         "desc": "Paga por lo que usas en cualquier modelo. Tu factura mensual es de al menos CHF 15.",
         "name": "Pay as you go",
@@ -629,7 +629,7 @@
       "locked": {
         "body": "Puedes leer todo aquí. Elige un plan para enviar mensajes nuevos.",
         "comparePlans": "Comparar planes",
-        "guarantee": "Garantía de devolución de 60 días · cancela cuando quieras",
+        "guarantee": "Plazo de reembolso de 60 días · cancela cuando quieras",
         "title": "El envío está en pausa",
         "upgrade": "Mejorar plan"
       },

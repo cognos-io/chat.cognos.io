@@ -163,9 +163,7 @@ test('exhausting the trial locks the composer and shows the in-chat banners', as
   // The in-chat lock banner + the locked composer both appear (no modal).
   await expect(page.getByText('Your trial credits are used up')).toBeVisible();
   await expect(page.getByText('Sending is paused')).toBeVisible();
-  await expect(
-    page.getByText('60-day money-back guarantee · cancel anytime'),
-  ).toBeVisible();
+  await expect(page.getByText('60-day refund window · cancel anytime')).toBeVisible();
   // New chat is disabled and the trial card flips to "Used up".
   await expect(page.getByRole('button', { name: 'New chat' })).toBeDisabled();
   await expect(page.getByText('Used up', { exact: true })).toBeVisible();
