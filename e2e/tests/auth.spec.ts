@@ -62,7 +62,9 @@ test.describe('auth + account key flow', () => {
 
     await gotoRegister(page);
     await fillRegisterForm(page, account);
-    await submitRegister(page, account);
+    // The mocked 503 means no user record exists yet, so skip the
+    // mark-verified step (it polls for the record and would time out).
+    await submitRegister(page);
     await expect(page.getByRole('alert')).toContainText(
       "We couldn't create your account right now",
     );

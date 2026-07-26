@@ -97,8 +97,12 @@ test('delete account surfaces the active-plan block', async ({ page }) => {
   await page.getByLabel('Current password').fill('current-password');
   await page.getByRole('button', { name: 'Delete my account' }).click();
 
+  // A 409 is mapped to the translated conflict toast, not the raw server
+  // message (account.toasts.deleteAccountConflict).
   await expect(
-    page.getByText('Cancel your plan before deleting your account'),
+    page.getByText(
+      'Resolve billing or Organisation ownership before deleting your account',
+    ),
   ).toBeVisible();
   // Still on the account page — deletion was refused.
   await expect(page).toHaveURL(/\/account$/);

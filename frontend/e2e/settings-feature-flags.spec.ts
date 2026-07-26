@@ -40,7 +40,10 @@ const seed = async (
   );
 };
 
-const FLAGGED_SECTIONS = ['Usage', 'Team & sharing', 'Notifications'];
+// Pin: mirrors environment.featureFlags — `team` shipped on (Teams v1,
+// July 2026) so only these sections remain flagged off. Update alongside
+// any flag flip in frontend/src/environments/.
+const FLAGGED_SECTIONS = ['Usage', 'Notifications'];
 
 test('flagged-off settings sections are hidden from the nav', async ({ page }) => {
   const fixture = buildVaultFixture('user_e2e_flag01', 'flag@example.com');
@@ -67,7 +70,7 @@ test('navigating directly to a flagged-off section redirects to /account', async
 
   await page.setViewportSize({ width: 1280, height: 800 });
 
-  for (const path of ['usage', 'team', 'notifications']) {
+  for (const path of ['usage', 'notifications']) {
     await page.goto(`/account/${path}`);
     await expect(page).toHaveURL(/\/account$/);
   }

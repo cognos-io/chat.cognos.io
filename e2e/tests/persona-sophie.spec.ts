@@ -115,6 +115,9 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
       const adminTabs = page.getByRole('group', { name: 'Team settings tabs' });
       const adminAvailable =
         await test.step('owner sees the admin tabs after a reload', async () => {
+          // The previous step left us on /account/projects; the reload-survival
+          // gate is about the Team admin surface, so navigate back first.
+          await page.goto('/account/team');
           await page.reload();
           // Wait for the load to settle on ANY terminal state.
           await expect(
@@ -331,9 +334,11 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
                 'Their personal account and personal chats are untouched.',
               ),
             ).toBeVisible();
+            // Copy gained a 3-seat-minimum clause after "cycle", so no
+            // trailing full stop here.
             await expect(
               page.getByText(
-                'The seat stays billed until the end of the current cycle.',
+                'The seat stays billed until the end of the current cycle',
               ),
             ).toBeVisible();
 
@@ -378,6 +383,11 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
         await page.goto('/');
         const trigger = page.getByTestId('workspace-switcher-trigger');
         await expect(trigger).toBeVisible();
+        // The billing-paused step switched into the org workspace and the
+        // choice persists; reset to Personal so this walkthrough starts from
+        // the default state.
+        await trigger.click();
+        await page.getByRole('menuitem', { name: /Personal.*Billed to you/s }).click();
         await expect(trigger).toHaveAttribute(
           'aria-label',
           'Switch workspace. Current workspace: Personal',
