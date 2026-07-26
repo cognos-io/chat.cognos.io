@@ -35,7 +35,10 @@
       "deleteChatsConfirm": "Sí, eliminar todo",
       "deleteChatsSubtitle": "Elimina permanentemente cada conversación y sus mensajes. Esto no se puede deshacer.",
       "deleteChatsTitle": "Eliminar todos los chats",
+      "deleteWithGoogle": "Continuar con Google",
       "deleting": "Eliminando…",
+      "googleReauthError": "No pudimos confirmar tu identidad con Google. Vuelve a intentarlo.",
+      "oauthOnlyHint": "Inicias sesión en esta cuenta con Google. Continúa con Google a continuación para confirmar que eres tú antes de eliminar tu cuenta.",
       "passwordLabel": "Contraseña actual",
       "stepUpHint": "Si tienes activada la autenticación de dos factores, introduce también el código actual de seis dígitos.",
       "title": "Zona de peligro",
@@ -107,6 +110,7 @@
     },
     "errors": {
       "emailChange": "No se pudo iniciar el cambio de correo. Comprueba la dirección e inténtalo de nuevo.",
+      "googleLink": "No se pudo conectar Google. Comprueba tu contraseña e inténtalo de nuevo.",
       "passwordChange": "No se pudo cambiar tu contraseña. Comprueba tu contraseña actual e inténtalo de nuevo."
     },
     "appearance": {
@@ -227,6 +231,12 @@
         "network": "No podemos conectar con Cognos. Comprueba tu conexión y vuelve a intentarlo.",
         "server": "No podemos enviar el enlace ahora. Vuelve a intentarlo en unos instantes."
       }
+    },
+    "google": {
+      "continue": "Continuar con Google",
+      "connecting": "Conectando con Google…",
+      "accountExists": "Ya existe una cuenta con este correo. Inicia sesión con tu contraseña y luego conecta Google desde los ajustes de seguridad de tu cuenta.",
+      "error": "No pudimos iniciar tu sesión con Google. Vuelve a intentarlo."
     },
     "login": {
       "error": "No pudimos iniciar tu sesión. Comprueba tu correo y contraseña e inténtalo de nuevo.",
@@ -1213,7 +1223,8 @@
       "lastWeek": "La semana pasada"
     },
     "close": "Cerrar",
-    "loading": "Cargando…"
+    "loading": "Cargando…",
+    "or": "o"
   },
   "library": {
     "title": "Biblioteca de archivos",
@@ -1648,7 +1659,18 @@
         "successToast": "Sesión cerrada en otros dispositivos",
         "errorToast": "No se pudo cerrar la sesión en otros dispositivos. Inténtalo de nuevo."
       },
-      "passwordHeading": "Contraseña"
+      "passwordHeading": "Contraseña",
+      "connectedAccounts": {
+        "heading": "Cuentas conectadas",
+        "description": "Métodos de inicio de sesión vinculados a tu cuenta de Cognos.",
+        "googleConnected": "Google está conectado a tu cuenta.",
+        "connectGoogle": "Conectar Google",
+        "connecting": "Conectando…",
+        "connectedToast": "Google conectado",
+        "signedInWithGoogle": "Inicias sesión en esta cuenta con Google.",
+        "oauthOnlyTitle": "Inicias sesión con Google",
+        "oauthOnlyBody": "Esta cuenta no tiene contraseña de Cognos, así que el cambio de contraseña y la autenticación de dos factores no están disponibles aquí. Gestiona la seguridad de tu cuenta de Google directamente con Google."
+      }
     },
     "bookmarks": {
       "title": "Tus marcadores",

@@ -17,6 +17,7 @@ import {
   CognosToastService,
 } from '@cognos/ui-angular';
 
+import { GoogleIconComponent } from '@app/components/google-icon/google-icon.component';
 import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 import {
   buildEmergencyKitText,
@@ -46,6 +47,7 @@ import { VaultService } from '@app/services/vault.service';
     CognosCardComponent,
     CognosFieldComponent,
     CognosTextFieldComponent,
+    GoogleIconComponent,
     MfaSettingsComponent,
     SettingsPageComponent,
     TranslocoModule,
@@ -89,47 +91,109 @@ import { VaultService } from '@app/services/vault.service';
           }
         </cog-card>
 
-        <cog-card
-          [heading]="t('settings.security.passwordHeading')"
-          [subtitle]="t('account.password.subtitle')"
-        >
-          <div class="account-security__fields">
-            <cog-field [label]="t('account.password.current')">
-              <cog-text-field
-                [ariaLabel]="t('account.password.current')"
-                type="password"
-                [value]="currentPassword()"
-                (valueChange)="currentPassword.set($event)"
-              />
-            </cog-field>
-            <cog-field [label]="t('account.password.new')">
-              <cog-text-field
-                [ariaLabel]="t('account.password.new')"
-                type="password"
-                [placeholder]="t('account.password.newPlaceholder')"
-                [value]="newPassword()"
-                (valueChange)="newPassword.set($event)"
-              />
-            </cog-field>
-          </div>
+        @if (hasPassword()) {
+          <cog-card
+            [heading]="t('settings.security.passwordHeading')"
+            [subtitle]="t('account.password.subtitle')"
+          >
+            <div class="account-security__fields">
+              <cog-field [label]="t('account.password.current')">
+                <cog-text-field
+                  [ariaLabel]="t('account.password.current')"
+                  type="password"
+                  [value]="currentPassword()"
+                  (valueChange)="currentPassword.set($event)"
+                />
+              </cog-field>
+              <cog-field [label]="t('account.password.new')">
+                <cog-text-field
+                  [ariaLabel]="t('account.password.new')"
+                  type="password"
+                  [placeholder]="t('account.password.newPlaceholder')"
+                  [value]="newPassword()"
+                  (valueChange)="newPassword.set($event)"
+                />
+              </cog-field>
+            </div>
 
-          @if (passwordError()) {
-            <p class="account-security__error">{{ passwordError() }}</p>
+            @if (passwordError()) {
+              <p class="account-security__error">{{ passwordError() }}</p>
+            }
+
+            <cog-button
+              card-actions
+              appearance="primary"
+              [disabled]="!canChangePassword()"
+              (click)="changePassword()"
+            >
+              {{
+                changingPassword()
+                  ? t('account.password.changing')
+                  : t('account.password.change')
+              }}
+            </cog-button>
+          </cog-card>
+        }
+
+        <cog-card
+          [heading]="t('settings.security.connectedAccounts.heading')"
+          [subtitle]="t('settings.security.connectedAccounts.description')"
+        >
+          @if (isGoogleLinked()) {
+            <cog-callout tone="success" icon="check">
+              <app-google-icon [size]="16" />
+              {{ t('settings.security.connectedAccounts.googleConnected') }}
+            </cog-callout>
+          } @else if (hasPassword()) {
+            <div class="account-security__fields">
+              <cog-field [label]="t('account.password.current')">
+                <cog-text-field
+                  [ariaLabel]="t('account.password.current')"
+                  type="password"
+                  autocomplete="current-password"
+                  [value]="linkPassword()"
+                  (valueChange)="linkPassword.set($event)"
+                />
+              </cog-field>
+            </div>
+
+            @if (linkError()) {
+              <p class="account-security__error">{{ linkError() }}</p>
+            }
+          } @else {
+            <!-- Unreachable in practice: an OAuth-only account already has
+                 Google linked. Kept as a safe fallback. -->
+            <cog-callout tone="info" icon="info">
+              {{ t('settings.security.connectedAccounts.signedInWithGoogle') }}
+            </cog-callout>
           }
 
-          <cog-button
-            card-actions
-            appearance="primary"
-            [disabled]="!canChangePassword()"
-            (click)="changePassword()"
-          >
-            {{
-              changingPassword()
-                ? t('account.password.changing')
-                : t('account.password.change')
-            }}
-          </cog-button>
+          @if (!isGoogleLinked() && hasPassword()) {
+            <cog-button
+              card-actions
+              appearance="default"
+              [disabled]="!canConnectGoogle()"
+              (click)="connectGoogle()"
+            >
+              @if (googleBusy()) {
+                {{ t('settings.security.connectedAccounts.connecting') }}
+              } @else {
+                <app-google-icon />
+                {{ t('settings.security.connectedAccounts.connectGoogle') }}
+              }
+            </cog-button>
+          }
         </cog-card>
+
+        @if (!hasPassword()) {
+          <cog-callout tone="info" icon="info">
+            <strong>{{
+              t('settings.security.connectedAccounts.oauthOnlyTitle')
+            }}</strong
+            ><br />
+            {{ t('settings.security.connectedAccounts.oauthOnlyBody') }}
+          </cog-callout>
+        }
 
         <cog-card
           [heading]="t('settings.security.sessions.heading')"
@@ -150,8 +214,12 @@ import { VaultService } from '@app/services/vault.service';
           </cog-button>
         </cog-card>
 
-        <!-- Two-factor authentication (relocated from the Account home). -->
-        <app-mfa-settings />
+        <!-- Two-factor authentication (relocated from the Account home).
+             Password-gated (MFA enrol/disable confirm with a password), so
+             hidden for OAuth-only Accounts. -->
+        @if (hasPassword()) {
+          <app-mfa-settings />
+        }
       </app-settings-page>
     </ng-container>
   `,
@@ -203,6 +271,20 @@ export class AccountSecurityComponent {
       this.currentPassword().length > 0 &&
       this.newPassword().length >= 12,
   );
+
+  // Google account linking (docs/business_processes/oauth-account-link.md).
+  protected readonly hasPassword = this._auth.hasPassword;
+  protected readonly isGoogleLinked = this._auth.isGoogleLinked;
+  protected readonly googleBusy = this._auth.googleBusy;
+  protected readonly linkPassword = signal('');
+  protected readonly linkError = signal<string | null>(null);
+  protected readonly canConnectGoogle = computed(
+    () => !this.googleBusy() && this.linkPassword().length > 0,
+  );
+
+  constructor() {
+    this._auth.loadAuthMethods().subscribe();
+  }
 
   downloadEmergencyKit(): void {
     const accountKey = this.accountKey();
@@ -272,6 +354,41 @@ export class AccountSecurityComponent {
         this.changingPassword.set(false);
         this.passwordError.set(
           this._transloco.translate('account.errors.passwordChange'),
+        );
+      },
+    });
+  }
+
+  // Must stay a plain (non-async) method invoked directly from (click) —
+  // PocketBase opens the OAuth popup synchronously, and Safari blocks popups
+  // opened outside that gesture. The password confirmation happens over the
+  // network first, so a popup is pre-opened here and handed to linkGoogle,
+  // which navigates it once the Google URL is known.
+  connectGoogle(): void {
+    if (!this.canConnectGoogle()) {
+      return;
+    }
+
+    this.linkError.set(null);
+    const popup =
+      typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+
+    this._auth.linkGoogle(this.linkPassword(), popup).subscribe({
+      next: () => {
+        this.linkPassword.set('');
+        this._toast.notify({
+          title: this._transloco.translate(
+            'settings.security.connectedAccounts.connectedToast',
+          ),
+          tone: 'success',
+          icon: 'check',
+        });
+      },
+      error: () => {
+        this.linkError.set(
+          this._auth.oauthError() === 'accountExists'
+            ? this._transloco.translate('auth.google.accountExists')
+            : this._transloco.translate('account.errors.googleLink'),
         );
       },
     });

@@ -58,6 +58,27 @@ export interface AuthTokenResponse {
   record: AuthModel;
 }
 
+// Account auth-methods (docs/business_processes/oauth-google-sign-in.md,
+// oauth-account-link.md) — distinct from PocketBase's own listAuthMethods()
+// (AuthService.listAuthMethods), which reports collection-level sign-in
+// options rather than this Account's own password/OAuth state.
+export interface AccountAuthMethodsResponse {
+  hasPassword: boolean;
+  providers: string[];
+}
+
+export interface OAuthLinkIntentResponse {
+  linkIntentId: string;
+}
+
+export interface OAuthStepUpBeginResponse {
+  challengeId: string;
+}
+
+export interface OAuthStepUpCompleteResponse {
+  oauthStepUpId: string;
+}
+
 export interface CompletionMessageRequest {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -1520,12 +1541,62 @@ export class CognosApiService {
 
   // Erases the user's account: their chats, keys, personas and preferences are
   // deleted server-side (financial records are retained, detached). Refused
-  // with 409 while a paid plan is active.
-  deleteAccount(password: string, totpCode: string): Observable<void> {
+  // with 409 while a paid plan is active. Password Accounts send
+  // password(+totpCode); OAuth-only Accounts send oauthStepUpId instead
+  // (docs/business_processes/account-delete.md).
+  deleteAccount(request: {
+    password?: string;
+    totpCode?: string;
+    oauthStepUpId?: string;
+  }): Observable<void> {
     return this._http.delete<void>(`${this._baseUrl}/api/v1/account`, {
       headers: this.authHeaders(),
-      body: { password, totpCode },
+      body: request,
     });
+  }
+
+  // --- Google OAuth account state (docs/business_processes/oauth-google-sign-in.md,
+  // oauth-account-link.md, account-delete.md) ---
+
+  getAccountAuthMethods(): Observable<AccountAuthMethodsResponse> {
+    return this._http.get<AccountAuthMethodsResponse>(
+      `${this._baseUrl}/api/v1/account/auth-methods`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  // createOAuthLinkIntent proves the current Cognos password and returns a
+  // one-time intent id to pass as authWithOAuth2's createData.cognosLinkIntent
+  // — the backend only attaches Google to this Account when that intent is
+  // presented and valid.
+  createOAuthLinkIntent(
+    password: string,
+    provider = 'google',
+  ): Observable<OAuthLinkIntentResponse> {
+    return this._http.post<OAuthLinkIntentResponse>(
+      `${this._baseUrl}/api/v1/account/oauth/link-intent`,
+      { password, provider },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  // beginOAuthStepUp mints a short-lived challenge id for the OAuth-only
+  // account-delete step-up. Pass it as authWithOAuth2's
+  // createData.cognosStepUpChallenge, then call completeOAuthStepUp.
+  beginOAuthStepUp(): Observable<OAuthStepUpBeginResponse> {
+    return this._http.post<OAuthStepUpBeginResponse>(
+      `${this._baseUrl}/api/v1/account/oauth/step-up/begin`,
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
+  completeOAuthStepUp(challengeId: string): Observable<OAuthStepUpCompleteResponse> {
+    return this._http.post<OAuthStepUpCompleteResponse>(
+      `${this._baseUrl}/api/v1/account/oauth/step-up/complete`,
+      { challengeId },
+      { headers: this.authHeaders() },
+    );
   }
 
   /** Rotates the caller's auth token key, revoking every other session. */

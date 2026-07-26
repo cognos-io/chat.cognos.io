@@ -6,6 +6,7 @@ import PocketBase from 'pocketbase';
 import { lastValueFrom, of, throwError } from 'rxjs';
 
 import { AuthService } from './auth.service';
+import { CognosApiService } from './cognos-api.service';
 import { ErrorService } from './error.service';
 import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
@@ -14,10 +15,10 @@ describe('AuthService', () => {
   let service: AuthService;
   let router: Router;
   let authChangeHandler:
-    | ((token: string, model: Record<string, unknown> | null) => void)
-    | undefined;
+    ((token: string, model: Record<string, unknown> | null) => void) | undefined;
 
   const authWithPassword = vi.fn();
+  const authWithOAuth2 = vi.fn();
   const authRefresh = vi.fn();
   const create = vi.fn();
   const update = vi.fn();
@@ -45,6 +46,13 @@ describe('AuthService', () => {
     completeRecovery: vi.fn(),
   };
 
+  const cognosApiService = {
+    getAccountAuthMethods: vi.fn(),
+    createOAuthLinkIntent: vi.fn(),
+    beginOAuthStepUp: vi.fn(),
+    completeOAuthStepUp: vi.fn(),
+  };
+
   const authStore = {
     isValid: false,
     clear,
@@ -56,6 +64,7 @@ describe('AuthService', () => {
     collection: vi.fn(() => ({
       authRefresh,
       authWithPassword,
+      authWithOAuth2,
       create,
       update,
     })),
@@ -72,6 +81,7 @@ describe('AuthService', () => {
     authChangeHandler = undefined;
     authStore.isValid = false;
     authWithPassword.mockReset();
+    authWithOAuth2.mockReset();
     authRefresh.mockReset();
     create.mockReset();
     update.mockReset();
@@ -86,6 +96,10 @@ describe('AuthService', () => {
     mfaService.deviceToken.mockReturnValue(null);
     mfaService.completeTotp.mockReset();
     mfaService.completeRecovery.mockReset();
+    cognosApiService.getAccountAuthMethods.mockReset();
+    cognosApiService.createOAuthLinkIntent.mockReset();
+    cognosApiService.beginOAuthStepUp.mockReset();
+    cognosApiService.completeOAuthStepUp.mockReset();
 
     TestBed.configureTestingModule({
       providers: [
@@ -95,6 +109,7 @@ describe('AuthService', () => {
         { provide: ErrorService, useValue: errorService },
         { provide: TrustedUnlockService, useValue: trustedUnlockService },
         { provide: MfaService, useValue: mfaService },
+        { provide: CognosApiService, useValue: cognosApiService },
       ],
     });
 
@@ -383,5 +398,150 @@ describe('AuthService', () => {
     expect(trustedUnlockService.clearAllUnlockKeys).toHaveBeenCalledTimes(1);
     expect(send).toHaveBeenCalledWith('/v1/auth/logout', { method: 'POST' });
     expect(clear).toHaveBeenCalledTimes(1);
+  });
+
+  describe('Google OAuth', () => {
+    it('signs in with Google and tracks login_completed without MFA', async () => {
+      authWithOAuth2.mockResolvedValueOnce({
+        token: 't',
+        record: { id: 'user-1', email: 'person@example.com' },
+      });
+
+      const record = await lastValueFrom(service.loginWithGoogle());
+
+      expect(authWithOAuth2).toHaveBeenCalledWith({ provider: 'google' });
+      expect(record).toEqual({ id: 'user-1', email: 'person@example.com' });
+      expect(service.oauthError()).toBeNull();
+      expect(service.googleBusy()).toBe(false);
+    });
+
+    it('surfaces an accountExists error on ACCOUNT_EXISTS_USE_PASSWORD collision', async () => {
+      authWithOAuth2.mockRejectedValueOnce({
+        status: 401,
+        response: { code: 'ACCOUNT_EXISTS_USE_PASSWORD' },
+      });
+
+      await expect(lastValueFrom(service.loginWithGoogle())).rejects.toBeTruthy();
+
+      expect(service.oauthError()).toBe('accountExists');
+      expect(service.googleBusy()).toBe(false);
+    });
+
+    it('surfaces a generic error for any other Google sign-in failure', async () => {
+      authWithOAuth2.mockRejectedValueOnce(new Error('popup closed'));
+
+      await expect(lastValueFrom(service.loginWithGoogle())).rejects.toBeTruthy();
+
+      expect(service.oauthError()).toBe('generic');
+    });
+
+    it('loads the Cognos auth-methods view into state', async () => {
+      cognosApiService.getAccountAuthMethods.mockReturnValue(
+        of({ hasPassword: true, providers: ['google'] }),
+      );
+
+      await lastValueFrom(service.loadAuthMethods());
+
+      expect(service.hasPassword()).toBe(true);
+      expect(service.isGoogleLinked()).toBe(true);
+    });
+
+    it('defaults hasPassword to true before auth-methods have loaded', () => {
+      expect(service.hasPassword()).toBe(true);
+      expect(service.isGoogleLinked()).toBe(false);
+    });
+
+    it('links Google by confirming the password then completing the OAuth round trip', async () => {
+      cognosApiService.createOAuthLinkIntent.mockReturnValue(
+        of({ linkIntentId: 'intent-1' }),
+      );
+      cognosApiService.getAccountAuthMethods.mockReturnValue(
+        of({ hasPassword: true, providers: ['google'] }),
+      );
+      authWithOAuth2.mockResolvedValueOnce({
+        token: 't',
+        record: { id: 'user-1' },
+      });
+      const popup = { closed: false, location: { href: '' } } as unknown as Window;
+
+      await lastValueFrom(service.linkGoogle('correct-pw', popup));
+
+      expect(cognosApiService.createOAuthLinkIntent).toHaveBeenCalledWith(
+        'correct-pw',
+        'google',
+      );
+      expect(authWithOAuth2).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: 'google',
+          createData: { cognosLinkIntent: 'intent-1' },
+        }),
+      );
+      // The urlCallback hands the pre-opened popup its destination, rather
+      // than letting PocketBase open a fresh (Safari-blocked) window.
+      const call = authWithOAuth2.mock.calls[0][0] as {
+        urlCallback: (url: string) => void;
+      };
+      call.urlCallback('https://accounts.google.com/o/oauth2/auth');
+      expect((popup as unknown as { location: { href: string } }).location.href).toBe(
+        'https://accounts.google.com/o/oauth2/auth',
+      );
+      expect(service.isGoogleLinked()).toBe(true);
+      expect(service.googleBusy()).toBe(false);
+    });
+
+    it('closes the popup and surfaces accountExists when linking collides with another account', async () => {
+      cognosApiService.createOAuthLinkIntent.mockReturnValue(
+        of({ linkIntentId: 'intent-1' }),
+      );
+      authWithOAuth2.mockRejectedValueOnce({
+        status: 401,
+        response: { code: 'ACCOUNT_EXISTS_USE_PASSWORD' },
+      });
+      const popup = { closed: false, close: vi.fn() } as unknown as Window;
+
+      await expect(
+        lastValueFrom(service.linkGoogle('correct-pw', popup)),
+      ).rejects.toBeTruthy();
+
+      expect(popup.close).toHaveBeenCalledTimes(1);
+      expect(service.oauthError()).toBe('accountExists');
+      expect(service.googleBusy()).toBe(false);
+    });
+
+    it('re-authenticates with Google to obtain a step-up id for account deletion', async () => {
+      cognosApiService.beginOAuthStepUp.mockReturnValue(
+        of({ challengeId: 'challenge-1' }),
+      );
+      cognosApiService.completeOAuthStepUp.mockReturnValue(
+        of({ oauthStepUpId: 'stepup-1' }),
+      );
+      authWithOAuth2.mockResolvedValueOnce({ token: 't', record: { id: 'user-1' } });
+
+      const oauthStepUpId = await lastValueFrom(service.stepUpWithGoogle(null));
+
+      expect(cognosApiService.beginOAuthStepUp).toHaveBeenCalledTimes(1);
+      expect(authWithOAuth2).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: 'google',
+          createData: { cognosStepUpChallenge: 'challenge-1' },
+        }),
+      );
+      expect(cognosApiService.completeOAuthStepUp).toHaveBeenCalledWith('challenge-1');
+      expect(oauthStepUpId).toBe('stepup-1');
+      expect(service.googleBusy()).toBe(false);
+    });
+
+    it('propagates a generic error when the step-up re-authentication fails', async () => {
+      cognosApiService.beginOAuthStepUp.mockReturnValue(
+        of({ challengeId: 'challenge-1' }),
+      );
+      authWithOAuth2.mockRejectedValueOnce(new Error('popup closed'));
+
+      await expect(lastValueFrom(service.stepUpWithGoogle(null))).rejects.toBeTruthy();
+
+      expect(cognosApiService.completeOAuthStepUp).not.toHaveBeenCalled();
+      expect(service.oauthError()).toBe('generic');
+      expect(service.googleBusy()).toBe(false);
+    });
   });
 });

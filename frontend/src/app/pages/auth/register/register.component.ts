@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
+  effect,
   inject,
   signal,
   viewChild,
@@ -18,6 +20,7 @@ import { filterNil } from 'ngxtension/filter-nil';
 import { CognosAuthPageComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
+import { GoogleIconComponent } from '@app/components/google-icon/google-icon.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { safeInternalUrl } from '@app/utils/safe-redirect';
 
@@ -36,6 +39,7 @@ import { authRequestErrorKind } from '../auth-request-error';
     TranslocoModule,
     CognosButtonComponent,
     CognosLogoComponent,
+    GoogleIconComponent,
     LoadingIndicatorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +49,37 @@ import { authRequestErrorKind } from '../auth-request-error';
         <app-cognos-logo class="auth-page__logo"></app-cognos-logo>
         <h1 class="auth-page__title">{{ t('auth.register.title') }}</h1>
         <p class="auth-page__lead">{{ t('auth.register.lead') }}</p>
+
+        <cog-button
+          appearance="default"
+          [fullWidth]="true"
+          size="lg"
+          type="button"
+          [disabled]="authService.googleBusy()"
+          (click)="onGoogleClick()"
+        >
+          @if (authService.googleBusy()) {
+            <span class="auth-page__loading-copy">
+              <app-loading-indicator></app-loading-indicator>
+              {{ t('auth.google.connecting') }}
+            </span>
+          } @else {
+            <app-google-icon />
+            {{ t('auth.google.continue') }}
+          }
+        </cog-button>
+
+        @if (authService.oauthError()) {
+          <p #oauthErrorAlert class="auth-page__hint" role="alert" tabindex="-1">
+            {{
+              authService.oauthError() === 'accountExists'
+                ? t('auth.google.accountExists')
+                : t('auth.google.error')
+            }}
+          </p>
+        }
+
+        <p class="auth-page__divider">{{ t('common.or') }}</p>
 
         <form
           class="auth-page__form"
@@ -193,7 +228,10 @@ export class RegisterComponent {
   private readonly _route = inject(ActivatedRoute);
   private readonly _analytics = inject(Analytics);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _destroyRef = inject(DestroyRef);
   private readonly _submitError = viewChild<ElementRef<HTMLElement>>('submitError');
+  private readonly _oauthErrorAlert =
+    viewChild<ElementRef<HTMLElement>>('oauthErrorAlert');
 
   // Marketing attribution (docs/business_processes/product-analytics.md): the site's
   // CTAs append ?ref=<location>. Read once, kept in component memory only —
@@ -222,6 +260,13 @@ export class RegisterComponent {
   }
 
   constructor() {
+    effect(() => {
+      if (!this.authService.oauthError()) {
+        return;
+      }
+      setTimeout(() => this._oauthErrorAlert()?.nativeElement.focus());
+    });
+
     this.authService.user$.pipe(takeUntilDestroyed(), filterNil()).subscribe((user) => {
       if (user) {
         // Registration signs the account straight in, so a guarded deep link
@@ -258,6 +303,24 @@ export class RegisterComponent {
       .subscribe(() => {
         this._analytics.track('signup_completed', { source: this._signupSource });
         this.loading.set(false);
+      });
+  }
+
+  // Must stay a plain (non-async) method called directly from the (click)
+  // binding: PocketBase opens the OAuth popup synchronously inside
+  // authWithOAuth2, and Safari blocks popups opened outside that gesture.
+  onGoogleClick(): void {
+    if (this.authService.googleBusy()) {
+      return;
+    }
+
+    this.authService
+      .loginWithGoogle()
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        // Success navigates via the user$ subscription above; failure is
+        // surfaced through authService.oauthError().
+        error: () => undefined,
       });
   }
 

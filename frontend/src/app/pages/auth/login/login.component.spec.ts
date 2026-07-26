@@ -7,7 +7,7 @@ import { Subject, throwError } from 'rxjs';
 
 import { ErrorService } from '@app/services/error.service';
 
-import { AuthService, LoginStatus } from '@services/auth.service';
+import { AuthService, LoginStatus, OAuthErrorKind } from '@services/auth.service';
 
 import { LoginComponent } from './login.component';
 
@@ -18,16 +18,22 @@ describe('LoginComponent', () => {
   let user$: Subject<unknown>;
 
   const status = signal<LoginStatus>('pending');
+  const oauthError = signal<OAuthErrorKind | null>(null);
+  const googleBusy = signal(false);
   const loginNext = vi.fn();
   const completeMfa = vi.fn();
+  const loginWithGoogle = vi.fn();
   const errorService = {
     alert: vi.fn(),
   };
 
   beforeEach(async () => {
     status.set('pending');
+    oauthError.set(null);
+    googleBusy.set(false);
     loginNext.mockReset();
     completeMfa.mockReset();
+    loginWithGoogle.mockReset();
     errorService.alert.mockReset();
     user$ = new Subject<unknown>();
 
@@ -39,10 +45,13 @@ describe('LoginComponent', () => {
           provide: AuthService,
           useValue: {
             status,
+            oauthError,
+            googleBusy,
             user$,
             login$: { next: loginNext },
             completeMfa,
             resetMfaChallenge: vi.fn(),
+            loginWithGoogle,
           },
         },
         { provide: ErrorService, useValue: errorService },
@@ -172,6 +181,8 @@ describe('LoginComponent post-auth next handling', () => {
           provide: AuthService,
           useValue: {
             status: signal<LoginStatus>('pending'),
+            oauthError: signal<OAuthErrorKind | null>(null),
+            googleBusy: signal(false),
             user$,
             login$: { next: vi.fn() },
           },

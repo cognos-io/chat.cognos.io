@@ -35,7 +35,10 @@
       "deleteChatsConfirm": "Yes, delete everything",
       "deleteChatsSubtitle": "Permanently delete every conversation and its messages. This can’t be undone.",
       "deleteChatsTitle": "Delete all chats",
+      "deleteWithGoogle": "Continue with Google",
       "deleting": "Deleting…",
+      "googleReauthError": "We couldn't confirm your identity with Google. Please try again.",
+      "oauthOnlyHint": "You sign in to this account with Google. Continue with Google below to confirm it's you before we delete your account.",
       "passwordLabel": "Current password",
       "stepUpHint": "If two-factor authentication is enabled, enter the current six-digit code too.",
       "title": "Danger zone",
@@ -107,6 +110,7 @@
     },
     "errors": {
       "emailChange": "Could not start the email change. Check the address and try again.",
+      "googleLink": "Could not connect Google. Check your password and try again.",
       "passwordChange": "Could not change your password. Check your current password and try again."
     },
     "appearance": {
@@ -227,6 +231,12 @@
         "network": "We couldn't reach Cognos. Check your connection and try again.",
         "server": "We couldn't send the reset link right now. Please try again shortly."
       }
+    },
+    "google": {
+      "continue": "Continue with Google",
+      "connecting": "Connecting to Google…",
+      "accountExists": "An account with this email already exists. Sign in with your password, then connect Google from your account security settings.",
+      "error": "We couldn't sign you in with Google. Please try again."
     },
     "login": {
       "error": "We couldn't sign you in. Check your email and password and try again.",
@@ -1213,7 +1223,8 @@
       "lastWeek": "Last week"
     },
     "close": "Close",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "or": "or"
   },
   "library": {
     "title": "File library",
@@ -1648,7 +1659,18 @@
         "successToast": "Other devices signed out",
         "errorToast": "Couldn't sign out other devices. Please try again."
       },
-      "passwordHeading": "Password"
+      "passwordHeading": "Password",
+      "connectedAccounts": {
+        "heading": "Connected accounts",
+        "description": "Sign-in methods linked to your Cognos account.",
+        "googleConnected": "Google is connected to your account.",
+        "connectGoogle": "Connect Google",
+        "connecting": "Connecting…",
+        "connectedToast": "Google connected",
+        "signedInWithGoogle": "You sign in to this account with Google.",
+        "oauthOnlyTitle": "You sign in with Google",
+        "oauthOnlyBody": "This account doesn't have a Cognos password, so password change and two-factor authentication aren't available here. Manage your Google account's security directly with Google."
+      }
     },
     "bookmarks": {
       "title": "Your bookmarks",

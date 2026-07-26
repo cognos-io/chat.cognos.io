@@ -1,9 +1,10 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { Observable, Subject, of, throwError } from 'rxjs';
 
-import { AuthService } from '@services/auth.service';
+import { AuthService, OAuthErrorKind } from '@services/auth.service';
 
 import { RegisterComponent } from './register.component';
 
@@ -14,9 +15,15 @@ describe('RegisterComponent', () => {
   let user$: Subject<unknown>;
 
   const registerSpy = vi.fn<(email: string, password: string) => Observable<unknown>>();
+  const oauthError = signal<OAuthErrorKind | null>(null);
+  const googleBusy = signal(false);
+  const loginWithGoogle = vi.fn();
 
   beforeEach(async () => {
     registerSpy.mockReset();
+    oauthError.set(null);
+    googleBusy.set(false);
+    loginWithGoogle.mockReset();
     user$ = new Subject<unknown>();
 
     await TestBed.configureTestingModule({
@@ -28,6 +35,9 @@ describe('RegisterComponent', () => {
           useValue: {
             user$,
             register: registerSpy,
+            oauthError,
+            googleBusy,
+            loginWithGoogle,
           },
         },
       ],

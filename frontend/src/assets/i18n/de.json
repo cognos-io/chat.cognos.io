@@ -35,7 +35,10 @@
       "deleteChatsConfirm": "Ja, alles löschen",
       "deleteChatsSubtitle": "Lösche dauerhaft jede Konversation und ihre Nachrichten. Dies kann nicht rückgängig gemacht werden.",
       "deleteChatsTitle": "Alle Chats löschen",
+      "deleteWithGoogle": "Mit Google fortfahren",
       "deleting": "Wird gelöscht…",
+      "googleReauthError": "Wir konnten deine Identität bei Google nicht bestätigen. Bitte versuch es erneut.",
+      "oauthOnlyHint": "Du meldest dich bei diesem Konto mit Google an. Fahre unten mit Google fort, um zu bestätigen, dass du es bist, bevor wir dein Konto löschen.",
       "passwordLabel": "Aktuelles Passwort",
       "stepUpHint": "Wenn die Zwei-Faktor-Authentifizierung aktiviert ist, gib auch den aktuellen sechsstelligen Code ein.",
       "title": "Gefahrenzone",
@@ -107,6 +110,7 @@
     },
     "errors": {
       "emailChange": "Die E-Mail-Änderung konnte nicht gestartet werden. Prüfe die Adresse und versuche es erneut.",
+      "googleLink": "Google konnte nicht verbunden werden. Prüfe dein Passwort und versuche es erneut.",
       "passwordChange": "Dein Passwort konnte nicht geändert werden. Prüfe dein aktuelles Passwort und versuche es erneut."
     },
     "appearance": {
@@ -227,6 +231,12 @@
         "network": "Cognos ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
         "server": "Der Link kann gerade nicht gesendet werden. Bitte versuche es in Kürze erneut."
       }
+    },
+    "google": {
+      "continue": "Mit Google fortfahren",
+      "connecting": "Verbindung zu Google wird hergestellt…",
+      "accountExists": "Für diese E-Mail-Adresse besteht bereits ein Konto. Melde dich mit deinem Passwort an und verbinde Google anschliessend in den Kontosicherheitseinstellungen.",
+      "error": "Anmeldung mit Google fehlgeschlagen. Bitte versuch es erneut."
     },
     "login": {
       "error": "Anmeldung fehlgeschlagen. Bitte prüfe E-Mail und Passwort und versuche es erneut.",
@@ -1213,7 +1223,8 @@
       "lastWeek": "Letzte Woche"
     },
     "close": "Schliessen",
-    "loading": "Wird geladen…"
+    "loading": "Wird geladen…",
+    "or": "oder"
   },
   "library": {
     "title": "Dateibibliothek",
@@ -1648,7 +1659,18 @@
         "successToast": "Andere Geräte abgemeldet",
         "errorToast": "Andere Geräte konnten nicht abgemeldet werden. Bitte versuche es erneut."
       },
-      "passwordHeading": "Passwort"
+      "passwordHeading": "Passwort",
+      "connectedAccounts": {
+        "heading": "Verbundene Konten",
+        "description": "Anmeldemethoden, die mit deinem Cognos-Konto verbunden sind.",
+        "googleConnected": "Google ist mit deinem Konto verbunden.",
+        "connectGoogle": "Google verbinden",
+        "connecting": "Wird verbunden…",
+        "connectedToast": "Google verbunden",
+        "signedInWithGoogle": "Du meldest dich bei diesem Konto mit Google an.",
+        "oauthOnlyTitle": "Du meldest dich mit Google an",
+        "oauthOnlyBody": "Dieses Konto hat kein Cognos-Passwort, daher sind Passwortänderung und Zwei-Faktor-Authentifizierung hier nicht verfügbar. Verwalte die Sicherheit deines Google-Kontos direkt bei Google."
+      }
     },
     "bookmarks": {
       "title": "Deine Lesezeichen",

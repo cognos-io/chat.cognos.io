@@ -35,7 +35,10 @@
       "deleteChatsConfirm": "Sim, eliminar tudo",
       "deleteChatsSubtitle": "Elimina permanentemente cada conversa e as suas mensagens. Isto não pode ser anulado.",
       "deleteChatsTitle": "Eliminar todas as conversas",
+      "deleteWithGoogle": "Continuar com o Google",
       "deleting": "A eliminar…",
+      "googleReauthError": "Não conseguimos confirmar a tua identidade com o Google. Tenta novamente.",
+      "oauthOnlyHint": "Inicias sessão nesta conta com o Google. Continua com o Google abaixo para confirmar que és tu antes de eliminarmos a tua conta.",
       "passwordLabel": "Palavra-passe atual",
       "stepUpHint": "Se a autenticação de dois fatores estiver ativa, introduz também o código atual de seis dígitos.",
       "title": "Zona de perigo",
@@ -107,6 +110,7 @@
     },
     "errors": {
       "emailChange": "Não foi possível iniciar a alteração de e-mail. Verifica o endereço e tenta novamente.",
+      "googleLink": "Não foi possível ligar o Google. Verifica a tua palavra-passe e tenta novamente.",
       "passwordChange": "Não foi possível alterar a tua palavra-passe. Verifica a tua palavra-passe atual e tenta novamente."
     },
     "appearance": {
@@ -227,6 +231,12 @@
         "network": "Não foi possível contactar o Cognos. Verifica a ligação e tenta novamente.",
         "server": "Não é possível enviar a ligação agora. Tenta novamente dentro de instantes."
       }
+    },
+    "google": {
+      "continue": "Continuar com o Google",
+      "connecting": "A ligar ao Google…",
+      "accountExists": "Já existe uma conta com este e-mail. Inicia sessão com a tua palavra-passe e depois liga o Google nas definições de segurança da tua conta.",
+      "error": "Não foi possível iniciar a tua sessão com o Google. Tenta novamente."
     },
     "login": {
       "error": "Não foi possível iniciar a tua sessão. Verifica o teu e-mail e palavra-passe e tenta novamente.",
@@ -1213,7 +1223,8 @@
       "lastWeek": "Na semana passada"
     },
     "close": "Fechar",
-    "loading": "A carregar…"
+    "loading": "A carregar…",
+    "or": "ou"
   },
   "library": {
     "title": "Biblioteca de ficheiros",
@@ -1648,7 +1659,18 @@
         "successToast": "Sessão terminada noutros dispositivos",
         "errorToast": "Não foi possível terminar a sessão noutros dispositivos. Tenta novamente."
       },
-      "passwordHeading": "Palavra-passe"
+      "passwordHeading": "Palavra-passe",
+      "connectedAccounts": {
+        "heading": "Contas ligadas",
+        "description": "Métodos de início de sessão associados à tua conta Cognos.",
+        "googleConnected": "O Google está ligado à tua conta.",
+        "connectGoogle": "Ligar o Google",
+        "connecting": "A ligar…",
+        "connectedToast": "Google ligado",
+        "signedInWithGoogle": "Inicias sessão nesta conta com o Google.",
+        "oauthOnlyTitle": "Inicias sessão com o Google",
+        "oauthOnlyBody": "Esta conta não tem palavra-passe Cognos, pelo que a alteração de palavra-passe e a autenticação de dois fatores não estão disponíveis aqui. Gere a segurança da tua conta Google diretamente com o Google."
+      }
     },
     "bookmarks": {
       "title": "Os teus marcadores",

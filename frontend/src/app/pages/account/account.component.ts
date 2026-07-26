@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { switchMap } from 'rxjs';
+
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
@@ -23,6 +25,7 @@ import {
 } from '@cognos/ui-angular';
 
 import { DataProcessingComponent } from '@app/components/account/data-processing/data-processing.component';
+import { GoogleIconComponent } from '@app/components/google-icon/google-icon.component';
 import { LanguageSwitcherComponent } from '@app/components/language-switcher/language-switcher.component';
 import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 import { ThemeSwitcherComponent } from '@app/components/theme-switcher/theme-switcher.component';
@@ -66,6 +69,7 @@ import {
     CognosSegmentedControlComponent,
     CognosToggleComponent,
     DataProcessingComponent,
+    GoogleIconComponent,
     LanguageSwitcherComponent,
     SettingsPageComponent,
     ThemeSwitcherComponent,
@@ -335,44 +339,76 @@ import {
                     [value]="deleteAccountConfirmText()"
                     (valueChange)="deleteAccountConfirmText.set($event)"
                   />
-                  <cog-field [label]="t('account.danger.passwordLabel')">
-                    <cog-text-field
-                      [ariaLabel]="t('account.danger.passwordLabel')"
-                      type="password"
-                      autocomplete="current-password"
-                      [value]="deleteAccountPassword()"
-                      (valueChange)="deleteAccountPassword.set($event)"
-                    />
-                  </cog-field>
-                  <cog-field
-                    [label]="t('account.danger.totpLabel')"
-                    [hint]="t('account.danger.stepUpHint')"
-                  >
-                    <cog-text-field
-                      [ariaLabel]="t('account.danger.totpLabel')"
-                      inputmode="numeric"
-                      autocomplete="one-time-code"
-                      [value]="deleteAccountTOTP()"
-                      (valueChange)="deleteAccountTOTP.set($event)"
-                    />
-                  </cog-field>
+
+                  @if (hasPassword()) {
+                    <cog-field [label]="t('account.danger.passwordLabel')">
+                      <cog-text-field
+                        [ariaLabel]="t('account.danger.passwordLabel')"
+                        type="password"
+                        autocomplete="current-password"
+                        [value]="deleteAccountPassword()"
+                        (valueChange)="deleteAccountPassword.set($event)"
+                      />
+                    </cog-field>
+                    <cog-field
+                      [label]="t('account.danger.totpLabel')"
+                      [hint]="t('account.danger.stepUpHint')"
+                    >
+                      <cog-text-field
+                        [ariaLabel]="t('account.danger.totpLabel')"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        [value]="deleteAccountTOTP()"
+                        (valueChange)="deleteAccountTOTP.set($event)"
+                      />
+                    </cog-field>
+                  } @else {
+                    <!-- OAuth-only Account: Google re-authentication stands in
+                         for password + TOTP (docs/business_processes/account-delete.md). -->
+                    <p class="account__hint">
+                      {{ t('account.danger.oauthOnlyHint') }}
+                    </p>
+                  }
+
+                  @if (oauthError()) {
+                    <p class="account__error" role="alert">
+                      {{ t('account.danger.googleReauthError') }}
+                    </p>
+                  }
                 </div>
               }
             </div>
 
             @if (confirmingDeleteAccount()) {
               <div class="account__danger-confirm">
-                <cog-button
-                  appearance="danger"
-                  [disabled]="deletingAccount() || !canDeleteAccount()"
-                  (click)="deleteAccount()"
-                >
-                  {{
-                    deletingAccount()
-                      ? t('account.danger.deleting')
-                      : t('account.danger.deleteAccountConfirm')
-                  }}
-                </cog-button>
+                @if (hasPassword()) {
+                  <cog-button
+                    appearance="danger"
+                    [disabled]="deletingAccount() || !canDeleteAccount()"
+                    (click)="deleteAccount()"
+                  >
+                    {{
+                      deletingAccount()
+                        ? t('account.danger.deleting')
+                        : t('account.danger.deleteAccountConfirm')
+                    }}
+                  </cog-button>
+                } @else {
+                  <cog-button
+                    appearance="danger"
+                    [disabled]="
+                      deletingAccount() || googleBusy() || !canDeleteAccountOAuth()
+                    "
+                    (click)="deleteAccountWithGoogle()"
+                  >
+                    @if (deletingAccount() || googleBusy()) {
+                      {{ t('account.danger.deleting') }}
+                    } @else {
+                      <app-google-icon />
+                      {{ t('account.danger.deleteWithGoogle') }}
+                    }
+                  </cog-button>
+                }
                 <cog-button
                   appearance="subtle"
                   [disabled]="deletingAccount()"
@@ -629,7 +665,12 @@ export class AccountComponent {
 
   constructor() {
     this._buildIdentity.refreshApiCommit();
+    this._auth.loadAuthMethods().subscribe();
   }
+
+  protected readonly hasPassword = this._auth.hasPassword;
+  protected readonly oauthError = this._auth.oauthError;
+  protected readonly googleBusy = this._auth.googleBusy;
 
   /** Short SHA for display; translated "unknown" when missing; em dash while loading. */
   protected formatCommitLabel(
@@ -740,6 +781,11 @@ export class AccountComponent {
     () =>
       this.deleteAccountConfirmText().trim().toUpperCase() === 'DELETE' &&
       this.deleteAccountPassword().length > 0,
+  );
+  // OAuth-only Account: Google re-authentication replaces password + TOTP, so
+  // typing DELETE is the only prerequisite before "Continue with Google".
+  protected readonly canDeleteAccountOAuth = computed(
+    () => this.deleteAccountConfirmText().trim().toUpperCase() === 'DELETE',
   );
 
   protected readonly dirty = computed(
@@ -887,29 +933,64 @@ export class AccountComponent {
 
     this.deletingAccount.set(true);
     this._api
-      .deleteAccount(this.deleteAccountPassword(), this.deleteAccountTOTP().trim())
+      .deleteAccount({
+        password: this.deleteAccountPassword(),
+        totpCode: this.deleteAccountTOTP().trim(),
+      })
       .subscribe({
-        next: async () => {
-          // The account is gone — clear the session and send them to login.
-          await this._auth.logout();
-          this._toast.notify({
-            title: this._transloco.translate('account.toasts.accountDeleted'),
-          });
-          await this._router.navigate(['/', 'auth', 'login']);
-        },
-        error: (error: unknown) => {
-          this.deletingAccount.set(false);
-          const status = (error as { status?: number })?.status;
-          this._toast.notify({
-            title:
-              status === 409
-                ? this._transloco.translate('account.toasts.deleteAccountConflict')
-                : status === 400
-                  ? this._transloco.translate('account.toasts.deleteAccountStepUpError')
-                  : this._transloco.translate('account.toasts.deleteAccountError'),
-            tone: 'danger',
-          });
-        },
+        next: () => this._onAccountDeleted(),
+        error: (error: unknown) => this._onDeleteAccountError(error),
       });
+  }
+
+  // OAuth-only Account deletion (docs/business_processes/account-delete.md):
+  // Google is this Account's only proof of identity, so a fresh sign-in
+  // stands in for the password + TOTP the password flow above uses. Must
+  // stay a plain (non-async) method invoked directly from (click) —
+  // PocketBase opens the OAuth popup synchronously, and Safari blocks popups
+  // opened outside that gesture.
+  deleteAccountWithGoogle(): void {
+    if (
+      this.deletingAccount() ||
+      this._auth.googleBusy() ||
+      !this.canDeleteAccountOAuth()
+    ) {
+      return;
+    }
+
+    this.deletingAccount.set(true);
+    const popup =
+      typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+
+    this._auth
+      .stepUpWithGoogle(popup)
+      .pipe(switchMap((oauthStepUpId) => this._api.deleteAccount({ oauthStepUpId })))
+      .subscribe({
+        next: () => this._onAccountDeleted(),
+        error: (error: unknown) => this._onDeleteAccountError(error),
+      });
+  }
+
+  private async _onAccountDeleted(): Promise<void> {
+    // The account is gone — clear the session and send them to login.
+    await this._auth.logout();
+    this._toast.notify({
+      title: this._transloco.translate('account.toasts.accountDeleted'),
+    });
+    await this._router.navigate(['/', 'auth', 'login']);
+  }
+
+  private _onDeleteAccountError(error: unknown): void {
+    this.deletingAccount.set(false);
+    const status = (error as { status?: number })?.status;
+    this._toast.notify({
+      title:
+        status === 409
+          ? this._transloco.translate('account.toasts.deleteAccountConflict')
+          : status === 400
+            ? this._transloco.translate('account.toasts.deleteAccountStepUpError')
+            : this._transloco.translate('account.toasts.deleteAccountError'),
+      tone: 'danger',
+    });
   }
 }

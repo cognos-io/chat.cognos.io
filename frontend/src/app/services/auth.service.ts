@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, inject } from '@angular/core';
+import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
@@ -28,7 +28,7 @@ import { normalizeAccountRetention } from '@app/utils/retention';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { Analytics } from './analytics/analytics';
-import { CognosApiService } from './cognos-api.service';
+import { AccountAuthMethodsResponse, CognosApiService } from './cognos-api.service';
 import { ErrorService } from './error.service';
 import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
@@ -50,6 +50,12 @@ export interface LoginRequest {
   email: string;
   password: string;
 }
+
+// Google OAuth (docs/business_processes/oauth-google-sign-in.md,
+// oauth-account-link.md). 'accountExists' is the ACCOUNT_EXISTS_USE_PASSWORD
+// collision — email already belongs to a password Account — everything else
+// (popup closed, network error, wrong password on link) is 'generic'.
+export type OAuthErrorKind = 'accountExists' | 'generic';
 
 interface AuthState {
   status: LoginStatus;
@@ -177,6 +183,30 @@ export class AuthService implements OnDestroy {
     ),
   );
 
+  // --- Google OAuth account state (docs/business_processes/oauth-google-sign-in.md,
+  // oauth-account-link.md, account-delete.md) ---
+
+  // The Cognos-specific auth-methods view (GET /api/v1/account/auth-methods),
+  // deliberately separate from PocketBase's own listAuthMethods() above: that
+  // reports collection-level sign-in options, this reports whether THIS
+  // Account has a usable Cognos password and which OAuth providers are linked.
+  private readonly _authMethods = signal<AccountAuthMethodsResponse | null>(null);
+  readonly authMethods = this._authMethods.asReadonly();
+
+  // Defaults true (safest — shows the full password/MFA UI) until the first
+  // load resolves, so a slow/failed fetch never hides security controls a
+  // password Account actually has.
+  readonly hasPassword = computed(() => this._authMethods()?.hasPassword ?? true);
+  readonly isGoogleLinked = computed(
+    () => this._authMethods()?.providers.includes('google') ?? false,
+  );
+
+  private readonly _googleBusy = signal(false);
+  readonly googleBusy = this._googleBusy.asReadonly();
+
+  private readonly _oauthError = signal<OAuthErrorKind | null>(null);
+  readonly oauthError = this._oauthError.asReadonly();
+
   constructor() {
     defer(() => this.checkAndRefreshToken())
       .pipe(
@@ -247,6 +277,147 @@ export class AuthService implements OnDestroy {
         return EMPTY;
       }),
     );
+  }
+
+  /**
+   * Sign in (or, for a brand-new email, sign up) with Google. Must be called
+   * synchronously from a user-gesture handler (click) with no prior
+   * `await`/Promise — PocketBase opens the OAuth popup synchronously as soon
+   * as `authWithOAuth2` runs, and Safari blocks popups opened outside that
+   * gesture's call stack.
+   *
+   * On ACCOUNT_EXISTS_USE_PASSWORD (email already belongs to a password
+   * Account — docs/business_processes/oauth-account-link.md) `oauthError()`
+   * is set to 'accountExists' so the caller can prompt the user to sign in
+   * with their password instead.
+   */
+  loginWithGoogle(): Observable<AuthUser> {
+    this._oauthError.set(null);
+    this._googleBusy.set(true);
+    return from(
+      this._pb.collection(this._authCollection).authWithOAuth2({ provider: 'google' }),
+    ).pipe(
+      // Google sign-in never requires a second factor. Saving into authStore
+      // (done internally by authWithOAuth2) fires the onChange listener below,
+      // which pushes into the same _user$ pipeline password login uses — no
+      // separate navigation wiring needed in the login/register components.
+      tap(() => this._analytics.track('login_completed', { mfa: false })),
+      map((response) => response.record as AuthUser),
+      tap({
+        next: () => this._googleBusy.set(false),
+        error: () => this._googleBusy.set(false),
+      }),
+      catchError((error) => {
+        this._oauthError.set(this._oauthErrorKind(error));
+        console.error('Google sign-in failed', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /**
+   * Connect Google to the signed-in Account (docs/business_processes/oauth-account-link.md).
+   * Confirms `password`, then completes the OAuth round trip carrying the
+   * resulting one-time link intent as `createData.cognosLinkIntent`.
+   *
+   * The password confirmation is an async HTTP call, so the OAuth popup
+   * can't be opened synchronously from the click as `loginWithGoogle` does.
+   * Pass a `popup` opened synchronously (`window.open('about:blank', ...)`)
+   * in the click handler itself; this method navigates it once the Google
+   * URL is known and closes it on failure. Without a `popup`, PocketBase
+   * falls back to opening its own window, which browsers may block since it
+   * no longer happens inside the gesture.
+   */
+  linkGoogle(
+    password: string,
+    popup: Window | null = null,
+  ): Observable<AccountAuthMethodsResponse> {
+    this._oauthError.set(null);
+    this._googleBusy.set(true);
+    return this._cognosApi.createOAuthLinkIntent(password, 'google').pipe(
+      switchMap(({ linkIntentId }) =>
+        from(
+          this._pb.collection(this._authCollection).authWithOAuth2({
+            provider: 'google',
+            createData: { cognosLinkIntent: linkIntentId },
+            urlCallback: (url) => this._navigatePopup(popup, url),
+          }),
+        ),
+      ),
+      switchMap(() => this.loadAuthMethods()),
+      tap(() => this._googleBusy.set(false)),
+      catchError((error) => {
+        popup?.close();
+        this._googleBusy.set(false);
+        this._oauthError.set(this._oauthErrorKind(error));
+        console.error('Connecting Google failed', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /**
+   * Re-authenticate with Google to obtain an `oauthStepUpId` for deleting an
+   * OAuth-only Account (docs/business_processes/account-delete.md — Google is
+   * the only proof of identity such an Account can offer, in place of a
+   * password + TOTP code). Mints a step-up challenge, carries it through the
+   * OAuth round trip as `createData.cognosStepUpChallenge`, then confirms it.
+   *
+   * Same popup-timing note as `linkGoogle`: pass a `popup` opened
+   * synchronously in the click handler.
+   */
+  stepUpWithGoogle(popup: Window | null = null): Observable<string> {
+    this._oauthError.set(null);
+    this._googleBusy.set(true);
+    return this._cognosApi.beginOAuthStepUp().pipe(
+      switchMap(({ challengeId }) =>
+        from(
+          this._pb.collection(this._authCollection).authWithOAuth2({
+            provider: 'google',
+            createData: { cognosStepUpChallenge: challengeId },
+            urlCallback: (url) => this._navigatePopup(popup, url),
+          }),
+        ).pipe(switchMap(() => this._cognosApi.completeOAuthStepUp(challengeId))),
+      ),
+      map((response) => response.oauthStepUpId),
+      tap(() => this._googleBusy.set(false)),
+      catchError((error) => {
+        popup?.close();
+        this._googleBusy.set(false);
+        this._oauthError.set('generic');
+        console.error('Google re-authentication failed', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /** Cognos's own view of this Account's sign-in methods (see field above). */
+  loadAuthMethods(): Observable<AccountAuthMethodsResponse> {
+    return this._cognosApi.getAccountAuthMethods().pipe(
+      tap((methods) => this._authMethods.set(methods)),
+      catchError((error) => {
+        console.error('Failed to load auth methods', error);
+        return EMPTY;
+      }),
+    );
+  }
+
+  /** Clear a previously surfaced OAuth error, e.g. before retrying. */
+  resetOAuthError(): void {
+    this._oauthError.set(null);
+  }
+
+  private _navigatePopup(popup: Window | null, url: string): void {
+    if (popup && !popup.closed) {
+      popup.location.href = url;
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
+  }
+
+  private _oauthErrorKind(error: unknown): OAuthErrorKind {
+    const code = (error as { response?: { code?: string } })?.response?.code;
+    return code === 'ACCOUNT_EXISTS_USE_PASSWORD' ? 'accountExists' : 'generic';
   }
 
   loginWithPassword(email: string, password: string) {

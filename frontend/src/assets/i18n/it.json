@@ -35,7 +35,10 @@
       "deleteChatsConfirm": "Sì, elimina tutto",
       "deleteChatsSubtitle": "Elimina definitivamente ogni conversazione e i suoi messaggi. Questa azione non può essere annullata.",
       "deleteChatsTitle": "Elimina tutte le chat",
+      "deleteWithGoogle": "Continua con Google",
       "deleting": "Eliminazione…",
+      "googleReauthError": "Non siamo riusciti a confermare la tua identità con Google. Riprova.",
+      "oauthOnlyHint": "Accedi a questo account con Google. Continua con Google qui sotto per confermare che sei tu prima di eliminare il tuo account.",
       "passwordLabel": "Password attuale",
       "stepUpHint": "Se l’autenticazione a due fattori è attiva, inserisci anche il codice attuale di sei cifre.",
       "title": "Zona pericolosa",
@@ -107,6 +110,7 @@
     },
     "errors": {
       "emailChange": "Impossibile avviare la modifica dell'e-mail. Controlla l'indirizzo e riprova.",
+      "googleLink": "Impossibile collegare Google. Controlla la tua password e riprova.",
       "passwordChange": "Impossibile cambiare la tua password. Controlla la tua password attuale e riprova."
     },
     "appearance": {
@@ -227,6 +231,12 @@
         "network": "Cognos non è raggiungibile. Controlla la connessione e riprova.",
         "server": "Al momento non è possibile inviare il link. Riprova tra poco."
       }
+    },
+    "google": {
+      "continue": "Continua con Google",
+      "connecting": "Connessione a Google…",
+      "accountExists": "Esiste già un account con questa e-mail. Accedi con la tua password, poi collega Google dalle impostazioni di sicurezza del tuo account.",
+      "error": "Impossibile accedere con Google. Riprova."
     },
     "login": {
       "error": "Impossibile accedere. Controlla la tua e-mail e la password e riprova.",
@@ -1213,7 +1223,8 @@
       "lastWeek": "La settimana scorsa"
     },
     "close": "Chiudi",
-    "loading": "Caricamento…"
+    "loading": "Caricamento…",
+    "or": "o"
   },
   "library": {
     "title": "Libreria file",
@@ -1648,7 +1659,18 @@
         "successToast": "Altri dispositivi disconnessi",
         "errorToast": "Impossibile disconnettere gli altri dispositivi. Riprova."
       },
-      "passwordHeading": "Password"
+      "passwordHeading": "Password",
+      "connectedAccounts": {
+        "heading": "Account collegati",
+        "description": "Metodi di accesso collegati al tuo account Cognos.",
+        "googleConnected": "Google è collegato al tuo account.",
+        "connectGoogle": "Collega Google",
+        "connecting": "Connessione…",
+        "connectedToast": "Google collegato",
+        "signedInWithGoogle": "Accedi a questo account con Google.",
+        "oauthOnlyTitle": "Accedi con Google",
+        "oauthOnlyBody": "Questo account non ha una password Cognos, quindi il cambio password e l'autenticazione a due fattori non sono disponibili qui. Gestisci la sicurezza del tuo account Google direttamente con Google."
+      }
     },
     "bookmarks": {
       "title": "I tuoi segnalibri",

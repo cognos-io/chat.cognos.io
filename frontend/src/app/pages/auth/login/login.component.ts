@@ -20,6 +20,7 @@ import { filterNil } from 'ngxtension/filter-nil';
 import { CognosAuthPageComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
+import { GoogleIconComponent } from '@app/components/google-icon/google-icon.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { ErrorService } from '@app/services/error.service';
 import { safeInternalUrl } from '@app/utils/safe-redirect';
@@ -36,6 +37,7 @@ import { AuthService } from '@services/auth.service';
     TranslocoModule,
     CognosButtonComponent,
     CognosLogoComponent,
+    GoogleIconComponent,
     LoadingIndicatorComponent,
   ],
   template: `
@@ -129,6 +131,37 @@ import { AuthService } from '@services/auth.service';
             </p>
           </form>
         } @else {
+          <cog-button
+            appearance="default"
+            [fullWidth]="true"
+            size="lg"
+            type="button"
+            [disabled]="authService.googleBusy()"
+            (click)="onGoogleClick()"
+          >
+            @if (authService.googleBusy()) {
+              <span class="auth-page__loading-copy">
+                <app-loading-indicator></app-loading-indicator>
+                {{ t('auth.google.connecting') }}
+              </span>
+            } @else {
+              <app-google-icon />
+              {{ t('auth.google.continue') }}
+            }
+          </cog-button>
+
+          @if (authService.oauthError()) {
+            <p #oauthErrorAlert class="auth-page__hint" role="alert" tabindex="-1">
+              {{
+                authService.oauthError() === 'accountExists'
+                  ? t('auth.google.accountExists')
+                  : t('auth.google.error')
+              }}
+            </p>
+          }
+
+          <p class="auth-page__divider">{{ t('common.or') }}</p>
+
           <form class="auth-page__form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
             <label class="auth-page__field" for="email">
               <span class="auth-page__label">{{ t('common.email') }}</span>
@@ -215,6 +248,8 @@ export class LoginComponent {
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _submitError = viewChild<ElementRef<HTMLElement>>('submitError');
   private readonly _mfaErrorAlert = viewChild<ElementRef<HTMLElement>>('mfaErrorAlert');
+  private readonly _oauthErrorAlert =
+    viewChild<ElementRef<HTMLElement>>('oauthErrorAlert');
 
   readonly loginForm = this._fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -240,6 +275,13 @@ export class LoginComponent {
         return;
       }
       setTimeout(() => this._submitError()?.nativeElement.focus());
+    });
+
+    effect(() => {
+      if (!this.authService.oauthError()) {
+        return;
+      }
+      setTimeout(() => this._oauthErrorAlert()?.nativeElement.focus());
     });
 
     this.authService.user$
@@ -270,6 +312,24 @@ export class LoginComponent {
     }
 
     this.authService.login$.next(this.loginForm.getRawValue());
+  }
+
+  // Must stay a plain (non-async) method called directly from the (click)
+  // binding: PocketBase opens the OAuth popup synchronously inside
+  // authWithOAuth2, and Safari blocks popups opened outside that gesture.
+  onGoogleClick(): void {
+    if (this.authService.googleBusy()) {
+      return;
+    }
+
+    this.authService
+      .loginWithGoogle()
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        // Success navigates via the user$ subscription above; failure is
+        // surfaced through authService.oauthError().
+        error: () => undefined,
+      });
   }
 
   onSubmitMfa() {

@@ -24,6 +24,9 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
  *     <p class="auth-page__switch"><a …>…</a></p>
  *   </cog-auth-page>
  *
+ * `auth-page__divider` renders an "or" rule between an OAuth button and the
+ * password form, e.g. `<p class="auth-page__divider">{{ t('common.or') }}</p>`.
+ *
  * `auth-page__field` is a plain `<div>`, not a `<label>` — the `<label for>`
  * inside it names only the control it points at. Never nest hint/error text
  * inside the label element: the browser folds any text content of a wrapping
@@ -178,6 +181,24 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
 
       .auth-page__loading-copy app-loading-indicator {
         padding: 0;
+      }
+
+      .auth-page__divider {
+        display: flex;
+        align-items: center;
+        gap: var(--cog-space-150);
+        margin: 0;
+        color: var(--cog-text-subtle);
+        font-size: var(--cog-fs-body-sm);
+        line-height: var(--cog-lh-body-sm);
+      }
+
+      .auth-page__divider::before,
+      .auth-page__divider::after {
+        content: '';
+        flex: 1;
+        height: var(--cog-border-width);
+        background: var(--cog-border);
       }
 
       @media (max-width: 640px) {
