@@ -60,14 +60,17 @@ This policy currently covers the **Cognos web app**.
 We collect the information needed to create, secure, and manage your account, such as:
 
 - email address
-- password hash and authentication data
+- password hash and authentication data (for email/password Accounts)
+- Google account identifiers when you choose Continue with Google
 - preferred language, theme, model, and privacy tier
 - avatar icon and colour
 - multi-factor authentication status, if enabled
 - account settings and preferences
 - billing status and subscription references
 
-Current sign-in is email/password. Authenticator-app MFA is supported.
+Current sign-in is email/password and Google. Authenticator-app MFA is supported
+for password sign-in. When you sign in with Google, Google learns that you use
+Cognos; your Account Key and chat contents are never sent to Google.
 
 ### Chat data
 
@@ -232,6 +235,7 @@ encrypted so Cognos cannot read it from storage.
 | Requesty                  | AI gateway                | Live prompts, responses, model metadata             | EU / UK      | Yes, for live AI requests                                |
 | AI providers via Requesty | AI responses              | Live prompts and responses                          | EU           | Yes, for live AI requests                                |
 | Plausible                 | Analytics, if enabled     | Aggregate usage events                              | EU           | No chat content                                          |
+| Google                    | Optional Google sign-in   | Google account identifiers needed to authenticate   | Global       | Authentication only; never chat contents or Account Key  |
 
 We require AI providers used with Cognos not to use Cognos user data for model training. Exact
 retention and routing terms depend on the provider and selected privacy tier. We use contractual
@@ -302,6 +306,7 @@ Repository-supported service integrations include:
 - Requesty, for AI gateway services
 - Ghost, for marketing site infrastructure
 - GitHub, for development infrastructure
+- Google, for optional Google sign-in (authentication only)
 - Grafana Alloy or related tooling, for server monitoring
 - Plausible, when enabled in the deployed environment, for cookieless aggregate analytics
 

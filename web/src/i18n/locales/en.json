@@ -408,7 +408,8 @@
             {
               "ul": [
                 "email address",
-                "password hash and authentication data",
+                "password hash and authentication data (for email/password Accounts)",
+                "Google account identifiers when you choose Continue with Google",
                 "preferred language, theme, model, and privacy tier",
                 "avatar icon and colour",
                 "multi-factor authentication status, if enabled",
@@ -417,7 +418,7 @@
               ]
             },
             {
-              "p": "Current sign-in is email/password. Google and Apple login may be added later. Authenticator-app MFA is supported. Passkeys are planned."
+              "p": "Current sign-in is email/password and Google. Authenticator-app MFA is supported for password sign-in. When you sign in with Google, Google learns that you use Cognos; your Account Key and chat contents are never sent to Google."
             }
           ]
         },
@@ -724,6 +725,7 @@
                 "Requesty, for AI gateway services",
                 "Ghost, for marketing site infrastructure",
                 "GitHub, for development infrastructure",
+                "Google, for optional Google sign-in (authentication only)",
                 "Grafana Alloy or related tooling, for server monitoring",
                 "Plausible, if launched, for cookieless analytics"
               ]
@@ -1030,7 +1032,7 @@
               "p": "You need an account to use Cognos."
             },
             {
-              "p": "You must provide accurate account information and keep it up to date. You are responsible for keeping your login credentials secure. Cognos currently supports email/password login and authenticator-app multi-factor authentication. Other login methods may be added later."
+              "p": "You must provide accurate account information and keep it up to date. You are responsible for keeping your login credentials secure. Cognos currently supports email/password login, Google sign-in, and authenticator-app multi-factor authentication for password Accounts."
             },
             {
               "p": "You are responsible for activity under your account, unless the activity happened because of our failure to protect systems under our control."
@@ -1710,6 +1712,13 @@
                     "Aggregate, anonymous usage",
                     "EU",
                     "No"
+                  ],
+                  [
+                    "Google",
+                    "Optional Google sign-in",
+                    "That you use Cognos, plus the Google account identifiers needed to sign you in",
+                    "Global (Google)",
+                    "No — authentication only; never chat contents or your Account Key"
                   ]
                 ]
               }
