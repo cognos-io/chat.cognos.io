@@ -103,8 +103,6 @@ github.com/ganigeorgiev/fexpr v0.5.0 h1:XA9JxtTE/Xm+g/JFI6RfZEHSiQlk+1glLvRK1Lpv
 github.com/ganigeorgiev/fexpr v0.5.0/go.mod h1:RyGiGqmeXhEQ6+mlGdnUleLHgtzzu/VGO2WtJkF5drE=
 github.com/go-co-op/gocron/v2 v2.21.2 h1:bD8/YwkojYHgXFr3iEulL148KBdTbKVxUZzFKpXcdbY=
 github.com/go-co-op/gocron/v2 v2.21.2/go.mod h1:5lEiCKk1oVJV39Zg7/YG10OnaVrDAV5GGR6O0663k6U=
-github.com/go-ozzo/ozzo-validation/v4 v4.3.0 h1:byhDUpfEwjsVQb1vBunvIjh2BHQ9ead57VkAEY4V+Es=
-github.com/go-ozzo/ozzo-validation/v4 v4.3.0/go.mod h1:2NKgrcHl3z6cJs+3Oo940FPRiTzuqKbvfrL2RxCj6Ew=
 github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/go-sql-driver/mysql v1.8.0 h1:UtktXaU2Nb64z/pLiGIxY4431SJ4/dR5cjMmlVHgnT4=
 github.com/go-sql-driver/mysql v1.8.0/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=

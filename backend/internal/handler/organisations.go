@@ -15,7 +15,10 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
+	// PocketBase 0.39 raises schema-validation failures from its own
+	// ozzo-validation fork; matching against go-ozzo would silently miss
+	// them and turn 400s into 500s.
+	validation "github.com/pocketbase/ozzo-validation/v4"
 )
 
 // Organisation handlers (/api/v1/orgs). Access model, per

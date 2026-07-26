@@ -4,7 +4,6 @@ go 1.26.5
 
 require (
 	github.com/go-co-op/gocron/v2 v2.21.2
-	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v1.1.0
 	github.com/knadh/koanf/providers/env v1.1.0
@@ -12,6 +11,7 @@ require (
 	github.com/knadh/koanf/v2 v2.3.5
 	github.com/maximhq/bifrost/core v1.5.12
 	github.com/pocketbase/dbx v1.12.0
+	github.com/pocketbase/ozzo-validation/v4 v4.3.0
 	github.com/pocketbase/pocketbase v0.39.7
 	github.com/pquerna/otp v1.5.0
 	github.com/prometheus/client_golang v1.23.2
@@ -85,7 +85,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
-	github.com/pocketbase/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
