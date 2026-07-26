@@ -51,6 +51,13 @@ flowchart LR
 The frontend maps the 403 to a calm "confirm your email" locked-composer state
 with a resend action, rather than a raw error toast.
 
+## Google OAuth
+
+Accounts created via [Google OAuth](./oauth-google-sign-in.md) are marked
+`verified = true` by PocketBase when Google returns a verified email. Those
+Accounts pass this gate immediately and never see the “confirm your email”
+composer lock.
+
 > **Production note:** this gate is only meaningful if SMTP is configured so
 > verification emails actually send. In local dev / e2e (no SMTP), mark the Account
 > `verified` via the PocketBase admin UI or a superuser — see the README.

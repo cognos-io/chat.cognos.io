@@ -18,17 +18,28 @@ Organisation is dissolved. An ordinary member is offboarded first: membership an
 Project access are revoked, and affected Projects are marked for key rotation
 before the Account is erased.
 
-Deletion is a step-up operation. The request body must contain the current
-Account password. When authenticator-app MFA is enabled, it must also contain a
-current six-digit code. The server verifies both immediately before checking
-billing and Organisation state and deleting data; a bearer token alone is
-insufficient.
+Deletion is a step-up operation. A bearer token alone is never enough.
+
+**Password Accounts** (password-only or linked): the request body must contain
+the current Account password. When authenticator-app MFA is enabled, it must
+also contain a current six-digit code.
+
+**OAuth-only Accounts** (Google, no Cognos password): the Account holder types
+the confirmation phrase in the UI, completes a **fresh Google sign-in**, and the
+backend mints a one-time short-lived `oauthStepUpId` (same spirit as an MFA
+session). `DELETE /api/v1/account` then accepts `{ oauthStepUpId }` instead of
+password/TOTP. The step-up proof is consumed on use and rejected if expired or
+bound to a different Account.
 
 ```mermaid
 flowchart LR
-  A[DELETE /api/v1/account] --> S{password and MFA valid?}
+  A[DELETE /api/v1/account] --> K{Account kind?}
+  K -- password / linked --> S{password and MFA valid?}
+  K -- OAuth-only --> G{oauthStepUpId valid?}
   S -- no --> R[400 deletion refused]
+  G -- no --> R
   S -- yes --> B{paid plan active?}
+  G -- yes --> B
   B -- yes --> C[409 billing must be resolved]
   B -- no --> O{Organisation Owner?}
   O -- yes --> T[409 transfer or dissolve first]

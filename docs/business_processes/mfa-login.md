@@ -53,6 +53,16 @@ MFA protects Account access. It does not decrypt Conversation data. The Account 
 (or trusted-device Vault session) is still required after login to open encrypted
 content.
 
+## Load-bearing constraint: password AuthMethod only
+
+The MFA interceptor runs on `OnRecordAuthRequest` and only challenges when
+`AuthMethod == "password"`. OAuth2 (Google), OTP, and token refresh pass through
+without a Cognos MFA prompt. Linked Accounts that sign in with Google therefore
+skip Cognos MFA for now; password sign-in for the same Account still challenges.
+OAuth-only Accounts do not enrol Cognos MFA (no Cognos password for enrol
+step-up). See [Google OAuth sign-in](./oauth-google-sign-in.md). Enforcing Cognos
+MFA on OAuth is tracked as an open point.
+
 ## TOTP seed encryption key rotation
 
 TOTP seeds are encrypted at rest with a server-held symmetric key

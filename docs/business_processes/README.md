@@ -28,6 +28,8 @@ Durable architectural rationale belongs in [ADRs](../adr/README.md). Domain voca
   [Account preferences](./account-preferences.md)
 - [Email change](./email-change.md), [password reset](./password-reset.md),
   [MFA login](./mfa-login.md), [MFA recovery codes](./mfa-recovery-codes.md)
+- [Google OAuth sign-in](./oauth-google-sign-in.md),
+  [OAuth account link](./oauth-account-link.md)
 - [Vault session](./vault-session.md), [logout token rotation](./logout-token-rotation.md),
   [Account deletion](./account-delete.md)
 
