@@ -67,12 +67,13 @@ jobs:
         uses: actions/checkout@v4
 
       # Analytics vendor strings stay confined to the adapter files, the
-      # environment config, and the specs that test them
-      # (docs/specs/product-analytics.md §10).
+      # environment config, and the docs that specify them
+      # (docs/business_processes/product-analytics.md).
       - name: analytics grep guardrail
         run: |
           if git grep -n 'plausible\.io' -- \
-            ':!docs/specs/product-analytics.md' \
+            ':!docs/business_processes/product-analytics.md' \
+            ':!docs/operations/analytics-dashboard.md' \
             ':!web/src/lib/analytics.ts' \
             ':!web/src/layouts/BaseLayout.astro' \
             ':!web/scripts/check-analytics.mjs' \
@@ -80,7 +81,7 @@ jobs:
             ':!frontend/src/app/services/analytics/' \
             ':!e2e/tests/analytics.spec.ts' \
             ':!.github/workflows/ci.yml'; then
-            echo '::error::plausible.io referenced outside the allowed analytics files (docs/specs/product-analytics.md §10)'
+            echo '::error::plausible.io referenced outside the allowed analytics files (docs/business_processes/product-analytics.md)'
             exit 1
           fi
 
