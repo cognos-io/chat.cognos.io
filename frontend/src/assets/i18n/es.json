@@ -1666,6 +1666,7 @@
         "description": "Métodos de inicio de sesión vinculados a tu cuenta de Cognos.",
         "googleConnected": "Google está conectado a tu cuenta.",
         "connectGoogle": "Conectar Google",
+        "passwordLabel": "Contraseña para conectar Google",
         "connecting": "Conectando…",
         "connectedToast": "Google conectado",
         "signedInWithGoogle": "Inicias sesión en esta cuenta con Google.",

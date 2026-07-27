@@ -102,7 +102,7 @@ const (
 	e2eGoogleProfileCookie  = "cognos_e2e_google_profile"
 	e2eGoogleDefaultProfile = "elena"
 	e2eGoogleCode           = "e2e-google-code-elena"
-	e2eGoogleAccessToken    = "e2e-google-access-elena"
+	e2eGoogleAccessToken    = "e2e-google-access-elena" // #nosec G101 -- deterministic fake token for the loopback E2E OAuth provider.
 	e2eGoogleSubject        = "google-e2e-elena"
 	e2eGoogleEmail          = "elena.oauth+elena@example.test"
 )

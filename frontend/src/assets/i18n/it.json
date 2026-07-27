@@ -1666,6 +1666,7 @@
         "description": "Metodi di accesso collegati al tuo account Cognos.",
         "googleConnected": "Google è collegato al tuo account.",
         "connectGoogle": "Collega Google",
+        "passwordLabel": "Password per collegare Google",
         "connecting": "Connessione…",
         "connectedToast": "Google collegato",
         "signedInWithGoogle": "Accedi a questo account con Google.",

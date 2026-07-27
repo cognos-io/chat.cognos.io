@@ -8,6 +8,11 @@ const POCKETBASE_URL = process.env.E2E_POCKETBASE_URL ?? 'http://127.0.0.1:8090'
 const AI_MOCK_URL = process.env.E2E_AI_MOCK_URL ?? 'http://127.0.0.1:18080';
 const AI_MOCK_HEALTH_URL =
   process.env.E2E_AI_MOCK_HEALTH_URL ?? 'http://127.0.0.1:18080/health';
+const configuredWorkers = Number(process.env.E2E_WORKERS);
+const E2E_WORKERS =
+  Number.isInteger(configuredWorkers) && configuredWorkers > 0
+    ? configuredWorkers
+    : undefined;
 
 // Set to `1` to skip auto-starting local services (e.g. when targeting an
 // already-running dev stack).
@@ -19,6 +24,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'line',
   timeout: 30_000,
+  workers: E2E_WORKERS,
   use: {
     baseURL: BASE_URL,
     trace: 'retain-on-failure',

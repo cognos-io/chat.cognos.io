@@ -76,9 +76,11 @@ jobs:
           if git grep -n 'plausible\.io' -- \
             ':!docs/business_processes/product-analytics.md' \
             ':!docs/operations/analytics-dashboard.md' \
+            ':!docs/security_findings.md' \
             ':!web/src/lib/analytics.ts' \
             ':!web/src/layouts/BaseLayout.astro' \
             ':!web/scripts/check-analytics.mjs' \
+            ':!frontend/src/_headers' \
             ':!frontend/src/environments/' \
             ':!frontend/src/app/services/analytics/' \
             ':!e2e/tests/analytics.spec.ts' \

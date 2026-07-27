@@ -543,6 +543,11 @@ test('Escape in the composer stops an active stream', async ({ page }) => {
 
     await page.goto(`/c/${conversationFixture.conversationRecord.id}`);
 
+    await expect(
+      page.getByRole('heading', { name: 'Escape stop conversation' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
+
     const composer = page.getByLabel(
       'Message Cognos — stored encrypted; sent to your provider to reply',
     );

@@ -1666,6 +1666,7 @@
         "description": "Anmeldemethoden, die mit deinem Cognos-Konto verbunden sind.",
         "googleConnected": "Google ist mit deinem Konto verbunden.",
         "connectGoogle": "Google verbinden",
+        "passwordLabel": "Passwort zum Verbinden mit Google",
         "connecting": "Wird verbunden…",
         "connectedToast": "Google verbunden",
         "signedInWithGoogle": "Du meldest dich bei diesem Konto mit Google an.",

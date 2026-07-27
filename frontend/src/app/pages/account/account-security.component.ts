@@ -146,9 +146,11 @@ import { VaultService } from '@app/services/vault.service';
             </cog-callout>
           } @else if (hasPassword()) {
             <div class="account-security__fields">
-              <cog-field [label]="t('account.password.current')">
+              <cog-field
+                [label]="t('settings.security.connectedAccounts.passwordLabel')"
+              >
                 <cog-text-field
-                  [ariaLabel]="t('account.password.current')"
+                  [ariaLabel]="t('settings.security.connectedAccounts.passwordLabel')"
                   type="password"
                   autocomplete="current-password"
                   [value]="linkPassword()"

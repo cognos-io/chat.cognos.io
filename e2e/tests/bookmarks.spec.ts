@@ -34,9 +34,18 @@ function messageText(page: Page, text: string) {
 }
 
 async function sendMessage(page: Page, content: string): Promise<void> {
+  const replies = page
+    .locator('app-message-list')
+    .getByText('Mocked assistant reply', { exact: true });
+  const replyCount = await replies.count();
+
   await page.getByLabel(COMPOSER_LABEL).fill(content);
-  await page.getByRole('button', { name: /^send$/i }).click();
+  const send = page.getByRole('button', { name: /^send$/i });
+  await expect(send).toBeEnabled();
+  await send.click();
   await expect(messageText(page, content)).toBeVisible();
+  await expect(replies).toHaveCount(replyCount + 1);
+  await expect(page.getByRole('button', { name: /stop generating/i })).toHaveCount(0);
 }
 
 // Triple-click selects the whole paragraph and fires REAL pointer events, so

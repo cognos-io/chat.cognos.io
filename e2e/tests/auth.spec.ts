@@ -84,15 +84,22 @@ test.describe('auth + account key flow', () => {
 
     await gotoLogin(page);
     await page.getByRole('link', { name: /forgot your password/i }).click();
+    await expect(page).toHaveURL(/\/auth\/forgot-password/);
+    await expect(
+      page.getByRole('heading', { name: /reset your password/i }),
+    ).toBeVisible();
     await page.getByLabel('Email').fill('person@example.com');
-    await page.getByRole('button', { name: /send reset link/i }).click();
+    const sendResetLink = page.getByRole('button', { name: /send reset link/i });
+    await expect(sendResetLink).toBeEnabled();
+    await sendResetLink.click();
     await expect(page.getByRole('alert')).toContainText('Too many reset requests');
 
     await page.unroute(resetUrl);
     await page.route(resetUrl, async (route) => {
       await route.fulfill({ status: 204 });
     });
-    await page.getByRole('button', { name: /send reset link/i }).click();
+    await expect(sendResetLink).toBeEnabled();
+    await sendResetLink.click();
     await expect(
       page.getByText(/if an account exists for person@example.com/i),
     ).toBeVisible();
