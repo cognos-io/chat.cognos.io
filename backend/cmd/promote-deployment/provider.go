@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +25,7 @@ type repositoryProviderConfig struct {
 	repository    string
 	repositoryURL string
 	token         string
+	username      string
 }
 
 type pullRequest struct {
@@ -37,6 +39,7 @@ type apiRepositoryProvider struct {
 	repository    string
 	repositoryURL string
 	token         string
+	username      string
 	authScheme    string
 	client        *http.Client
 }
@@ -63,17 +66,18 @@ func newAPIRepositoryProvider(name, authScheme string, cfg repositoryProviderCon
 		repository:    cfg.repository,
 		repositoryURL: cfg.repositoryURL,
 		token:         cfg.token,
+		username:      cfg.username,
 		authScheme:    authScheme,
 		client:        client,
 	}, nil
 }
 
 func (provider *apiRepositoryProvider) Clone(ctx context.Context, directory string) error {
-	return runGit(ctx, "", "-c", "http.extraHeader="+provider.authorizationHeader(), "clone", "--branch", "main", "--single-branch", provider.repositoryURL, directory)
+	return runGit(ctx, "", "-c", "http.extraHeader="+provider.gitAuthorizationHeader(), "clone", "--branch", "main", "--single-branch", provider.repositoryURL, directory)
 }
 
 func (provider *apiRepositoryProvider) Push(ctx context.Context, directory, branch string) error {
-	return runGit(ctx, directory, "-c", "http.extraHeader="+provider.authorizationHeader(), "push", "--force", "origin", branch)
+	return runGit(ctx, directory, "-c", "http.extraHeader="+provider.gitAuthorizationHeader(), "push", "--force", "origin", branch)
 }
 
 func (provider *apiRepositoryProvider) UpsertPullRequest(ctx context.Context, branch string, pull pullRequest) error {
@@ -136,6 +140,14 @@ func (provider *apiRepositoryProvider) request(ctx context.Context, method, endp
 
 func (provider *apiRepositoryProvider) authorizationHeader() string {
 	return "Authorization: " + provider.authScheme + " " + provider.token
+}
+
+func (provider *apiRepositoryProvider) gitAuthorizationHeader() string {
+	if provider.username == "" {
+		return provider.authorizationHeader()
+	}
+	credentials := base64.StdEncoding.EncodeToString([]byte(provider.username + ":" + provider.token))
+	return "Authorization: Basic " + credentials
 }
 
 func runGit(ctx context.Context, directory string, arguments ...string) error {

@@ -30,6 +30,7 @@ run independently; the deployment workflow defaults it to `forgejo`.
 | `GITHUB_INFRASTRUCTURE_REPOSITORY_URL` | Yes      | HTTPS clone URL                               |
 | `GITHUB_INFRASTRUCTURE_REPOSITORY`     | Yes      | Repository in `owner/repository` form         |
 | `GITHUB_INFRASTRUCTURE_TOKEN`          | Yes      | Contents and pull-request write access        |
+| `GITHUB_INFRASTRUCTURE_USERNAME`       | Yes      | GitHub account that owns the token            |
 | `GITHUB_INFRASTRUCTURE_API_URL`        | No       | API URL; defaults to `https://api.github.com` |
 
 Use a fine-grained token or GitHub App installation token scoped only to the infrastructure

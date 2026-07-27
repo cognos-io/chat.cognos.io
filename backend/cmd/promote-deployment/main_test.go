@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -78,8 +79,8 @@ func TestForgejoProviderCreatesPullRequest(t *testing.T) {
 
 	var createdBody string
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		if got := request.Header.Get("Authorization"); got != "token test-token" {
-			t.Errorf("Authorization header = %q, want %q", got, "token test-token")
+		if got := request.Header.Get("Authorization"); got != "token token" {
+			t.Errorf("Authorization header = %q, want %q", got, "token token")
 		}
 		switch {
 		case request.Method == http.MethodGet && request.URL.Path == "/repos/braw.dev/infrastructure/pulls":
@@ -102,7 +103,7 @@ func TestForgejoProviderCreatesPullRequest(t *testing.T) {
 		apiURL:        server.URL,
 		repository:    "braw.dev/infrastructure",
 		repositoryURL: server.URL + "/braw.dev/infrastructure.git",
-		token:         "test-token",
+		token:         "token",
 	}, server.Client())
 	if err != nil {
 		t.Fatalf("newForgejoProvider() error = %v", err)
@@ -123,8 +124,8 @@ func TestGitHubProviderUpdatesExistingPullRequest(t *testing.T) {
 
 	var patched bool
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		if got := request.Header.Get("Authorization"); got != "Bearer test-token" {
-			t.Errorf("Authorization header = %q, want %q", got, "Bearer test-token")
+		if got := request.Header.Get("Authorization"); got != "Bearer token" {
+			t.Errorf("Authorization header = %q, want %q", got, "Bearer token")
 		}
 		switch {
 		case request.Method == http.MethodGet:
@@ -142,7 +143,8 @@ func TestGitHubProviderUpdatesExistingPullRequest(t *testing.T) {
 		apiURL:        server.URL,
 		repository:    "cognos-io/infrastructure",
 		repositoryURL: server.URL + "/cognos-io/infrastructure.git",
-		token:         "test-token",
+		token:         "token",
+		username:      "deployment-bot",
 	}, server.Client())
 	if err != nil {
 		t.Fatalf("newGitHubProvider() error = %v", err)
@@ -153,6 +155,55 @@ func TestGitHubProviderUpdatesExistingPullRequest(t *testing.T) {
 	}
 	if !patched {
 		t.Error("upsertPullRequest() patched = false, want true")
+	}
+}
+
+func TestGitHubProviderUsesBasicAuthenticationForGit(t *testing.T) {
+	t.Parallel()
+
+	environment := map[string]string{
+		"GITHUB_INFRASTRUCTURE_REPOSITORY":     "braw-dev/infra",
+		"GITHUB_INFRASTRUCTURE_REPOSITORY_URL": "https://github.com/braw-dev/infra.git",
+		"GITHUB_INFRASTRUCTURE_TOKEN":          "token",
+		"GITHUB_INFRASTRUCTURE_USERNAME":       "deployment-bot",
+		"GITHUB_REPOSITORY":                    "cognos-io/chat.cognos.io",
+		"GITHUB_RUN_ID":                        "1234",
+		"GITHUB_SERVER_URL":                    "https://github.com",
+		"GITHUB_SHA":                           "0123456789012345678901234567890123456789",
+		"IMAGE_DIGEST":                         "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"IMAGE_TAG":                            "sha-0123456789012345678901234567890123456789",
+		"INFRASTRUCTURE_BRANCH":                "deploy/cognos-backend",
+		"INFRASTRUCTURE_PROVIDER":              "github",
+	}
+	cfg, err := loadConfig(func(name string) string {
+		return environment[name]
+	}, http.DefaultClient)
+	if err != nil {
+		t.Fatalf("loadConfig() error = %v", err)
+	}
+	provider, ok := cfg.provider.(*githubProvider)
+	if !ok {
+		t.Fatalf("loadConfig() provider = %T, want *githubProvider", cfg.provider)
+	}
+
+	credentials := base64.StdEncoding.EncodeToString([]byte("deployment-bot:token"))
+	want := "Authorization: Basic " + credentials
+	if got := provider.gitAuthorizationHeader(); got != want {
+		t.Errorf("gitAuthorizationHeader() = %q, want %q", got, want)
+	}
+}
+
+func TestGitHubProviderRejectsMissingUsername(t *testing.T) {
+	t.Parallel()
+
+	_, err := newGitHubProvider(repositoryProviderConfig{
+		apiURL:        "https://api.github.com",
+		repository:    "braw-dev/infra",
+		repositoryURL: "https://github.com/braw-dev/infra.git",
+		token:         "token",
+	}, http.DefaultClient)
+	if err == nil {
+		t.Error("newGitHubProvider() error = nil, want an error for a missing username")
 	}
 }
 

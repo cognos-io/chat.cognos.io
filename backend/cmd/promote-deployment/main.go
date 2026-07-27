@@ -124,6 +124,7 @@ func loadConfig(getenv func(string) string, client *http.Client) (config, error)
 		repository:    getenv(prefix + "REPOSITORY"),
 		repositoryURL: getenv(prefix + "REPOSITORY_URL"),
 		token:         getenv(prefix + "TOKEN"),
+		username:      getenv(prefix + "USERNAME"),
 	}
 	if providerName == "github" && providerCfg.apiURL == "" {
 		providerCfg.apiURL = "https://api.github.com"
