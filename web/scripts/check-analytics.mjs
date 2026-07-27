@@ -28,13 +28,13 @@ if (!existsSync(distDir)) {
 // (a) Plausible script tag + queue shim in the built homepage.
 const indexHtml = readFileSync(join(distDir, 'index.html'), 'utf8');
 check(
-  indexHtml.includes('https://plausible.io/js/script.js') &&
-    indexHtml.includes('data-domain="cognos.io"'),
+  indexHtml.includes('https://plausible.io/js/pa-FxSv3tmVTFctFy6HFBkoB.js'),
   'dist/index.html contains the Plausible script tag',
 );
 check(
-  indexHtml.includes('window.plausible.q = window.plausible.q || []'),
-  'dist/index.html contains the queue shim',
+  indexHtml.includes('(plausible.q = plausible.q || []).push(arguments)') &&
+    indexHtml.includes('plausible.init()'),
+  'dist/index.html contains the queue shim and init',
 );
 
 // (b) data-track attributes on the key CTAs.
@@ -67,20 +67,20 @@ check(
   }`,
 );
 
-// (d) App analytics stays fail-closed until the external Plausible site/goals
-// and live event smoke are evidenced in docs/operations/analytics-dashboard.md.
+// (d) App production analytics is on and CSP allows only the Events API host.
+// Dev/e2e environments stay off (asserted by e2e/tests/analytics.spec.ts).
 const productionEnvironment = readFileSync(
   join(frontendRoot, 'src/environments/environment.ts'),
   'utf8',
 );
 const appHeaders = readFileSync(join(frontendRoot, 'src/_headers'), 'utf8');
 check(
-  /analytics:\s*\{\s*enabled:\s*false,/.test(productionEnvironment),
-  'app production analytics is disabled pending the external enablement gate',
+  /analytics:\s*\{\s*enabled:\s*true,/.test(productionEnvironment),
+  'app production analytics is enabled',
 );
 check(
-  !appHeaders.match(/connect-src[^;]*https:\/\/plausible\.io/),
-  'app CSP does not allow Plausible while app analytics is disabled',
+  Boolean(appHeaders.match(/connect-src[^;]*https:\/\/plausible\.io/)),
+  'app CSP connect-src allows https://plausible.io',
 );
 
 if (failures.length > 0) {

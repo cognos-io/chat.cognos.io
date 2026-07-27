@@ -9,9 +9,10 @@ Cognos measures aggregate product use without cookies or cross-site Account iden
 must never contain email addresses, Account, Conversation, Paddle or Attachment IDs, filenames,
 Message content, prompts, key material, raw URLs or error payloads.
 
-Production emission stays disabled until the
-[dashboard verification checklist](../operations/analytics-dashboard.md) passes. Development and
-e2e builds never send events to Plausible.
+Production emission is enabled for the provisioned Plausible sites; catalogue goals exist on both;
+operator MFA is on. After deploy, finish the live content-free smoke on the
+[dashboard verification checklist](../operations/analytics-dashboard.md). Native funnels are
+deferred (approximate from goal rates). Development and e2e builds never send events to Plausible.
 
 ## Hard rules
 
@@ -44,11 +45,11 @@ allowlist, tests, this table and production dashboard goal to change together.
 
 ## Dashboard baseline
 
-Provision separate `cognos.io` and `app.cognos.io` sites. Create goals for every event and these
-funnels:
+Provision separate `cognos.io` and `app.cognos.io` sites. Create goals for every event. Native
+funnels are deferred on the current plan; approximate weekly from goal rates:
 
-- marketing pageview → `cta_click`
-- `signup_completed` → `message_sent`
+- marketing pageviews ÷ `cta_click`
+- `signup_completed` ÷ `message_sent`
 - `trial_exhausted` → `checkout_started` → `checkout_completed`
 
 Record four weeks of aggregate baseline data before setting targets. Small cookieless counts are

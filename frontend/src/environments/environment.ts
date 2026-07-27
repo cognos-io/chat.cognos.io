@@ -14,11 +14,10 @@ export const environment = {
   paddleClientToken: 'live_dc8e669e83bffa09427953c13bd',
   paddleEnvironment: 'production' as 'sandbox' | 'production',
   // Privacy-respecting product analytics (docs/business_processes/product-analytics.md).
-  // Keep production disabled until docs/operations/analytics-dashboard.md
-  // records Plausible provisioning and a live content-free event smoke. The
-  // app CSP deliberately excludes the vendor while this is false.
+  // Production posts to Plausible's Events API (no vendor JS). Dev/e2e stay
+  // off. Live smoke + goals/funnels: docs/operations/analytics-dashboard.md.
   analytics: {
-    enabled: false,
+    enabled: true,
     plausibleDomain: 'app.cognos.io',
     plausibleApiHost: 'https://plausible.io',
   },

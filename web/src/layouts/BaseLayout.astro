@@ -54,17 +54,22 @@ const ogLocales: Record<Lang, string> = {
     <meta name="twitter:card" content="summary" />
 
     {
-      /* Privacy-friendly analytics — production builds only. The queue shim
-         lets track() calls fire before the deferred script has loaded. */
+      /* Privacy-friendly analytics — production builds only. Site-specific
+         script hash from Plausible; queue shim + init let track() calls fire
+         before the async script has loaded. */
       import.meta.env.PROD && (
         <>
-          <script defer data-domain="cognos.io" src="https://plausible.io/js/script.js" is:inline />
+          <script async src="https://plausible.io/js/pa-FxSv3tmVTFctFy6HFBkoB.js" is:inline />
           <script is:inline>
             window.plausible =
               window.plausible ||
               function () {
-                (window.plausible.q = window.plausible.q || []).push(arguments);
+                (plausible.q = plausible.q || []).push(arguments);
               };
+            plausible.init = plausible.init || function (i) {
+              plausible.o = i || {};
+            };
+            plausible.init();
           </script>
         </>
       )

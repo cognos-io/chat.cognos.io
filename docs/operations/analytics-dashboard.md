@@ -6,14 +6,16 @@ presence does not claim that provisioning has happened.
 
 ## Provisioning
 
-- [ ] Create separate sites for `cognos.io` and `app.cognos.io` in the approved EU-hosted account.
-- [ ] Restrict dashboard access, enable MFA for operators and record the owner/reviewer privately.
-- [ ] Create goals for every event in the current event catalogue on the correct site.
-- [ ] Create funnels: marketing pageview → `cta_click`; `signup_completed` → `message_sent`; and
-      `trial_exhausted` → `checkout_started` → `checkout_completed`.
-- [ ] After the sites/goals exist, add only `https://plausible.io` to the app CSP `connect-src` and
-      set `environment.analytics.enabled` to `true` in the same reviewed release. The contract test
-      keeps both off until this gate is complete.
+- [x] Create separate sites for `cognos.io` and `app.cognos.io` in the approved EU-hosted account.
+- [x] Restrict dashboard access, enable MFA for operators and record the owner/reviewer privately.
+- [x] Create goals for every event in the current event catalogue on the correct site.
+- [~] Native Plausible funnels deferred (Business plan). Approximate weekly from goal rates instead:
+      marketing pageviews ÷ `cta_click`; `signup_completed` ÷ `message_sent`;
+      `trial_exhausted` → `checkout_started` → `checkout_completed`. Revisit if drop-off diagnosis
+      is needed.
+- [x] Add only `https://plausible.io` to the app CSP `connect-src` and set
+      `environment.analytics.enabled` to `true` in the same reviewed release. Marketing uses the
+      site-specific Plausible script; the app posts to the Events API (no vendor JS).
 
 ## Production verification
 
@@ -26,7 +28,8 @@ Use synthetic Accounts and test billing only. Inspect browser requests and the P
       prompts, key material or error payloads.
 - [ ] Signup `ref` values outside the allowlist become `other`; no cross-site visitor identifier is
       created.
-- [ ] Funnel steps populate on the correct site. Paddle totals remain the billing source of truth.
+- [ ] Goal rates (deferred-funnel substitutes) are visible on the correct site. Paddle totals remain
+      the billing source of truth.
 - [ ] Save a dated, access-controlled screenshot/export and reviewer sign-off; do not add private
       production data to this repository.
 

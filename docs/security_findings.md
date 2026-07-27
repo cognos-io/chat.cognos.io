@@ -38,8 +38,9 @@ the final column.
   `max(active members, 3)`; transient reconciliation failures are retryable.
 - Product and marketing now consistently describe Teams as available only to selected design
   partners, not as either unshipped or self-serve GA.
-- App analytics is disabled until Plausible provisioning and a live content-free event smoke are
-  evidenced; the CSP therefore remains closed to the vendor host.
+- App analytics emission is enabled (`plausible.io` in CSP `connect-src`); catalogue goals and
+  operator MFA are in place. A live content-free event smoke after deploy remains open on
+  `docs/operations/analytics-dashboard.md` (OP-011). Native funnels deferred.
 
 ## Review discipline
 
