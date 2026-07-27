@@ -463,6 +463,13 @@
                     "Uso agregado y anónimo",
                     "UE",
                     "No"
+                  ],
+                  [
+                    "Google",
+                    "Inicio de sesión opcional con Google",
+                    "Que usas Cognos, más los identificadores de la cuenta de Google necesarios para iniciar sesión",
+                    "Global (Google)",
+                    "No — solo autenticación; nunca el contenido de los chats ni tu clave de cuenta"
                   ]
                 ]
               }
@@ -1104,7 +1111,7 @@
               {
                 "figure": {
                   "src": "/docs-media/create-account-register.png",
-                  "alt": "El formulario de registro de Cognos con los campos de correo y contraseña, y un botón de Crear cuenta.",
+                  "alt": "El formulario de registro de Cognos con los campos de correo y contraseña, un botón de Crear cuenta y Continuar con Google.",
                   "caption": "La página de registro en app.cognos.io/auth/register."
                 }
               }
@@ -1129,7 +1136,10 @@
             "heading": "Verifica tu correo",
             "blocks": [
               {
-                "p": "Cognos te envía un enlace de confirmación por correo. Puedes leer y gestionar tu cuenta antes de confirmarlo, pero no podrás enviar mensajes a la IA hasta que tu correo esté verificado."
+                "p": "Si te registraste con correo y contraseña, Cognos te envía un enlace de confirmación por correo. Puedes leer y gestionar tu cuenta antes de confirmarlo, pero no podrás enviar mensajes a la IA hasta que tu correo esté verificado."
+              },
+              {
+                "p": "Si elegiste <b>Continuar con Google</b>, tu correo ya está verificado — no hace falta un enlace de confirmación de Cognos."
               },
               {
                 "p": "Una vez verificado, tu <a href=\"/docs/trial-credit\">crédito de prueba</a> está listo y puedes empezar <a href=\"/docs/your-first-chat\">tu primer chat</a>."
@@ -2488,6 +2498,9 @@
           {
             "heading": "Actívala",
             "blocks": [
+              {
+                "p": "Necesitas una contraseña de Cognos para activarla. Si solo usas el inicio de sesión con Google, la autenticación de dos factores de Cognos no está disponible."
+              },
               {
                 "steps": [
                   {

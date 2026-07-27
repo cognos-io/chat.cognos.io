@@ -463,6 +463,13 @@
                     "Utilização agregada e anónima",
                     "UE",
                     "Não"
+                  ],
+                  [
+                    "Google",
+                    "Início de sessão opcional com Google",
+                    "Que usas o Cognos, mais os identificadores da conta Google necessários para iniciar sessão",
+                    "Global (Google)",
+                    "Não — apenas autenticação; nunca o conteúdo das conversas nem a tua chave de conta"
                   ]
                 ]
               }
@@ -1104,7 +1111,7 @@
               {
                 "figure": {
                   "src": "/docs-media/create-account-register.png",
-                  "alt": "O formulário de registo do Cognos com campos de e-mail e palavra-passe e um botão Criar conta.",
+                  "alt": "O formulário de registo do Cognos com campos de e-mail e palavra-passe, um botão Criar conta e Continuar com o Google.",
                   "caption": "A página de registo em app.cognos.io/auth/register."
                 }
               }
@@ -1129,7 +1136,10 @@
             "heading": "Verifica o teu e-mail",
             "blocks": [
               {
-                "p": "O Cognos envia-te por e-mail um link de confirmação. Podes ler e gerir a tua conta antes de confirmares, mas não podes enviar mensagens à IA enquanto o teu e-mail não estiver verificado."
+                "p": "Se te registaste com e-mail e palavra-passe, o Cognos envia-te por e-mail um link de confirmação. Podes ler e gerir a tua conta antes de confirmares, mas não podes enviar mensagens à IA enquanto o teu e-mail não estiver verificado."
+              },
+              {
+                "p": "Se escolheste <b>Continuar com o Google</b>, o teu e-mail já está verificado — não é necessária uma ligação de confirmação do Cognos."
               },
               {
                 "p": "Depois de verificado, o teu <a href=\"/docs/trial-credit\">crédito de teste</a> fica pronto e podes começar <a href=\"/docs/your-first-chat\">a tua primeira conversa</a>."
@@ -2484,6 +2494,9 @@
           {
             "heading": "Ativa-a",
             "blocks": [
+              {
+                "p": "Precisas de uma palavra-passe Cognos para ativar. Se usas apenas o início de sessão com Google, a autenticação de dois fatores Cognos não está disponível."
+              },
               {
                 "steps": [
                   {

@@ -457,6 +457,13 @@
                     "Aggregierte, anonyme Nutzung",
                     "EU",
                     "Nein"
+                  ],
+                  [
+                    "Google",
+                    "Optionale Google-Anmeldung",
+                    "Dass du Cognos nutzt, plus die Google-Konto-Kennungen, die nötig sind, um dich anzumelden",
+                    "Global (Google)",
+                    "Nein — nur Authentifizierung; nie Chat-Inhalte oder dein Account-Schlüssel"
                   ]
                 ]
               }
@@ -1098,7 +1105,7 @@
               {
                 "figure": {
                   "src": "/docs-media/create-account-register.png",
-                  "alt": "Das Cognos-Registrierungsformular mit Feldern für E-Mail und Passwort sowie einer Schaltfläche Konto erstellen.",
+                  "alt": "Das Cognos-Registrierungsformular mit Feldern für E-Mail und Passwort, einer Schaltfläche Konto erstellen und Mit Google fortfahren.",
                   "caption": "Die Registrierungsseite unter app.cognos.io/auth/register."
                 }
               }
@@ -1123,7 +1130,10 @@
             "heading": "Bestätige deine E-Mail-Adresse",
             "blocks": [
               {
-                "p": "Cognos schickt dir einen Bestätigungslink per E-Mail. Du kannst dein Konto schon vor der Bestätigung lesen und verwalten, aber du kannst der KI erst Nachrichten senden, wenn deine E-Mail-Adresse bestätigt ist."
+                "p": "Wenn du dich mit E-Mail und Passwort registriert hast, schickt Cognos dir einen Bestätigungslink per E-Mail. Du kannst dein Konto schon vor der Bestätigung lesen und verwalten, aber du kannst der KI erst Nachrichten senden, wenn deine E-Mail-Adresse bestätigt ist."
+              },
+              {
+                "p": "Wenn du <b>Mit Google fortfahren</b> gewählt hast, ist deine E-Mail bereits bestätigt — du brauchst keinen Cognos-Bestätigungslink."
               },
               {
                 "p": "Sobald sie bestätigt ist, steht dein <a href=\"/docs/trial-credit\">Testguthaben</a> bereit, und du kannst mit <a href=\"/docs/your-first-chat\">deinem ersten Chat</a> starten."
@@ -2482,6 +2492,9 @@
           {
             "heading": "Aktivieren",
             "blocks": [
+              {
+                "p": "Du brauchst ein Cognos-Passwort zur Einrichtung. Wenn du dich nur mit Google anmeldest, ist Cognos-MFA nicht verfügbar."
+              },
               {
                 "steps": [
                   {

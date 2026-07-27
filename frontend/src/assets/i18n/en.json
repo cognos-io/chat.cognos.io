@@ -103,6 +103,7 @@
     "email": {
       "current": "Current email",
       "new": "New email",
+      "oauthOnlyHint": "You sign in with Google. This Account's email address cannot be changed yet.",
       "send": "Send confirmation link",
       "sending": "Sending…",
       "subtitle": "Your email only signs you in and receives account notices — it never unlocks your data. Changing it is safe and never affects your encrypted chats.",

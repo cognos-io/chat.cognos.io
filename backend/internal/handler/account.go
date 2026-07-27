@@ -63,8 +63,14 @@ func AccountDelete(params AccountDeleteParams) func(e *core.RequestEvent) error 
 		hasCognosPassword := userRecord.GetBool("has_cognos_password")
 		switch {
 		case !hasCognosPassword:
+			// OAuth-only path. Defense in depth: require a live Google link even
+			// if has_cognos_password was corrupted — never accept oauthStepUpId
+			// for an Account that cannot have completed Google re-auth.
 			if params.OAuth == nil {
 				return apis.NewApiError(http.StatusServiceUnavailable, "OAuth step-up is not configured", nil)
+			}
+			if !userHasGoogleProvider(params.MFA.App, userRecord) {
+				return apis.NewBadRequestError("Google is not connected to this account", nil)
 			}
 			if req.OAuthStepUpId == "" {
 				return apis.NewBadRequestError("Google re-authentication required", nil)

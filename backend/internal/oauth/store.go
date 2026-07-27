@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
@@ -60,8 +61,7 @@ func (s *Store) ConsumeLinkIntent(userID, provider, rawToken string) error {
 	if record.GetString("user") != userID || record.GetString("provider") != provider {
 		return ErrNotFound
 	}
-	record.Set("consumed_at", types.NowDateTime())
-	return s.app.Save(record)
+	return s.casConsume(collLinkIntents, record.Id, userID, provider, false)
 }
 
 // CreateStepUpChallenge mints a challenge the client must confirm via a fresh
@@ -83,6 +83,19 @@ func (s *Store) CreateStepUpChallenge(userID, provider string) (rawToken string,
 	return rawToken, nil
 }
 
+// ValidateStepUpChallenge checks that a challenge is active and belongs to the
+// given user and provider without confirming or consuming it.
+func (s *Store) ValidateStepUpChallenge(userID, provider, rawToken string) error {
+	record, err := s.findActiveByHash(collStepUpChallenges, "challenge_hash", rawToken)
+	if err != nil {
+		return err
+	}
+	if record.GetString("user") != userID || record.GetString("provider") != provider {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // ConfirmStepUpChallenge marks a challenge confirmed after Google re-auth.
 func (s *Store) ConfirmStepUpChallenge(userID, provider, rawToken string) error {
 	record, err := s.findActiveByHash(collStepUpChallenges, "challenge_hash", rawToken)
@@ -101,6 +114,9 @@ func (s *Store) ConfirmStepUpChallenge(userID, provider, rawToken string) error 
 
 // CompleteStepUpChallenge consumes a confirmed challenge and mints an
 // oauthStepUpId for account delete.
+//
+// Challenge consumption uses a conditional UPDATE so concurrent completes
+// cannot mint two sessions from one challenge.
 func (s *Store) CompleteStepUpChallenge(userID, provider, rawChallenge string) (rawSession string, err error) {
 	challenge, err := s.findActiveByHash(collStepUpChallenges, "challenge_hash", rawChallenge)
 	if err != nil {
@@ -113,22 +129,23 @@ func (s *Store) CompleteStepUpChallenge(userID, provider, rawChallenge string) (
 		return "", ErrNotFound
 	}
 
-	collection, err := s.app.FindCollectionByNameOrId(collStepUpSessions)
-	if err != nil {
-		return "", err
-	}
 	rawSession = NewToken()
-	session := core.NewRecord(collection)
-	session.Set("user", userID)
-	session.Set("session_hash", Hash(rawSession))
-	session.Set("provider", provider)
-	session.Set("expires_at", types.NowDateTime().Add(StepUpSessionTTL))
-	if err := s.app.Save(session); err != nil {
-		return "", err
-	}
-
-	challenge.Set("consumed_at", types.NowDateTime())
-	if err := s.app.Save(challenge); err != nil {
+	err = s.app.RunInTransaction(func(txApp core.App) error {
+		if err := casConsumeOn(txApp, collStepUpChallenges, challenge.Id, userID, provider, true); err != nil {
+			return err
+		}
+		collection, err := txApp.FindCollectionByNameOrId(collStepUpSessions)
+		if err != nil {
+			return err
+		}
+		session := core.NewRecord(collection)
+		session.Set("user", userID)
+		session.Set("session_hash", Hash(rawSession))
+		session.Set("provider", provider)
+		session.Set("expires_at", types.NowDateTime().Add(StepUpSessionTTL))
+		return txApp.Save(session)
+	})
+	if err != nil {
 		return "", err
 	}
 	return rawSession, nil
@@ -143,8 +160,47 @@ func (s *Store) ConsumeStepUpSession(userID, rawToken string) error {
 	if record.GetString("user") != userID {
 		return ErrNotFound
 	}
-	record.Set("consumed_at", types.NowDateTime())
-	return s.app.Save(record)
+	provider := record.GetString("provider")
+	return s.casConsume(collStepUpSessions, record.Id, userID, provider, false)
+}
+
+func (s *Store) casConsume(collection, id, userID, provider string, requireConfirmed bool) error {
+	return casConsumeOn(s.app, collection, id, userID, provider, requireConfirmed)
+}
+
+// casConsumeOn marks a row consumed only if it is still active (and optionally
+// confirmed). RowsAffected != 1 means another caller won the race.
+func casConsumeOn(app core.App, collection, id, userID, provider string, requireConfirmed bool) error {
+	now := types.NowDateTime().String()
+	query := `
+		UPDATE ` + collection + `
+		SET consumed_at = {:now}
+		WHERE id = {:id}
+		  AND user = {:user}
+		  AND provider = {:provider}
+		  AND consumed_at = ''
+		  AND expires_at > {:now}`
+	if requireConfirmed {
+		query += `
+		  AND confirmed_at != ''`
+	}
+	res, err := app.DB().NewQuery(query).Bind(dbx.Params{
+		"now":      now,
+		"id":       id,
+		"user":     userID,
+		"provider": provider,
+	}).Execute()
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n != 1 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (s *Store) findActiveByHash(collection, hashField, rawToken string) (*core.Record, error) {

@@ -74,3 +74,39 @@ func TestUserEmailChangeConfirmChangesEmail(t *testing.T) {
 
 	scenario.Test(t)
 }
+
+func TestOAuthOnlyEmailChangeRequestIsNeutrallySuppressed(t *testing.T) {
+	app := setupTestApp(t)
+	t.Cleanup(app.Cleanup)
+
+	record, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	if err != nil {
+		t.Fatalf("FindAuthRecordByEmail(users) error = %v", err)
+	}
+	record.Set("has_cognos_password", false)
+	record.SetRandomPassword()
+	if err := app.Save(record); err != nil {
+		t.Fatalf("Save(OAuth-only user) error = %v", err)
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "OAuth-only email change request has neutral response without email",
+		Method: http.MethodPost,
+		URL:    "/api/collections/users/request-email-change",
+		Body: strings.NewReader(`{
+			"newEmail": "test1-new@example.com"
+		}`),
+		ExpectedStatus:        http.StatusNoContent,
+		DisableTestAppCleanup: true,
+		TestAppFactory: func(testing.TB) *tests.TestApp {
+			return app
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if got, want := app.TestMailer.TotalSend(), 0; got != want {
+				t.Errorf("TestMailer.TotalSend() = %d, want %d", got, want)
+			}
+		},
+	}
+	scenario.Test(t)
+}

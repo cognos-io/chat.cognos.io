@@ -130,6 +130,13 @@ func NewServer() *pocketbase.PocketBase {
 	app.RootCmd.AddCommand(syncCmd)
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		if err := configureE2EGoogleOAuth(
+			app,
+			os.Getenv(e2eGoogleOAuthURLEnv),
+			app.IsDev(),
+		); err != nil {
+			return err
+		}
 		if tlsCert == "" && tlsKey == "" {
 			return e.Next()
 		}
@@ -422,12 +429,12 @@ func bindAppHooks(
 		hooks.SoftDelete(app)
 		hooks.EnforceSingleUserKeyPair(app)
 		hooks.EnforceSingleConversationPublicKey(app)
-		// Password reset and email change are both allowed: under the
-		// account_key_v2 scheme the email and password are authentication-only
-		// metadata, never inputs to the data key, so changing either never
-		// affects encrypted data (see docs/security-model.md §9/§10). Email
-		// changes still go through PocketBase's verified request → confirm flow;
-		// this guard only blocks an unverified email swap via a direct PATCH.
+		// For Accounts with a Cognos password, password reset and email change
+		// are crypto-safe: under account_key_v2 neither value derives the data
+		// key (see docs/security-model.md §9/§10). OAuth-only Accounts are
+		// suppressed by EnforceCognosPasswordBoundaries below because both native
+		// flows depend on a Cognos password. This guard blocks an unverified
+		// email swap via a direct PATCH for every Account kind.
 		hooks.ForbidUserEmailChanges(app)
 		// Per-account brute-force lockout, on top of the per-IP rate limit.
 		hooks.EnforceLoginLockout(app)
@@ -438,7 +445,7 @@ func bindAppHooks(
 		// mark password signups with has_cognos_password.
 		oauthStore := oauth.NewStore(app)
 		hooks.EnforceOAuthRules(app, oauthStore)
-		hooks.MarkCognosPasswordOnAuthCreate(app)
+		hooks.EnforceCognosPasswordBoundaries(app)
 
 		if params.CronScheduler != nil {
 			expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)

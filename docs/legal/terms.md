@@ -65,8 +65,9 @@ restrictions, or operational reasons.
 You need an account to use Cognos.
 
 You must provide accurate account information and keep it up to date. You are responsible for
-keeping your login credentials secure. Cognos currently supports email/password login and
-authenticator-app multi-factor authentication. Other login methods may be added later.
+keeping your login credentials secure. Cognos currently supports email/password login, Google
+sign-in, and authenticator-app multi-factor authentication for password Accounts. Other login
+methods may be added later.
 
 You are responsible for activity under your account, unless the activity happened because of our
 failure to protect systems under our control.

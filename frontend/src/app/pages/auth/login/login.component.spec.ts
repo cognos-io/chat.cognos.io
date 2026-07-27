@@ -11,6 +11,8 @@ import { AuthService, LoginStatus, OAuthErrorKind } from '@services/auth.service
 
 import { LoginComponent } from './login.component';
 
+const TEST_PASSWORD = 'correct horse battery staple';
+
 describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let component: LoginComponent;
@@ -20,6 +22,7 @@ describe('LoginComponent', () => {
   const status = signal<LoginStatus>('pending');
   const oauthError = signal<OAuthErrorKind | null>(null);
   const googleBusy = signal(false);
+  const googleAvailable = signal(true);
   const loginNext = vi.fn();
   const completeMfa = vi.fn();
   const loginWithGoogle = vi.fn();
@@ -31,6 +34,7 @@ describe('LoginComponent', () => {
     status.set('pending');
     oauthError.set(null);
     googleBusy.set(false);
+    googleAvailable.set(true);
     loginNext.mockReset();
     completeMfa.mockReset();
     loginWithGoogle.mockReset();
@@ -47,6 +51,7 @@ describe('LoginComponent', () => {
             status,
             oauthError,
             googleBusy,
+            googleAvailable,
             user$,
             login$: { next: loginNext },
             completeMfa,
@@ -113,6 +118,14 @@ describe('LoginComponent', () => {
     );
   });
 
+  it('hides Google when PocketBase has no configured Google provider', () => {
+    googleAvailable.set(false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Continue with Google');
+    expect(fixture.nativeElement.querySelector('.auth-page__divider')).toBeNull();
+  });
+
   it('uses login wording and separate working legal links', () => {
     const legal = fixture.nativeElement.querySelector('.auth-page__legal');
     const links = Array.from(
@@ -128,21 +141,21 @@ describe('LoginComponent', () => {
   it('submits login credentials when the form is valid', () => {
     component.loginForm.setValue({
       email: 'person@example.com',
-      password: 'correct horse battery staple',
+      password: TEST_PASSWORD,
     });
 
     component.onSubmit();
 
     expect(loginNext).toHaveBeenCalledWith({
       email: 'person@example.com',
-      password: 'correct horse battery staple',
+      password: TEST_PASSWORD,
     });
   });
 
   it('does not submit while authentication is in progress', () => {
     component.loginForm.setValue({
       email: 'person@example.com',
-      password: 'correct horse battery staple',
+      password: TEST_PASSWORD,
     });
     status.set('authenticating');
     fixture.detectChanges();
@@ -183,6 +196,7 @@ describe('LoginComponent post-auth next handling', () => {
             status: signal<LoginStatus>('pending'),
             oauthError: signal<OAuthErrorKind | null>(null),
             googleBusy: signal(false),
+            googleAvailable: signal(true),
             user$,
             login$: { next: vi.fn() },
           },

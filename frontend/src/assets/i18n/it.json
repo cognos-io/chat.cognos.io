@@ -103,6 +103,7 @@
     "email": {
       "current": "E-mail attuale",
       "new": "Nuova e-mail",
+      "oauthOnlyHint": "Accedi con Google. L’indirizzo e-mail di questo account non può ancora essere modificato.",
       "send": "Invia link di conferma",
       "sending": "Invio…",
       "subtitle": "La tua e-mail serve solo per accedere e ricevere avvisi sull'account — non sblocca mai i tuoi dati. Cambiarla è sicuro e non influisce mai sulle tue chat crittografate.",

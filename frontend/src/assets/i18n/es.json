@@ -103,6 +103,7 @@
     "email": {
       "current": "Correo actual",
       "new": "Nuevo correo",
+      "oauthOnlyHint": "Inicias sesión con Google. La dirección de correo de esta cuenta todavía no se puede cambiar.",
       "send": "Enviar enlace de confirmación",
       "sending": "Enviando…",
       "subtitle": "Tu correo solo sirve para iniciar sesión y recibir avisos de la cuenta — nunca desbloquea tus datos. Cambiarlo es seguro y nunca afecta a tus chats cifrados.",

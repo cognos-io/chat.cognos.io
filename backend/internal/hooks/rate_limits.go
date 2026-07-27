@@ -25,6 +25,9 @@ func ApplyRateLimits(app core.App) {
 		// Tight per-client cap on password sign-in to slow credential guessing.
 		// A genuine user rarely needs more than a handful of attempts in 5 min.
 		{Label: "*:authWithPassword", MaxRequests: 10, Duration: 300},
+		// OAuth still reaches our token-exchange endpoint after the identity
+		// provider callback. Bound retries independently of Google's limits.
+		{Label: "*:authWithOAuth2", MaxRequests: 10, Duration: 300},
 		// Registration (users collection create). Keep responses neutral so a
 		// throttle cannot be used for Account enumeration; the client already
 		// maps 429 to a generic "too many signup attempts" message.

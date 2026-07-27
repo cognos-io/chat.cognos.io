@@ -25,6 +25,7 @@ func TestPocketBaseAuthRateLimitsAreConfigured(t *testing.T) {
 	for _, want := range []string{
 		"*:authRefresh",
 		"*:authWithPassword",
+		"*:authWithOAuth2",
 		"users:create",
 		"*:requestVerification",
 		"*:requestPasswordReset",
@@ -41,9 +42,9 @@ func TestPocketBaseAuthRateLimitsAreConfigured(t *testing.T) {
 	// budgets so a Duration shrink or MaxRequests creep cannot pass silently.
 	for _, rule := range app.Settings().RateLimits.Rules {
 		switch rule.Label {
-		case "*:authWithPassword":
+		case "*:authWithPassword", "*:authWithOAuth2":
 			if rule.MaxRequests != 10 || rule.Duration != 300 {
-				t.Fatalf("authWithPassword = %d/%ds, want 10/300s", rule.MaxRequests, rule.Duration)
+				t.Fatalf("%s = %d/%ds, want 10/300s", rule.Label, rule.MaxRequests, rule.Duration)
 			}
 		case "users:create":
 			if rule.MaxRequests != 5 || rule.Duration != 300 {

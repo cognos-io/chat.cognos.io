@@ -457,6 +457,13 @@
                     "Uso aggregato e anonimo",
                     "UE",
                     "No"
+                  ],
+                  [
+                    "Google",
+                    "Accesso Google facoltativo",
+                    "Che usi Cognos, più gli identificatori dell’account Google necessari per accedere",
+                    "Globale (Google)",
+                    "No — solo autenticazione; mai i contenuti delle chat né la tua chiave account"
                   ]
                 ]
               }
@@ -1098,7 +1105,7 @@
               {
                 "figure": {
                   "src": "/docs-media/create-account-register.png",
-                  "alt": "Il modulo di registrazione di Cognos con i campi email e password e un pulsante Crea account.",
+                  "alt": "Il modulo di registrazione di Cognos con i campi email e password, un pulsante Crea account e Continua con Google.",
                   "caption": "La pagina di registrazione su app.cognos.io/auth/register."
                 }
               }
@@ -1123,7 +1130,10 @@
             "heading": "Verifica la tua email",
             "blocks": [
               {
-                "p": "Cognos ti invia un'email con un link di conferma. Puoi leggere e gestire il tuo account prima di confermare, ma non potrai inviare messaggi all'IA finché la tua email non sarà verificata."
+                "p": "Se ti sei registrato con email e password, Cognos ti invia un'email con un link di conferma. Puoi leggere e gestire il tuo account prima di confermare, ma non potrai inviare messaggi all'IA finché la tua email non sarà verificata."
+              },
+              {
+                "p": "Se hai scelto <b>Continua con Google</b>, la tua email è già verificata — non serve un link di conferma Cognos."
               },
               {
                 "p": "Una volta verificata, il tuo <a href=\"/docs/trial-credit\">credito di prova</a> è pronto e puoi iniziare la <a href=\"/docs/your-first-chat\">tua prima chat</a>."
@@ -2478,6 +2488,9 @@
           {
             "heading": "Attivala",
             "blocks": [
+              {
+                "p": "Serve una password Cognos per attivarla. Se usi solo l'accesso con Google, l'autenticazione a due fattori Cognos non è disponibile."
+              },
               {
                 "steps": [
                   {

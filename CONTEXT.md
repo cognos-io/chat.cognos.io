@@ -21,17 +21,18 @@ _Avoid:_ user (domain prose), customer, end user
 
 ### Account Key
 
-The high-entropy secret generated once at signup, shown to the Account holder, and never stored
-server-side. Alone it decrypts the Account's encrypted private-key backup and unlocks data on a new
-device. Losing it is unrecoverable.
+The high-entropy secret generated once when the Account is created (password signup or first OAuth
+sign-in), shown to the Account holder, and never stored server-side. Alone it decrypts the Account's
+encrypted private-key backup and unlocks data on a new device. Losing it is unrecoverable.
 
 _Avoid:_ secret key, master key, recovery key (Emergency Kit is the artefact that holds the Account
 Key, not a separate secret)
 
 ### Emergency Kit
 
-The one-time downloadable file (`cognos-emergency-kit.txt`) an Account holder saves at signup
-containing their Account Key. Not a separate secret — the delivery format for the Account Key.
+The one-time downloadable file (`cognos-emergency-kit.txt`) an Account holder saves when their
+Account is created, containing their Account Key. Not a separate secret — the delivery format for
+the Account Key.
 
 _Avoid:_ recovery kit; do not confuse with **MFA recovery codes** (one-time backup codes for
 multi-factor authentication, unrelated to decryption)
@@ -43,11 +44,20 @@ never affects encrypted data.
 
 _Avoid:_ passphrase (implies it protects data), master password (conflicts with Account Key)
 
+### Identity provider
+
+An external service that authenticates an Account holder and returns a verified identity to Cognos.
+Google is the only supported Identity provider today. It never receives the Account Key or decrypted
+Conversation content.
+
+_Avoid:_ Provider alone (reserved for the AI service that handles a Completion), social login
+
 ### Account key pair
 
 The Account's long-lived asymmetric encryption identity — one public key and one private key,
-created once at signup. The private key is wrapped under the Account Key and backed up server-side;
-the public key is stored in plaintext. Root of all per-conversation and per-project key wrapping.
+created once when the Account is created. The private key is wrapped under the Account Key and
+backed up server-side; the public key is stored in plaintext. Root of all per-conversation and
+per-project key wrapping.
 
 _Avoid:_ user key pair (in domain language; fine as the PocketBase collection name)
 
@@ -74,7 +84,8 @@ _Avoid:_ auto-lock (not implemented)
 ### Logout
 
 Ending the auth session and clearing the **Vault** — revokes server-side wrap keys and rotates the
-auth token. Requires **Account password** to sign in again, then **Unlock** with the Account Key.
+auth token. Signing in again requires an available sign-in method (Account password or linked
+Identity provider), then **Unlock** with the Account Key.
 
 _Avoid:_ sign out (UI only)
 
@@ -187,9 +198,10 @@ _Avoid:_ LLM (implementation jargon in domain docs)
 ### Provider
 
 The third-party AI service that processes plaintext during a Completion. Recorded on the assistant
-Message at completion time (`served_provider_name`). Distinct from the Model the Account selected.
+Message at completion time (`served_provider_name`). Distinct from the Model the Account selected
+and from an **Identity provider** used only for sign-in.
 
-_Avoid:_ using Provider and Model interchangeably
+_Avoid:_ using Provider and Model interchangeably; using Provider for Google sign-in
 
 ### Persona
 
@@ -389,6 +401,7 @@ right column is what to use in new specs and copy.
 | `user key pair`, `user_key_pairs`      | **Account key pair** (domain); collection name unchanged in code                           |
 | `user personas`                        | **custom Personas**                                                                        |
 | `provider` and `model` interchangeably | **Model** = catalogue choice; **Provider** = who processed the Completion                  |
+| `authentication provider`              | **Identity provider**; keep **Provider** for the AI service                                |
 | `tier` alone                           | **Privacy tier** (data residency) vs **Plan** (billing) — always qualify                   |
 | `member`, `collaborator`               | **Participant** (Conversation/Project) or **Org membership** (Organisation) — qualify      |
 | `team`, `org`, `company`               | **Organisation** (entity); "team" acceptable in marketing/UI copy only                     |

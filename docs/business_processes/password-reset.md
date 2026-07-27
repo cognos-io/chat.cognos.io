@@ -17,10 +17,15 @@ encrypted Conversations; it only changes the sign-in credential.
 Losing the **Account Key**, by contrast, makes encrypted data unrecoverable —
 the password cannot substitute for it.
 
-**OAuth-only Accounts** have no Cognos password. Password reset does not apply;
-the Account holder recovers Google access through Google's own account recovery.
-Linked Accounts (password + Google) may still reset the Cognos password as
-above. See [Google OAuth sign-in](./oauth-google-sign-in.md).
+**OAuth-only Accounts** have no Cognos password. A reset request for their email
+returns the same neutral response as an unknown or password Account, but Cognos
+sends no reset email and creates no usable reset token. This avoids revealing
+whether the email has an Account or which sign-in method it uses. The Account
+holder recovers Google access through Google's own account recovery.
 
-See `backend/cmd/api/password_auth_test.go`, the auth e2e specs, and
+Linked Accounts (password + Google) may reset the Cognos password as above.
+Resetting it does not change or remove the exact linked Google identity. See
+[Google OAuth sign-in](./oauth-google-sign-in.md).
+
+See `backend/cmd/api/password_reset_test.go`, the auth e2e specs, and
 `docs/security-model.md` §9/§10.

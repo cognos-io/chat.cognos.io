@@ -17,6 +17,19 @@ type OAuthParams struct {
 	Store *oauth.Store
 }
 
+func userHasGoogleProvider(app core.App, userRecord *core.Record) bool {
+	ext, err := app.FindAllExternalAuthsByRecord(userRecord)
+	if err != nil {
+		return false
+	}
+	for _, ea := range ext {
+		if ea.Provider() == oauth.ProviderGoogle {
+			return true
+		}
+	}
+	return false
+}
+
 type accountAuthMethodsResponse struct {
 	HasPassword bool     `json:"hasPassword"`
 	Providers   []string `json:"providers"`
@@ -38,7 +51,8 @@ func AccountAuthMethods(params OAuthParams) func(e *core.RequestEvent) error {
 		providers := make([]string, 0)
 		ext, err := params.App.FindAllExternalAuthsByRecord(userRecord)
 		if err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to load auth methods", err)
+			// Do not leak the internal error to the client.
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load auth methods", nil)
 		}
 		for _, ea := range ext {
 			providers = append(providers, ea.Provider())
@@ -118,18 +132,7 @@ func AccountOAuthStepUpBegin(params OAuthParams) func(e *core.RequestEvent) erro
 			return apis.NewBadRequestError("Use your password to delete this account", nil)
 		}
 
-		ext, err := params.App.FindAllExternalAuthsByRecord(userRecord)
-		if err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to load auth methods", err)
-		}
-		hasGoogle := false
-		for _, ea := range ext {
-			if ea.Provider() == oauth.ProviderGoogle {
-				hasGoogle = true
-				break
-			}
-		}
-		if !hasGoogle {
+		if !userHasGoogleProvider(params.App, userRecord) {
 			return apis.NewBadRequestError("Google is not connected to this account", nil)
 		}
 

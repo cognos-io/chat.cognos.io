@@ -226,33 +226,41 @@ import {
                 [disabled]="true"
               />
             </cog-field>
-            <cog-field [label]="t('account.email.new')">
-              <cog-text-field
-                [ariaLabel]="t('account.email.new')"
-                type="email"
-                [placeholder]="t('common.emailPlaceholder')"
-                [value]="newEmail()"
-                (valueChange)="newEmail.set($event)"
-              />
-            </cog-field>
+            @if (hasPassword()) {
+              <cog-field [label]="t('account.email.new')">
+                <cog-text-field
+                  [ariaLabel]="t('account.email.new')"
+                  type="email"
+                  [placeholder]="t('common.emailPlaceholder')"
+                  [value]="newEmail()"
+                  (valueChange)="newEmail.set($event)"
+                />
+              </cog-field>
+            } @else {
+              <p class="account__hint" role="note">
+                {{ t('account.email.oauthOnlyHint') }}
+              </p>
+            }
           </div>
 
           @if (emailChangeError()) {
             <p class="account__error">{{ emailChangeError() }}</p>
           }
 
-          <cog-button
-            card-actions
-            appearance="primary"
-            [disabled]="!canRequestEmailChange()"
-            (click)="requestEmailChange()"
-          >
-            {{
-              requestingEmailChange()
-                ? t('account.email.sending')
-                : t('account.email.send')
-            }}
-          </cog-button>
+          @if (hasPassword()) {
+            <cog-button
+              card-actions
+              appearance="primary"
+              [disabled]="!canRequestEmailChange()"
+              (click)="requestEmailChange()"
+            >
+              {{
+                requestingEmailChange()
+                  ? t('account.email.sending')
+                  : t('account.email.send')
+              }}
+            </cog-button>
+          }
         </cog-card>
 
         <!-- Password change and two-factor authentication now live on the

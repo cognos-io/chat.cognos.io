@@ -8,6 +8,9 @@ import { AuthService, OAuthErrorKind } from '@services/auth.service';
 
 import { RegisterComponent } from './register.component';
 
+const SHORT_PASSWORD = 'eleven-char';
+const TEST_PASSWORD = 'correct horse battery staple';
+
 describe('RegisterComponent', () => {
   let fixture: ComponentFixture<RegisterComponent>;
   let component: RegisterComponent;
@@ -17,12 +20,14 @@ describe('RegisterComponent', () => {
   const registerSpy = vi.fn<(email: string, password: string) => Observable<unknown>>();
   const oauthError = signal<OAuthErrorKind | null>(null);
   const googleBusy = signal(false);
+  const googleAvailable = signal(true);
   const loginWithGoogle = vi.fn();
 
   beforeEach(async () => {
     registerSpy.mockReset();
     oauthError.set(null);
     googleBusy.set(false);
+    googleAvailable.set(true);
     loginWithGoogle.mockReset();
     user$ = new Subject<unknown>();
 
@@ -37,6 +42,7 @@ describe('RegisterComponent', () => {
             register: registerSpy,
             oauthError,
             googleBusy,
+            googleAvailable,
             loginWithGoogle,
           },
         },
@@ -60,10 +66,18 @@ describe('RegisterComponent', () => {
     expect(fixture.nativeElement.querySelector('#passwordConfirm')).toBeNull();
   });
 
+  it('hides Google when PocketBase has no configured Google provider', () => {
+    googleAvailable.set(false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Continue with Google');
+    expect(fixture.nativeElement.querySelector('.auth-page__divider')).toBeNull();
+  });
+
   it('requires a password of at least 12 characters', () => {
     component.registerForm.setValue({
       email: 'person@example.com',
-      password: 'eleven-char', // 11 chars
+      password: SHORT_PASSWORD, // 11 chars
     });
     expect(component.registerForm.invalid).toBe(true);
 
@@ -75,7 +89,7 @@ describe('RegisterComponent', () => {
     registerSpy.mockReturnValue(of(undefined));
     component.registerForm.setValue({
       email: 'person@example.com',
-      password: 'correct horse battery staple',
+      password: TEST_PASSWORD,
     });
 
     component.onSubmit();
@@ -102,7 +116,7 @@ describe('RegisterComponent', () => {
       registerSpy.mockReturnValue(throwError(() => error));
       component.registerForm.setValue({
         email: 'person@example.com',
-        password: 'correct horse battery staple',
+        password: TEST_PASSWORD,
       });
 
       component.onSubmit();

@@ -66,15 +66,21 @@ separate items only when demand justifies displacing the work above.
 The Comprehensive server-assisted Redaction mode stays disabled. It requires a separate privacy
 design before implementation.
 
-## Models and Providers
+## Identity and access
 
 | ID     | Priority | Open point                                                                         | Recommendation                                                                                                                                 |
 | ------ | -------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | OP-026 | P2       | Passkeys are not implemented, and their first-factor versus MFA role is undecided. | Decide role, relying-party/origin policy and recovery first. Passkeys must never replace the Account Key.                                      |
-| OP-027 | P2       | Model-picker Auto mode is unbuilt.                                                 | Defer until evidence shows Account holders cannot choose; any rules should be local, deterministic and explainable.                            |
-| OP-028 | P2       | Custom or self-hosted Model endpoints are unbuilt.                                 | Run discovery before design because this changes plaintext routing, trust, billing, network access and support boundaries.                     |
 | OP-039 | P2       | Cognos MFA is not challenged on Google OAuth sign-in (password AuthMethod only).   | When demand or risk warrants it, challenge OAuth like password; keep Account Key separate. See [mfa-login](./business_processes/mfa-login.md). |
 | OP-040 | P2       | Sign in with Apple is not offered.                                                 | Needs paid Apple Developer Program + Services ID; ship after Google is proven. Passkeys remain a separate decision (OP-026).                   |
+| OP-041 | P2       | Sign in with Microsoft is not offered.                                             | Ship only after Google is proven; define tenant, alias, verified-email, collision and exact-identity rules before enabling it.                 |
+
+## Models and Providers
+
+| ID     | Priority | Open point                                         | Recommendation                                                                                                      |
+| ------ | -------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| OP-027 | P2       | Model-picker Auto mode is unbuilt.                 | Defer until evidence shows Account holders cannot choose; any rules should be local, deterministic and explainable. |
+| OP-028 | P2       | Custom or self-hosted Model endpoints are unbuilt. | Run discovery first because this changes plaintext routing, trust, billing, network access and support boundaries.  |
 
 Infomaniak search, rich source previews, audio transcription and Project Personas are not approved
 roadmap items. Drop them unless customer evidence brings them back.

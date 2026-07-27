@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pocketbase/pocketbase/tests"
 )
@@ -74,5 +75,93 @@ func TestPasswordResetConfirmChangesPassword(t *testing.T) {
 		},
 	}
 
+	scenario.Test(t)
+}
+
+func TestOAuthOnlyPasswordResetRequestIsNeutrallySuppressed(t *testing.T) {
+	app := setupTestApp(t)
+	t.Cleanup(app.Cleanup)
+
+	record, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	if err != nil {
+		t.Fatalf("FindAuthRecordByEmail(users) error = %v", err)
+	}
+	record.Set("has_cognos_password", false)
+	record.SetRandomPassword()
+	if err := app.Save(record); err != nil {
+		t.Fatalf("Save(OAuth-only user) error = %v", err)
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "OAuth-only reset request has neutral response without email",
+		Method: http.MethodPost,
+		URL:    "/api/collections/users/request-password-reset",
+		Body: strings.NewReader(`{
+			"email": "test1@example.com"
+		}`),
+		ExpectedStatus:        http.StatusNoContent,
+		Delay:                 100 * time.Millisecond,
+		DisableTestAppCleanup: true,
+		TestAppFactory: func(testing.TB) *tests.TestApp {
+			return app
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if got, want := app.TestMailer.TotalSend(), 0; got != want {
+				t.Errorf("TestMailer.TotalSend() = %d, want %d", got, want)
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestOAuthOnlyPasswordResetConfirmIsRejected(t *testing.T) {
+	app := setupTestApp(t)
+	t.Cleanup(app.Cleanup)
+
+	record, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	if err != nil {
+		t.Fatalf("FindAuthRecordByEmail(users) error = %v", err)
+	}
+	record.Set("has_cognos_password", false)
+	record.SetRandomPassword()
+	if err := app.Save(record); err != nil {
+		t.Fatalf("Save(OAuth-only user) error = %v", err)
+	}
+
+	token, err := record.NewPasswordResetToken()
+	if err != nil {
+		t.Fatalf("NewPasswordResetToken() error = %v", err)
+	}
+
+	const newPassword = "must-not-become-a-password"
+
+	scenario := tests.ApiScenario{
+		Name:   "OAuth-only reset confirmation cannot create password",
+		Method: http.MethodPost,
+		URL:    "/api/collections/users/confirm-password-reset",
+		Body: strings.NewReader(fmt.Sprintf(`{
+			"token": %q,
+			"password": %q,
+			"passwordConfirm": %q
+		}`, token, newPassword, newPassword)),
+		ExpectedStatus:        http.StatusBadRequest,
+		ExpectedContent:       []string{"Invalid or expired password reset token"},
+		DisableTestAppCleanup: true,
+		TestAppFactory: func(testing.TB) *tests.TestApp {
+			return app
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			updated, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users) error = %v", err)
+			}
+			if updated.ValidatePassword(newPassword) {
+				t.Errorf("ValidatePassword(%q) = true, want false", newPassword)
+			}
+			if got, want := updated.GetBool("has_cognos_password"), false; got != want {
+				t.Errorf("has_cognos_password = %t, want %t", got, want)
+			}
+		},
+	}
 	scenario.Test(t)
 }

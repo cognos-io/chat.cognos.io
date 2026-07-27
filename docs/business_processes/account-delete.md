@@ -20,22 +20,36 @@ before the Account is erased.
 
 Deletion is a step-up operation. A bearer token alone is never enough.
 
-**Password Accounts** (password-only or linked): the request body must contain
-the current Account password. When authenticator-app MFA is enabled, it must
-also contain a current six-digit code.
+**Password Accounts** (password-only or linked — any Account with
+`has_cognos_password = true`): the request body must contain the current Account
+password. When authenticator-app MFA is enabled, it must also contain a current
+six-digit code. Linked Accounts **must** use this path; Google re-auth cannot
+substitute for password (+ MFA) on delete.
 
-**OAuth-only Accounts** (Google, no Cognos password): the Account holder types
-the confirmation phrase in the UI, completes a **fresh Google sign-in**, and the
-backend mints a one-time short-lived `oauthStepUpId` (same spirit as an MFA
-session). `DELETE /api/v1/account` then accepts `{ oauthStepUpId }` instead of
-password/TOTP. The step-up proof is consumed on use and rejected if expired or
-bound to a different Account.
+**OAuth-only Accounts** (Google linked, `has_cognos_password = false`): the
+Account holder types the confirmation phrase in the UI, completes a **fresh
+Google identity selection, and the backend mints a one-time short-lived `oauthStepUpId`
+(TTL 5 minutes; single-use; bound to that Account). `DELETE /api/v1/account`
+then accepts `{ oauthStepUpId }` instead of password/TOTP. The step-up proof is
+consumed on use and rejected if expired, reused, or bound to a different
+Account.
+
+The step-up challenge is bound to the exact Google provider identity ID already
+stored on that Account's live `_externalAuths` row. The OAuth callback must
+return provider `google` and that same identity ID. A different Google Account,
+an email match, or merely having some Google link is never enough.
+
+OAuth-only Accounts cannot enrol Cognos MFA today (no Cognos password for enrol
+step-up — see [MFA login](./mfa-login.md)). If that changes (OP-039), this delete
+path must be redesigned so Cognos MFA cannot be bypassed.
 
 ```mermaid
 flowchart LR
   A[DELETE /api/v1/account] --> K{Account kind?}
   K -- password / linked --> S{password and MFA valid?}
-  K -- OAuth-only --> G{oauthStepUpId valid?}
+  K -- OAuth-only --> I{exact Google identity re-auth?}
+  I -- no --> R[400 deletion refused]
+  I -- yes --> G{oauthStepUpId valid?}
   S -- no --> R[400 deletion refused]
   G -- no --> R
   S -- yes --> B{paid plan active?}
@@ -63,3 +77,24 @@ while action, target and time remain.
 Losing the Account Key is not an account-deletion path: the Account holder can
 still sign in and manage billing or delete the Account, but encrypted data is
 unrecoverable without the Account Key.
+
+## What must never happen
+
+- Deleting an OAuth-only Account after re-authentication with a different Google
+  identity, even if its email matches.
+- Accepting a provider other than `google` for OAuth step-up.
+- Accepting a bearer token, unconfirmed challenge, expired/reused
+  `oauthStepUpId`, or a proof bound to another Account.
+- Allowing Google re-auth to replace password and Cognos MFA for a password or
+  Linked Account.
+
+## Enforcement / tests
+
+- Password/MFA and OAuth-only delete branches:
+  `backend/cmd/api/account_delete_test.go`,
+  `backend/cmd/api/oauth_account_test.go`.
+- Exact identity, challenge confirmation, Account binding, expiry, and single
+  use: `backend/cmd/api/oauth_store_test.go`,
+  `backend/cmd/api/oauth_hook_test.go`.
+- API permission surface: `backend/cmd/api/auth_surface_test.go`,
+  `e2e/tests/oauth-api.spec.ts`.

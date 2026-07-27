@@ -57,10 +57,10 @@ func TestAccountOAuthLinkIntentRequiresPassword(t *testing.T) {
 			BeforeTestFunc: withRecordAuth("users", testUserEmail),
 		},
 		{
-			Name:   "correct password returns linkIntentId",
-			Method: http.MethodPost,
-			URL:    "/api/v1/account/oauth/link-intent",
-			Body:   strings.NewReader(`{"password":"` + testUserPassword + `","provider":"google"}`),
+			Name:           "correct password returns linkIntentId",
+			Method:         http.MethodPost,
+			URL:            "/api/v1/account/oauth/link-intent",
+			Body:           strings.NewReader(`{"password":"` + testUserPassword + `","provider":"google"}`),
 			ExpectedStatus: http.StatusOK,
 			ExpectedContent: []string{
 				`"linkIntentId":`,
@@ -143,6 +143,49 @@ func TestAccountDeleteAcceptsOAuthStepUp(t *testing.T) {
 			if _, err := app.FindAuthRecordByEmail("users", testUserEmail); err == nil {
 				t.Fatal("expected user to be deleted")
 			}
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestAccountDeleteRejectsOAuthStepUpWithoutGoogleLink(t *testing.T) {
+	t.Parallel()
+	// has_cognos_password=false but no Google external auth — must not delete
+	// via oauthStepUpId (defense in depth against a corrupted flag).
+	body := &deferredBody{}
+	scenario := tests.ApiScenario{
+		Name:           "corrupted oauth-only flag without google link rejected",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/account",
+		Body:           body,
+		ExpectedStatus: http.StatusBadRequest,
+		ExpectedContent: []string{
+			"Google is not connected to this account",
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			user, err := app.FindAuthRecordByEmail("users", testUserEmail)
+			if err != nil {
+				t.Fatal(err)
+			}
+			user.Set("has_cognos_password", false)
+			if err := app.Save(user); err != nil {
+				t.Fatal(err)
+			}
+			store := oauth.NewStore(app)
+			challenge, err := store.CreateStepUpChallenge(user.Id, oauth.ProviderGoogle)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := store.ConfirmStepUpChallenge(user.Id, oauth.ProviderGoogle, challenge); err != nil {
+				t.Fatal(err)
+			}
+			stepUpID, err := store.CompleteStepUpChallenge(user.Id, oauth.ProviderGoogle, challenge)
+			if err != nil {
+				t.Fatal(err)
+			}
+			body.Set(`{"oauthStepUpId":"` + stepUpID + `"}`)
+			withRecordAuth("users", testUserEmail)(t, app, e)
 		},
 	}
 	scenario.Test(t)

@@ -103,6 +103,7 @@
     "email": {
       "current": "E-mail actuel",
       "new": "Nouvel e-mail",
+      "oauthOnlyHint": "Vous vous connectez avec Google. L’adresse e-mail de ce compte ne peut pas encore être modifiée.",
       "send": "Envoyer le lien de confirmation",
       "sending": "Envoi…",
       "subtitle": "Votre e-mail sert uniquement à vous connecter et à recevoir les avis liés au compte — il ne déverrouille jamais vos données. Le modifier est sans risque et n'affecte jamais vos conversations chiffrées.",

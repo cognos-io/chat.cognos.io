@@ -11,6 +11,12 @@ import { ErrorService } from './error.service';
 import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
 
+const CORRECT_PASSWORD = 'correct-pw';
+const NEW_PASSWORD = 'a-new-strong-pw';
+const REGISTRATION_PASSWORD = 'correct horse battery staple';
+const TEST_TOKEN = 'token-123';
+const WRONG_PASSWORD = 'wrong password';
+
 describe('AuthService', () => {
   let service: AuthService;
   let router: Router;
@@ -19,6 +25,7 @@ describe('AuthService', () => {
 
   const authWithPassword = vi.fn();
   const authWithOAuth2 = vi.fn();
+  const listAuthMethods = vi.fn();
   const authRefresh = vi.fn();
   const create = vi.fn();
   const update = vi.fn();
@@ -65,6 +72,7 @@ describe('AuthService', () => {
       authRefresh,
       authWithPassword,
       authWithOAuth2,
+      listAuthMethods,
       create,
       update,
     })),
@@ -82,6 +90,10 @@ describe('AuthService', () => {
     authStore.isValid = false;
     authWithPassword.mockReset();
     authWithOAuth2.mockReset();
+    listAuthMethods.mockReset();
+    listAuthMethods.mockResolvedValue({
+      oauth2: { enabled: true, providers: [{ name: 'google' }] },
+    });
     authRefresh.mockReset();
     create.mockReset();
     update.mockReset();
@@ -130,7 +142,7 @@ describe('AuthService', () => {
 
     service.login$.next({
       email: 'person@example.com',
-      password: 'wrong password',
+      password: WRONG_PASSWORD,
     });
 
     expect(service.status()).toBe('authenticating');
@@ -156,7 +168,7 @@ describe('AuthService', () => {
       response: { code: 'mfa_required', mfaSessionId: 'sess-1' },
     });
 
-    service.login$.next({ email: 'person@example.com', password: 'correct-pw' });
+    service.login$.next({ email: 'person@example.com', password: CORRECT_PASSWORD });
 
     await flushPromises();
 
@@ -171,7 +183,7 @@ describe('AuthService', () => {
     mfaService.deviceToken.mockReturnValue('device-token-1');
     authWithPassword.mockResolvedValueOnce({ token: 't', record: { id: 'u' } });
 
-    service.login$.next({ email: 'person@example.com', password: 'correct-pw' });
+    service.login$.next({ email: 'person@example.com', password: CORRECT_PASSWORD });
     await flushPromises();
 
     expect(mfaService.deviceToken).toHaveBeenCalledWith('person@example.com');
@@ -189,7 +201,7 @@ describe('AuthService', () => {
       of({ id: 'u', email: 'person@example.com' }),
     );
 
-    service.login$.next({ email: 'person@example.com', password: 'correct-pw' });
+    service.login$.next({ email: 'person@example.com', password: CORRECT_PASSWORD });
     await flushPromises();
 
     await lastValueFrom(service.completeMfa('totp', '123456', true));
@@ -244,7 +256,7 @@ describe('AuthService', () => {
     // mirrors the new password since we already validated it client-side.
     expect(update).toHaveBeenCalledWith('user-1', {
       oldPassword: 'old-pw',
-      password: 'a-new-strong-pw',
+      password: NEW_PASSWORD,
       passwordConfirm: 'a-new-strong-pw',
     });
     // Re-auth with the new password refreshes the now-rotated token.
@@ -371,17 +383,17 @@ describe('AuthService', () => {
 
   it('creates the account and then signs in with the same credentials', async () => {
     create.mockResolvedValueOnce({ id: 'user-1' });
-    authWithPassword.mockResolvedValueOnce({ token: 'token-123' });
+    authWithPassword.mockResolvedValueOnce({ token: TEST_TOKEN });
 
     await expect(
       lastValueFrom(
         service.register('person@example.com', 'correct horse battery staple'),
       ),
-    ).resolves.toEqual({ token: 'token-123' });
+    ).resolves.toEqual({ token: TEST_TOKEN });
 
     expect(create).toHaveBeenCalledWith({
       email: 'person@example.com',
-      password: 'correct horse battery staple',
+      password: REGISTRATION_PASSWORD,
       passwordConfirm: 'correct horse battery staple',
     });
     expect(authWithPassword).toHaveBeenCalledWith(
@@ -401,6 +413,13 @@ describe('AuthService', () => {
   });
 
   describe('Google OAuth', () => {
+    it('reports Google availability from PocketBase collection auth methods', async () => {
+      await flushPromises();
+
+      expect(listAuthMethods).toHaveBeenCalledTimes(1);
+      expect(service.googleAvailable()).toBe(true);
+    });
+
     it('signs in with Google and tracks login_completed without MFA', async () => {
       authWithOAuth2.mockResolvedValueOnce({
         token: 't',

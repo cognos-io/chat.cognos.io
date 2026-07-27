@@ -103,6 +103,7 @@
     "email": {
       "current": "Aktuelle E-Mail",
       "new": "Neue E-Mail",
+      "oauthOnlyHint": "Du meldest dich mit Google an. Die E-Mail-Adresse dieses Accounts kann derzeit nicht geändert werden.",
       "send": "Bestätigungslink senden",
       "sending": "Wird gesendet…",
       "subtitle": "Deine E-Mail dient nur zur Anmeldung und zum Empfang von Kontobenachrichtigungen — sie entsperrt niemals deine Daten. Das Ändern ist sicher und betrifft deine verschlüsselten Chats nie.",

@@ -193,6 +193,17 @@ export class AuthService implements OnDestroy {
   private readonly _authMethods = signal<AccountAuthMethodsResponse | null>(null);
   readonly authMethods = this._authMethods.asReadonly();
 
+  // Collection-level availability comes from PocketBase. Keep the Google CTA
+  // hidden until a client id/secret is configured, rather than offering a
+  // button that can only fail.
+  private readonly _availableAuthMethods = signal<AuthMethodsList | null>(null);
+  readonly googleAvailable = computed(
+    () =>
+      this._availableAuthMethods()?.oauth2.providers.some(
+        (provider) => provider.name === 'google',
+      ) ?? false,
+  );
+
   // Defaults true (safest — shows the full password/MFA UI) until the first
   // load resolves, so a slow/failed fetch never hides security controls a
   // password Account actually has.
@@ -208,6 +219,8 @@ export class AuthService implements OnDestroy {
   readonly oauthError = this._oauthError.asReadonly();
 
   constructor() {
+    this.listAuthMethods().pipe(takeUntilDestroyed()).subscribe();
+
     defer(() => this.checkAndRefreshToken())
       .pipe(
         takeUntilDestroyed(),
@@ -271,9 +284,10 @@ export class AuthService implements OnDestroy {
 
   listAuthMethods(): Observable<AuthMethodsList> {
     return from(this._pb.collection(this._authCollection).listAuthMethods()).pipe(
-      catchError((error) => {
+      tap((methods) => this._availableAuthMethods.set(methods)),
+      catchError(() => {
         this._errorService.alert(this._transloco.translate('errors.listAuthMethods'));
-        console.error('Error listing auth methods', error);
+        console.error('Error listing auth methods');
         return EMPTY;
       }),
     );
@@ -309,7 +323,7 @@ export class AuthService implements OnDestroy {
       }),
       catchError((error) => {
         this._oauthError.set(this._oauthErrorKind(error));
-        console.error('Google sign-in failed', error);
+        console.error('Google sign-in failed');
         return throwError(() => error);
       }),
     );
@@ -350,7 +364,7 @@ export class AuthService implements OnDestroy {
         popup?.close();
         this._googleBusy.set(false);
         this._oauthError.set(this._oauthErrorKind(error));
-        console.error('Connecting Google failed', error);
+        console.error('Connecting Google failed');
         return throwError(() => error);
       }),
     );
@@ -375,6 +389,10 @@ export class AuthService implements OnDestroy {
           this._pb.collection(this._authCollection).authWithOAuth2({
             provider: 'google',
             createData: { cognosStepUpChallenge: challengeId },
+            // Make the Account holder actively select a Google identity. The
+            // backend still binds the returned provider id to the exact
+            // external-auth row; this prompt is UX, not the security check.
+            query: { prompt: 'select_account' },
             urlCallback: (url) => this._navigatePopup(popup, url),
           }),
         ).pipe(switchMap(() => this._cognosApi.completeOAuthStepUp(challengeId))),
@@ -385,7 +403,7 @@ export class AuthService implements OnDestroy {
         popup?.close();
         this._googleBusy.set(false);
         this._oauthError.set('generic');
-        console.error('Google re-authentication failed', error);
+        console.error('Google re-authentication failed');
         return throwError(() => error);
       }),
     );
@@ -395,8 +413,8 @@ export class AuthService implements OnDestroy {
   loadAuthMethods(): Observable<AccountAuthMethodsResponse> {
     return this._cognosApi.getAccountAuthMethods().pipe(
       tap((methods) => this._authMethods.set(methods)),
-      catchError((error) => {
-        console.error('Failed to load auth methods', error);
+      catchError(() => {
+        console.error('Failed to load auth methods');
         return EMPTY;
       }),
     );

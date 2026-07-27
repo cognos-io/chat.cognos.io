@@ -40,6 +40,9 @@ const E2E_SUPERUSER_EMAIL =
   process.env.E2E_SUPERUSER_EMAIL ?? 'e2e-superuser@example.com';
 const E2E_SUPERUSER_PASSWORD =
   process.env.E2E_SUPERUSER_PASSWORD ?? 'e2e-superuser-password-1234'; // gitleaks:allow
+const E2E_MFA_TOTP_ENCRYPTION_KEY = Buffer.from('0123456789abcdef'.repeat(2)).toString(
+  'base64',
+);
 
 const BACKEND_ENV = [
   'COGNOS_INFOMANIAK_API_KEY=e2e-dummy-key',
@@ -49,6 +52,10 @@ const BACKEND_ENV = [
   // works offline (the mock serves both transports).
   'COGNOS_REQUESTY_API_KEY=e2e-dummy-key',
   `COGNOS_REQUESTY_URL=${AI_MOCK_URL}`,
+  // Exercise PocketBase's real OAuth exchange against the loopback-only
+  // identity endpoints in cmd/mock-ai-provider. The API refuses this override
+  // outside --dev or when the URL is not loopback.
+  `COGNOS_E2E_GOOGLE_OAUTH_URL=${AI_MOCK_URL}`,
   // Never inherit a developer's sandbox/production Paddle credentials. The
   // local mock accepts subscription quantity updates so Organisation invite
   // flows exercise the real billing call without leaving the E2E process.
@@ -60,7 +67,7 @@ const BACKEND_ENV = [
   `COGNOS_GATEWAY_GROUNDING_REDIRECT_PREFIX=${AI_MOCK_URL}/grounding-redirect/`,
   // Fixed 32-byte (base64) key so MFA TOTP enrolment works in e2e. Test-only,
   // not a real secret — it only ever seals throwaway seeds on the e2e stack.
-  'COGNOS_MFA_TOTP_ENCRYPTION_KEY=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=', // gitleaks:allow
+  `COGNOS_MFA_TOTP_ENCRYPTION_KEY=${E2E_MFA_TOTP_ENCRYPTION_KEY}`,
 ];
 const BACKEND_SERVE_ARGS = [
   'go run ./cmd/api serve --dev',

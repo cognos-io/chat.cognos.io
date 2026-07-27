@@ -50,36 +50,38 @@ import { authRequestErrorKind } from '../auth-request-error';
         <h1 class="auth-page__title">{{ t('auth.register.title') }}</h1>
         <p class="auth-page__lead">{{ t('auth.register.lead') }}</p>
 
-        <cog-button
-          appearance="default"
-          [fullWidth]="true"
-          size="lg"
-          type="button"
-          [disabled]="authService.googleBusy()"
-          (click)="onGoogleClick()"
-        >
-          @if (authService.googleBusy()) {
-            <span class="auth-page__loading-copy">
-              <app-loading-indicator></app-loading-indicator>
-              {{ t('auth.google.connecting') }}
-            </span>
-          } @else {
-            <app-google-icon />
-            {{ t('auth.google.continue') }}
+        @if (authService.googleAvailable()) {
+          <cog-button
+            appearance="default"
+            [fullWidth]="true"
+            size="lg"
+            type="button"
+            [disabled]="authService.googleBusy()"
+            (click)="onGoogleClick()"
+          >
+            @if (authService.googleBusy()) {
+              <span class="auth-page__loading-copy">
+                <app-loading-indicator></app-loading-indicator>
+                {{ t('auth.google.connecting') }}
+              </span>
+            } @else {
+              <app-google-icon />
+              {{ t('auth.google.continue') }}
+            }
+          </cog-button>
+
+          @if (authService.oauthError()) {
+            <p #oauthErrorAlert class="auth-page__hint" role="alert" tabindex="-1">
+              {{
+                authService.oauthError() === 'accountExists'
+                  ? t('auth.google.accountExists')
+                  : t('auth.google.error')
+              }}
+            </p>
           }
-        </cog-button>
 
-        @if (authService.oauthError()) {
-          <p #oauthErrorAlert class="auth-page__hint" role="alert" tabindex="-1">
-            {{
-              authService.oauthError() === 'accountExists'
-                ? t('auth.google.accountExists')
-                : t('auth.google.error')
-            }}
-          </p>
+          <p class="auth-page__divider">{{ t('common.or') }}</p>
         }
-
-        <p class="auth-page__divider">{{ t('common.or') }}</p>
 
         <form
           class="auth-page__form"

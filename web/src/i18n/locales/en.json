@@ -2361,7 +2361,7 @@
               {
                 "figure": {
                   "src": "/docs-media/create-account-register.png",
-                  "alt": "The Cognos sign-up form with email and password fields and a Create account button.",
+                  "alt": "The Cognos sign-up form with email and password fields, a Create account button, and Continue with Google.",
                   "caption": "The sign-up page at app.cognos.io/auth/register."
                 }
               }
@@ -2386,7 +2386,10 @@
             "heading": "Verify your email",
             "blocks": [
               {
-                "p": "Cognos emails you a confirmation link. You can read and manage your account before confirming, but you can't send messages to the AI until your email is verified."
+                "p": "If you signed up with email and password, Cognos emails you a confirmation link. You can read and manage your account before confirming, but you can't send messages to the AI until your email is verified."
+              },
+              {
+                "p": "If you chose <b>Continue with Google</b>, your email is already verified — no Cognos confirmation link is needed."
               },
               {
                 "p": "Once verified, your <a href=\"/docs/trial-credit\">trial credit</a> is ready and you can start <a href=\"/docs/your-first-chat\">your first chat</a>."
@@ -3737,6 +3740,9 @@
           {
             "heading": "Turn it on",
             "blocks": [
+              {
+                "p": "You need a Cognos password to enrol. If you only use Google sign-in, Cognos MFA is not available."
+              },
               {
                 "steps": [
                   {

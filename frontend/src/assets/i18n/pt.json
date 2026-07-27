@@ -103,6 +103,7 @@
     "email": {
       "current": "E-mail atual",
       "new": "Novo e-mail",
+      "oauthOnlyHint": "Inicias sessão com o Google. O endereço de e-mail desta conta ainda não pode ser alterado.",
       "send": "Enviar link de confirmação",
       "sending": "A enviar…",
       "subtitle": "O teu e-mail serve apenas para iniciar sessão e receber avisos da conta — nunca desbloqueia os teus dados. Alterá-lo é seguro e nunca afeta as tuas conversas encriptadas.",

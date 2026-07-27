@@ -1,8 +1,12 @@
 package hooks
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
+	"strings"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/oauth"
@@ -20,12 +24,26 @@ import (
 func EnforceOAuthRules(app core.App, store *oauth.Store) {
 	app.OnRecordAuthWithOAuth2Request("users").BindFunc(func(e *core.RecordAuthWithOAuth2RequestEvent) error {
 		provider := e.ProviderName
-		if provider == "" {
-			provider = oauth.ProviderGoogle
+		if provider != oauth.ProviderGoogle {
+			return e.BadRequestError("Unsupported OAuth provider.", nil)
+		}
+		if e.OAuth2User == nil || strings.TrimSpace(e.OAuth2User.Id) == "" {
+			return e.BadRequestError("Google did not return a stable identity.", nil)
+		}
+		if e.IsNewRecord && strings.TrimSpace(e.OAuth2User.Email) == "" {
+			return e.BadRequestError("Google did not return a verified email.", nil)
 		}
 
-		linkIntent, _ := createDataString(e.CreateData, oauth.CreateDataLinkIntent)
-		stepUpChallenge, _ := createDataString(e.CreateData, oauth.CreateDataStepUpChallenge)
+		linkIntent, linkIntentValid := createDataString(e.CreateData, oauth.CreateDataLinkIntent)
+		_, linkIntentPresent := e.CreateData[oauth.CreateDataLinkIntent]
+		stepUpChallenge, stepUpChallengeValid := createDataString(e.CreateData, oauth.CreateDataStepUpChallenge)
+		_, stepUpChallengePresent := e.CreateData[oauth.CreateDataStepUpChallenge]
+		switch {
+		case (linkIntentPresent && !linkIntentValid) || (stepUpChallengePresent && !stepUpChallengeValid):
+			return e.BadRequestError("Invalid Cognos OAuth proof data.", nil)
+		case linkIntentPresent && stepUpChallengePresent:
+			return e.BadRequestError("Choose either Google account linking or re-authentication.", nil)
+		}
 
 		// Strip Cognos-only createData keys so they never land on the user row
 		// if this is a new-record create.
@@ -39,32 +57,39 @@ func EnforceOAuthRules(app core.App, store *oauth.Store) {
 			authedID = e.Auth.Id
 		}
 
-		alreadyLinked := false
-		if e.Record != nil {
-			ext, err := app.FindAllExternalAuthsByRecord(e.Record)
-			if err == nil {
-				for _, ea := range ext {
-					if ea.Provider() == provider {
-						alreadyLinked = true
-						break
-					}
-				}
+		providerID := ""
+		if e.OAuth2User != nil {
+			providerID = e.OAuth2User.Id
+		}
+		alreadyLinked, err := exactExternalAuthExists(app, e.Record, provider, providerID)
+		if err != nil {
+			return e.InternalServerError("Failed OAuth2 relation check.", err)
+		}
+
+		if stepUpChallenge != "" {
+			if e.Record == nil || !alreadyLinked {
+				return e.BadRequestError("Invalid or expired Google re-authentication challenge.", nil)
 			}
+			if err := store.ValidateStepUpChallenge(e.Record.Id, provider, stepUpChallenge); err != nil {
+				return e.BadRequestError("Invalid or expired Google re-authentication challenge.", err)
+			}
+			if err := e.Next(); err != nil {
+				return err
+			}
+			if err := store.ConfirmStepUpChallenge(e.Record.Id, provider, stepUpChallenge); err != nil {
+				return e.BadRequestError("Invalid or expired Google re-authentication challenge.", err)
+			}
+			return nil
 		}
 
 		switch {
 		case alreadyLinked && e.Record != nil:
-			// Returning Google sign-in (or re-auth for step-up).
-			if stepUpChallenge != "" {
-				if err := store.ConfirmStepUpChallenge(e.Record.Id, provider, stepUpChallenge); err != nil {
-					return e.BadRequestError("Invalid or expired Google re-authentication challenge", err)
-				}
-			}
+			// Returning Google sign-in.
 			return e.Next()
 
 		case e.IsNewRecord:
 			// Brand-new Google Account. has_cognos_password stays false (default);
-			// password signup sets it true in MarkCognosPasswordOnAuthCreate.
+			// password signup sets it true in EnforceCognosPasswordBoundaries.
 			return e.Next()
 
 		case e.Record != nil && authedID != "" && authedID == e.Record.Id:
@@ -97,9 +122,10 @@ func EnforceOAuthRules(app core.App, store *oauth.Store) {
 	})
 }
 
-// MarkCognosPasswordOnAuthCreate sets has_cognos_password when a user is created
-// with a client-supplied password (email/password signup).
-func MarkCognosPasswordOnAuthCreate(app core.App) {
+// EnforceCognosPasswordBoundaries maintains the has_cognos_password boundary:
+// password signup sets it, while OAuth-only Accounts cannot enter native
+// password-dependent reset or email-change flows.
+func EnforceCognosPasswordBoundaries(app core.App) {
 	app.OnRecordCreateRequest("users").BindFunc(func(e *core.RecordRequestEvent) error {
 		if e.Record == nil {
 			return e.Next()
@@ -112,16 +138,53 @@ func MarkCognosPasswordOnAuthCreate(app core.App) {
 		return e.Next()
 	})
 
-	app.OnRecordConfirmPasswordResetRequest("users").BindFunc(func(e *core.RecordConfirmPasswordResetRequestEvent) error {
-		if err := e.Next(); err != nil {
-			return err
+	app.OnRecordRequestPasswordResetRequest("users").BindFunc(func(e *core.RecordRequestPasswordResetRequestEvent) error {
+		if e.Record != nil && !e.Record.GetBool("has_cognos_password") {
+			// Match PocketBase's neutral response for an unknown email so this
+			// cannot be used to enumerate OAuth-only Accounts.
+			return e.NoContent(http.StatusNoContent)
 		}
-		if e.Record != nil {
-			e.Record.Set("has_cognos_password", true)
-			_ = app.Save(e.Record)
-		}
-		return nil
+		return e.Next()
 	})
+
+	app.OnRecordRequestEmailChangeRequest("users").BindFunc(func(e *core.RecordRequestEmailChangeRequestEvent) error {
+		if e.Record != nil && !e.Record.GetBool("has_cognos_password") {
+			return e.NoContent(http.StatusNoContent)
+		}
+		return e.Next()
+	})
+
+	app.OnRecordConfirmPasswordResetRequest("users").BindFunc(func(e *core.RecordConfirmPasswordResetRequestEvent) error {
+		if e.Record == nil || !e.Record.GetBool("has_cognos_password") {
+			return e.BadRequestError("Invalid or expired password reset token.", nil)
+		}
+		return e.Next()
+	})
+}
+
+func exactExternalAuthExists(
+	app core.App,
+	record *core.Record,
+	provider string,
+	providerID string,
+) (bool, error) {
+	if record == nil || providerID == "" {
+		return false, nil
+	}
+
+	externalAuth, err := app.FindFirstExternalAuthByExpr(dbx.HashExp{
+		"collectionRef": record.Collection().Id,
+		"recordRef":     record.Id,
+		"provider":      provider,
+		"providerId":    providerID,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return externalAuth != nil, nil
 }
 
 func createDataString(data map[string]any, key string) (string, bool) {

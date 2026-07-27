@@ -16,6 +16,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -77,6 +78,9 @@ func routes(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 	})
+	mux.HandleFunc("GET /oauth/google/authorize", googleOAuthAuthorizeHandler())
+	mux.HandleFunc("POST /oauth/google/token", googleOAuthTokenHandler())
+	mux.HandleFunc("GET /oauth/google/userinfo", googleOAuthUserInfoHandler())
 	mux.HandleFunc("POST /v1/chat/completions", chatCompletionsHandler(logger))
 	mux.HandleFunc("POST /v1/responses", responsesHandler(logger))
 	mux.HandleFunc("GET /grounding-redirect/{token}", groundingRedirectHandler(logger))
@@ -90,6 +94,127 @@ func routes(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	return mux
+}
+
+const (
+	// Deterministic identity used only by the loopback E2E OAuth provider.
+	// These are fixtures, not credentials. Never log the code or access token.
+	e2eGoogleProfileCookie  = "cognos_e2e_google_profile"
+	e2eGoogleDefaultProfile = "elena"
+	e2eGoogleCode           = "e2e-google-code-elena"
+	e2eGoogleAccessToken    = "e2e-google-access-elena"
+	e2eGoogleSubject        = "google-e2e-elena"
+	e2eGoogleEmail          = "elena.oauth+elena@example.test"
+)
+
+func googleOAuthAuthorizeHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		redirectURL, err := url.Parse(r.URL.Query().Get("redirect_uri"))
+		if err != nil ||
+			(redirectURL.Scheme != "http" && redirectURL.Scheme != "https") ||
+			!isE2ERedirectHost(redirectURL.Hostname()) ||
+			redirectURL.Path != "/api/oauth2-redirect" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid redirect_uri"})
+			return
+		}
+		state := r.URL.Query().Get("state")
+		if state == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing state"})
+			return
+		}
+
+		query := redirectURL.Query()
+		query.Set("code", googleCode(googleProfile(r)))
+		query.Set("state", state)
+		redirectURL.RawQuery = query.Encode()
+		http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+	}
+}
+
+func googleOAuthTokenHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil ||
+			r.Form.Get("grant_type") != "authorization_code" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant"})
+			return
+		}
+		profile, ok := strings.CutPrefix(r.Form.Get("code"), "e2e-google-code-")
+		if !ok || !validGoogleProfile(profile) {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant"})
+			return
+		}
+
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, http.StatusOK, map[string]any{
+			"access_token": googleAccessToken(profile),
+			"token_type":   "Bearer",
+			"expires_in":   300,
+		})
+	}
+}
+
+func googleOAuthUserInfoHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accessToken, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer e2e-google-access-")
+		if !ok || !validGoogleProfile(accessToken) {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_token"})
+			return
+		}
+
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, http.StatusOK, map[string]any{
+			"sub":            googleSubject(accessToken),
+			"name":           "Elena Rossi",
+			"email":          googleEmail(accessToken),
+			"email_verified": true,
+		})
+	}
+}
+
+func googleProfile(r *http.Request) string {
+	cookie, err := r.Cookie(e2eGoogleProfileCookie)
+	if err == nil && validGoogleProfile(cookie.Value) {
+		return cookie.Value
+	}
+	return e2eGoogleDefaultProfile
+}
+
+func validGoogleProfile(profile string) bool {
+	if len(profile) < 1 || len(profile) > 40 {
+		return false
+	}
+	for _, char := range profile {
+		if (char < 'a' || char > 'z') &&
+			(char < '0' || char > '9') &&
+			char != '-' {
+			return false
+		}
+	}
+	return true
+}
+
+func googleCode(profile string) string {
+	return "e2e-google-code-" + profile
+}
+
+func googleAccessToken(profile string) string {
+	return "e2e-google-access-" + profile
+}
+
+func googleSubject(profile string) string {
+	return "google-e2e-" + profile
+}
+
+func googleEmail(profile string) string {
+	return "elena.oauth+" + profile + "@example.test"
+}
+
+func isE2ERedirectHost(host string) bool {
+	if host == "localhost" || host == "cognos.local" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func paddleSubscriptionCancelHandler(logger *slog.Logger) http.HandlerFunc {

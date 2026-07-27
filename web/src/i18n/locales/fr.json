@@ -457,6 +457,13 @@
                     "Usage agrégé et anonyme",
                     "UE",
                     "Non"
+                  ],
+                  [
+                    "Google",
+                    "Connexion Google facultative",
+                    "Que vous utilisez Cognos, ainsi que les identifiants de compte Google nécessaires pour vous connecter",
+                    "Mondial (Google)",
+                    "Non — authentification uniquement ; jamais le contenu des chats ni votre clé de compte"
                   ]
                 ]
               }
@@ -1098,7 +1105,7 @@
               {
                 "figure": {
                   "src": "/docs-media/create-account-register.png",
-                  "alt": "Le formulaire d'inscription Cognos avec les champs e-mail et mot de passe et un bouton Créer un compte.",
+                  "alt": "Le formulaire d'inscription Cognos avec les champs e-mail et mot de passe, un bouton Créer un compte et Continuer avec Google.",
                   "caption": "La page d'inscription à l'adresse app.cognos.io/auth/register."
                 }
               }
@@ -1123,7 +1130,10 @@
             "heading": "Vérifiez votre e-mail",
             "blocks": [
               {
-                "p": "Cognos vous envoie un lien de confirmation par e-mail. Vous pouvez lire et gérer votre compte avant de confirmer, mais vous ne pouvez pas envoyer de messages à l'IA tant que votre e-mail n'est pas vérifié."
+                "p": "Si vous vous êtes inscrit avec e-mail et mot de passe, Cognos vous envoie un lien de confirmation par e-mail. Vous pouvez lire et gérer votre compte avant de confirmer, mais vous ne pouvez pas envoyer de messages à l'IA tant que votre e-mail n'est pas vérifié."
+              },
+              {
+                "p": "Si vous avez choisi <b>Continuer avec Google</b>, votre e-mail est déjà vérifié — aucun lien de confirmation Cognos n'est nécessaire."
               },
               {
                 "p": "Une fois vérifié, votre <a href=\"/docs/trial-credit\">crédit d'essai</a> est prêt et vous pouvez démarrer <a href=\"/docs/your-first-chat\">votre première discussion</a>."
@@ -2482,6 +2492,9 @@
           {
             "heading": "Activez-la",
             "blocks": [
+              {
+                "p": "Vous devez disposer d'un mot de passe Cognos pour l'activer. Si vous utilisez uniquement la connexion Google, l'authentification à deux facteurs Cognos n'est pas disponible."
+              },
               {
                 "steps": [
                   {

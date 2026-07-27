@@ -8,9 +8,93 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
+
+func TestGoogleOAuthAuthorizeRedirectsWithState(t *testing.T) {
+	t.Parallel()
+
+	redirectURL := "https://cognos.local:8095/api/oauth2-redirect"
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/oauth/google/authorize?redirect_uri="+url.QueryEscape(redirectURL)+"&state=state-123",
+		nil,
+	)
+	rec := httptest.NewRecorder()
+
+	routes(slog.New(slog.NewTextHandler(io.Discard, nil))).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusFound)
+	}
+	location, err := url.Parse(rec.Header().Get("Location"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if location.Scheme != "https" || location.Host != "cognos.local:8095" ||
+		location.Path != "/api/oauth2-redirect" {
+		t.Fatalf("unexpected redirect target %q", location.String())
+	}
+	if got := location.Query().Get("state"); got != "state-123" {
+		t.Fatalf("state = %q, want state-123", got)
+	}
+	if got := location.Query().Get("code"); got != e2eGoogleCode {
+		t.Fatalf("code = %q, want %q", got, e2eGoogleCode)
+	}
+}
+
+func TestGoogleOAuthTokenAndUserInfo(t *testing.T) {
+	t.Parallel()
+
+	router := routes(slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+	tokenReq := httptest.NewRequest(
+		http.MethodPost,
+		"/oauth/google/token",
+		strings.NewReader("grant_type=authorization_code&code="+e2eGoogleCode),
+	)
+	tokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	tokenRec := httptest.NewRecorder()
+	router.ServeHTTP(tokenRec, tokenReq)
+	if tokenRec.Code != http.StatusOK {
+		t.Fatalf("token status = %d, want %d: %s", tokenRec.Code, http.StatusOK, tokenRec.Body.String())
+	}
+
+	var token struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+	}
+	if err := json.Unmarshal(tokenRec.Body.Bytes(), &token); err != nil {
+		t.Fatal(err)
+	}
+	if token.AccessToken != e2eGoogleAccessToken || token.TokenType != "Bearer" {
+		t.Fatalf("unexpected token response: %+v", token)
+	}
+
+	userReq := httptest.NewRequest(http.MethodGet, "/oauth/google/userinfo", nil)
+	userReq.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	userRec := httptest.NewRecorder()
+	router.ServeHTTP(userRec, userReq)
+	if userRec.Code != http.StatusOK {
+		t.Fatalf("userinfo status = %d, want %d: %s", userRec.Code, http.StatusOK, userRec.Body.String())
+	}
+
+	var user struct {
+		Subject       string `json:"sub"`
+		Email         string `json:"email"`
+		EmailVerified bool   `json:"email_verified"`
+	}
+	if err := json.Unmarshal(userRec.Body.Bytes(), &user); err != nil {
+		t.Fatal(err)
+	}
+	if user.Subject != e2eGoogleSubject ||
+		user.Email != e2eGoogleEmail ||
+		!user.EmailVerified {
+		t.Fatalf("unexpected userinfo response: %+v", user)
+	}
+}
 
 func TestSelectReplySwitchesOnTokenCap(t *testing.T) {
 	t.Parallel()
