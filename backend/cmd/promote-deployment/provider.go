@@ -81,6 +81,11 @@ func (provider *apiRepositoryProvider) Push(ctx context.Context, directory, bran
 }
 
 func (provider *apiRepositoryProvider) UpsertPullRequest(ctx context.Context, branch string, pull pullRequest) error {
+	_, err := provider.upsertPullRequest(ctx, branch, pull)
+	return err
+}
+
+func (provider *apiRepositoryProvider) upsertPullRequest(ctx context.Context, branch string, pull pullRequest) (int, error) {
 	parts := strings.Split(provider.repository, "/")
 	endpoint := provider.apiURL + "/repos/" + parts[0] + "/" + parts[1] + "/pulls"
 	var existing []struct {
@@ -90,16 +95,28 @@ func (provider *apiRepositoryProvider) UpsertPullRequest(ctx context.Context, br
 		} `json:"head"`
 	}
 	if err := provider.request(ctx, http.MethodGet, endpoint+"?state=open&limit=50", nil, &existing); err != nil {
-		return err
+		return 0, err
 	}
 	for _, candidate := range existing {
 		if candidate.Head.Ref == branch {
 			payload := map[string]string{"title": pull.title, "body": pull.body}
-			return provider.request(ctx, http.MethodPatch, endpoint+"/"+strconv.Itoa(candidate.Number), payload, nil)
+			if err := provider.request(ctx, http.MethodPatch, endpoint+"/"+strconv.Itoa(candidate.Number), payload, nil); err != nil {
+				return 0, err
+			}
+			return candidate.Number, nil
 		}
 	}
 	payload := map[string]string{"title": pull.title, "body": pull.body, "head": branch, "base": "main"}
-	return provider.request(ctx, http.MethodPost, endpoint, payload, nil)
+	var created struct {
+		Number int `json:"number"`
+	}
+	if err := provider.request(ctx, http.MethodPost, endpoint, payload, &created); err != nil {
+		return 0, err
+	}
+	if created.Number < 1 {
+		return 0, fmt.Errorf("%s API returned pull request without a number", provider.name)
+	}
+	return created.Number, nil
 }
 
 func (provider *apiRepositoryProvider) request(ctx context.Context, method, endpoint string, payload, result any) error {

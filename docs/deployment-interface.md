@@ -113,7 +113,9 @@ The GitHub provider remains available as a fallback. To use it, set `INFRASTRUCT
 `github` and configure `GH_INFRASTRUCTURE_TOKEN`, `GH_INFRASTRUCTURE_REPOSITORY_URL`,
 `GH_INFRASTRUCTURE_REPOSITORY`, `GH_INFRASTRUCTURE_USERNAME` and, for GitHub Enterprise,
 `GH_INFRASTRUCTURE_API_URL`. The username is the GitHub Account that owns the token; it is
-non-secret and is used only for HTTPS Git authentication.
+non-secret and is used only for HTTPS Git authentication. GitHub promotion pull requests are
+assigned to `kisamoto`, who must retain push access to the infrastructure repository for GitHub to
+apply the assignment.
 
 The frontend is built with `pnpm --dir frontend build`; production values are currently compiled
 from `frontend/src/environments/environment.ts`. A release review must verify:

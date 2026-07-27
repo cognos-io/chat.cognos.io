@@ -34,7 +34,8 @@ run independently; the deployment workflow defaults it to `forgejo`.
 | `GITHUB_INFRASTRUCTURE_API_URL`        | No       | API URL; defaults to `https://api.github.com` |
 
 Use a fine-grained token or GitHub App installation token scoped only to the infrastructure
-repository.
+repository. GitHub promotion pull requests are assigned to `kisamoto`; GitHub requires the assignee
+to have push access to the infrastructure repository.
 
 ### Forgejo
 

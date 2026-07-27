@@ -123,15 +123,24 @@ func TestGitHubProviderUpdatesExistingPullRequest(t *testing.T) {
 	t.Parallel()
 
 	var patched bool
+	var assignedBody string
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if got := request.Header.Get("Authorization"); got != "Bearer token" {
 			t.Errorf("Authorization header = %q, want %q", got, "Bearer token")
 		}
 		switch {
-		case request.Method == http.MethodGet:
+		case request.Method == http.MethodGet && request.URL.Path == "/repos/cognos-io/infrastructure/pulls":
 			io.WriteString(response, `[{"number":7,"head":{"ref":"deploy/cognos-backend"}}]`)
 		case request.Method == http.MethodPatch && request.URL.Path == "/repos/cognos-io/infrastructure/pulls/7":
 			patched = true
+			io.WriteString(response, `{"number":7}`)
+		case request.Method == http.MethodPost && request.URL.Path == "/repos/cognos-io/infrastructure/issues/7/assignees":
+			body, err := io.ReadAll(request.Body)
+			if err != nil {
+				t.Errorf("ReadAll(request.Body) error = %v", err)
+			}
+			assignedBody = string(body)
+			response.WriteHeader(http.StatusCreated)
 			io.WriteString(response, `{"number":7}`)
 		default:
 			http.Error(response, "unexpected request", http.StatusNotFound)
@@ -155,6 +164,49 @@ func TestGitHubProviderUpdatesExistingPullRequest(t *testing.T) {
 	}
 	if !patched {
 		t.Error("upsertPullRequest() patched = false, want true")
+	}
+	if !strings.Contains(assignedBody, `"assignees":["kisamoto"]`) {
+		t.Errorf("UpsertPullRequest() assignment body = %q, want assignee kisamoto", assignedBody)
+	}
+}
+
+func TestGitHubProviderCreatesAndAssignsPullRequest(t *testing.T) {
+	t.Parallel()
+
+	var assigned bool
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		switch {
+		case request.Method == http.MethodGet && request.URL.Path == "/repos/braw-dev/infra/pulls":
+			io.WriteString(response, `[]`)
+		case request.Method == http.MethodPost && request.URL.Path == "/repos/braw-dev/infra/pulls":
+			response.WriteHeader(http.StatusCreated)
+			io.WriteString(response, `{"number":42}`)
+		case request.Method == http.MethodPost && request.URL.Path == "/repos/braw-dev/infra/issues/42/assignees":
+			assigned = true
+			response.WriteHeader(http.StatusCreated)
+			io.WriteString(response, `{"number":42}`)
+		default:
+			http.Error(response, "unexpected request", http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	provider, err := newGitHubProvider(repositoryProviderConfig{
+		apiURL:        server.URL,
+		repository:    "braw-dev/infra",
+		repositoryURL: server.URL + "/braw-dev/infra.git",
+		token:         "token",
+		username:      "deployment-bot",
+	}, server.Client())
+	if err != nil {
+		t.Fatalf("newGitHubProvider() error = %v", err)
+	}
+	err = provider.UpsertPullRequest(context.Background(), "deploy/cognos-backend", pullRequest{title: "promote", body: "details"})
+	if err != nil {
+		t.Fatalf("GitHubProvider.UpsertPullRequest() error = %v", err)
+	}
+	if !assigned {
+		t.Error("UpsertPullRequest() assigned = false, want true")
 	}
 }
 
