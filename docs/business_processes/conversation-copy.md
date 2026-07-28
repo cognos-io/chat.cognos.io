@@ -37,5 +37,5 @@ Rules:
 Copying can take time because encryption happens in the browser. The UI keeps a blocking,
 translated progress state until the transaction finishes.
 
-Project, Attachment and larger-copy work remains in
-[OP-016](../open-points.md#conversations-and-retrieval).
+Project, Attachment and larger-copy support is outside the current scope. Reconsider it only with
+evidence that the fail-closed limit blocks real use.

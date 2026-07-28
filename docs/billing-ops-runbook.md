@@ -2,7 +2,7 @@
 
 Practical guide for taking Cognos billing live on Paddle and operating it.
 Current behaviour is defined by the [billing business processes](./business_processes/README.md).
-Unresolved billing work is centralised in [open points](./open-points.md#operations-and-billing).
+Unresolved billing work is centralised in [open points](./open-points.md).
 This doc is the go-live checklist and the “something looks wrong, what do I do?” guide.
 
 ## Canonical customer prices
@@ -107,7 +107,8 @@ not exist in the sandbox.
   renewal. Each closed cycle is a row in `payg_cycle_summaries`. When cycle
   usage reaches the minimum, Accounts see a one-per-cycle soft warning on Plan
   & billing (ack stamps `payg_soft_alert_cycle_start_at`); Completions are
-  never blocked by this alert. A hard spend breaker remains deferred (OP-037).
+  never blocked by this alert. A hard spend breaker remains deferred until beta spend and support
+  data justify a threshold.
 - **Unlimited** never bills per request; usage is recorded (`amount_rappen=0`,
   cost in `user_cost_rappen`) for fair-use only.
 - **Organisation** bills `max(N × CHF 15, pooled usage)` per cycle where
@@ -192,8 +193,8 @@ single Paddle transaction can span two cycles' charges, so exact per-cycle
 `reconciled` equality is **not** asserted yet - we record for audit and assert
 only the safe lower bound (`billed ≥ expected`). After the first real PAYG cycle
 with overage in production, confirm which transaction the overage lands on and
-tighten the `reconciled` check and add a drift alert; see
-[OP-012](./open-points.md#operations-and-billing).
+tighten the `reconciled` check and add a drift alert; this remains part of
+[OP-005](./open-points.md#launch-gates).
 
 ## 6. Organisation dissolution reconciliation
 

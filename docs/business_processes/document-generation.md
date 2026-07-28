@@ -1,12 +1,12 @@
 ---
-description: Assistant messages render to DOCX/PDF/Markdown files entirely in the browser — the file bytes never exist on Cognos servers, not even transiently
+description: Assistant messages render to DOCX/PDF/Markdown files entirely in the browser - the file bytes never exist on Cognos servers, not even transiently
 name: document-generation
 ---
 
 # Document Generation (client-side)
 
 Account holders can download any assistant message as a real Word document, PDF or
-Markdown file — and can ask the Model for one ("write me a PDF brief"),
+Markdown file - and can ask the Model for one ("write me a PDF brief"),
 which answers with a **document card** in the reply. Unlike competitors
 (server-side Python sandboxes), Cognos renders the file **in the browser**,
 from the already-decrypted message content, inside a Web Worker.
@@ -17,9 +17,9 @@ disk. Nothing new is stored; nothing document-shaped transits the network.
 
 Two entry points, one render path:
 
-1. **Download as…** in the message toolbar — works on any assistant
+1. **Download as…** in the message toolbar - works on any assistant
    message, retroactively.
-2. **Model-created documents** — the composer's "Create documents" tool
+2. **Model-created documents** - the composer's "Create documents" tool
    (on by default, per-conversation opt-out) appends a byte-stable
    `<cog-doc>` output contract to the system prompt. The model emits the
    document (DOCX, PDF or XLSX) as a tagged block inside its normal reply;
@@ -27,7 +27,7 @@ Two entry points, one render path:
    download. Revisions are conversational: the contract requires the model
    to re-emit the complete updated document, so history is the version
    trail. The raw block persists inside the sealed message like any other
-   content — the card re-renders from history for free. "Save to library"
+   content - the card re-renders from history for free. "Save to library"
    routes the rendered bytes through the encrypted attachments pipeline
    (vault-sealed, redaction mappings travel with the file).
 
@@ -44,46 +44,47 @@ flowchart LR
 
 Properties this gives us:
 
-- **Zero new server surface.** The backend is untouched — no endpoint, no
+- **Zero new server surface.** The backend is untouched - no endpoint, no
   storage, no plaintext. Stronger than image generation, where plaintext
   bytes transit the backend before sealing.
 - **Files contain real values, providers never saw them.** Redaction tokens
-  are hydrated client-side immediately before render — same posture as
+  are hydrated client-side immediately before render - same posture as
   display.
 - **No identifying metadata.** Generated files carry creator/producer
   `Cognos` and day-rounded timestamps only (docx pack-time timestamps are
-  rewritten inside the zip — the library offers no override). Anyone the
+  rewritten inside the zip - the library offers no override). Anyone the
   Account holder sends the file to learns nothing about them.
 - **Renderer performs zero network I/O.** Libraries are lazy-loaded
   same-origin chunks; remote markdown image URLs are dropped (alt text
   kept); links are sanitised to `http(s)`. A generated file can never
-  phone home — including spreadsheets: network/exec-capable formula
+  phone home - including spreadsheets: network/exec-capable formula
   functions (`WEBSERVICE`, `HYPERLINK`, DDE pipes, …) are downgraded to
   literal text with a visible warning; out-of-range cell references get
   an advisory warning without blocking the file.
-- **Fail open to text.** The markdown→DocIR mapper is total — unknown or
+- **Fail open to text.** The markdown→DocIR mapper is total - unknown or
   hostile input degrades (HTML stripped, KaTeX/footnotes stay literal),
   never throws. A truncated or malformed `<cog-doc>` block degrades to
   visible markdown (plus a translated notice when the spec was invalid);
   render failures show a notice; the message content is always still there.
 - **Opt-out means byte-identical.** Turning "Create documents" off removes
-  the contract from the system prompt entirely — the wire payload matches a
+  the contract from the system prompt entirely - the wire payload matches a
   pre-feature client, asserted in e2e. Nothing document-shaped leaks when
   the Account holder opts out.
 - **Citation anchors never guess.** If a reply mixes web-search citations
   with a document block, inline citation markers are suppressed (offsets
   index the unsegmented content) and the sources dropdown carries all
-  sources — mirroring the web-search degradation rule.
+  sources - mirroring the web-search degradation rule.
 - **Heavy libraries never touch the initial bundle.** `docx` (~113 KB gz)
   and `pdfmake` (~342 KB gz + fonts) load lazily inside the worker on
   first use.
 
-Authoritative code: `frontend/src/app/documents/` —
+Authoritative code: `frontend/src/app/documents/` -
 `document-export.service.ts` (hydrate → route → deliver),
 `markdown/markdown-to-docir.ts` (the total mapper),
 `renderers/` (docx/pdf/markdown facades + `doc-styles.ts` metadata
 hygiene), `sheets/` (sheet spec + formula validator + xlsx facade),
 `workers/document-render.worker.ts`,
 `cog-doc/` (block parser + prompt contract),
-`../components/chat/document-card/` (the card). Compatibility, browser tool-loop and optional
-sandbox work is tracked in [open points](../open-points.md#data-documents-and-sharing).
+`../components/chat/document-card/` (the card). Cross-application compatibility evidence remains
+tracked in [OP-021](../open-points.md#external-and-manual-evidence). Browser tool loops and
+sandboxed code execution are not planned.

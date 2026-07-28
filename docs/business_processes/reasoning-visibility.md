@@ -6,8 +6,8 @@ name: reasoning-visibility
 # Reasoning Visibility
 
 Some models return **reasoning** (their "thinking") alongside the answer. Cognos
-surfaces it in a subtle inline **"Show reasoning"** disclosure — streamed live,
-collapsed once the answer lands — while giving it the exact same
+surfaces it in a subtle inline **"Show reasoning"** disclosure - streamed live,
+collapsed once the answer lands - while giving it the exact same
 no-plaintext-at-rest treatment as message content.
 
 It rides the [completion pipeline](./completion-pipeline.md); this doc only
@@ -21,10 +21,10 @@ provider-specific code.
 The answer and the reasoning travel on separate SSE event types, so reasoning
 can never bleed into the final answer text:
 
-- `delta` — answer text chunk (unchanged).
-- `reasoning_delta` — reasoning text chunk (new). Clients that ignore unknown
+- `delta` - answer text chunk (unchanged).
+- `reasoning_delta` - reasoning text chunk (new). Clients that ignore unknown
   event types still get the full answer.
-- `complete` — terminal payload: answer, optional `reasoning`, and
+- `complete` - terminal payload: answer, optional `reasoning`, and
   `usage.reasoning_tokens` (defaults to `0`).
 
 ```mermaid
@@ -60,7 +60,7 @@ defaulting to the Model's default and remembering the Account holder's per-model
 their encrypted preferences. The chosen tier rides the completion as
 `reasoning_effort`; the handler forwards it only if the model declares it
 (otherwise `400`), and Bifrost maps it to the provider (`off` → reasoning
-disabled). Models that declare no tiers behave exactly as before — no selector,
+disabled). Models that declare no tiers behave exactly as before - no selector,
 no parameter sent. Enabling a real model is a data change (set the two fields on
 its `ai_models` record) once its provider's accepted tiers are confirmed.
 
@@ -72,13 +72,13 @@ its `ai_models` record) once its provider's accepted tiers are confirmed.
    plaintext column ever holds it.
 2. **Counts travel; text doesn't.** Only `reasoning_tokens` (a number) reaches
    the response and could reach billing/analytics. Reasoning **text** is never
-   logged, metered, or emitted as analytics — not even at debug level.
+   logged, metered, or emitted as analytics - not even at debug level.
 3. **The UI stays honest.** The disclosure is labelled "Reasoning supplied by
-   the model. It may be incomplete or incorrect." — reasoning is an aid to
+   the model. It may be incomplete or incorrect." - reasoning is an aid to
    inspection, not proof of correctness.
 4. **Absent reasoning shows nothing.** Models that return no reasoning render no
    disclosure and report `reasoning_tokens: 0`.
 
-Public shares render stored Reasoning using the same disclosure. Document exports currently omit
-it, and no usage label renders the token count; both review points live in
-[OP-020](../open-points.md#conversations-and-retrieval).
+Public shares render stored Reasoning using the same disclosure. Document exports intentionally
+contain the final answer without hidden Reasoning, and usage surfaces do not expose the raw token
+count.

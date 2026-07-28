@@ -37,7 +37,7 @@ sequenceDiagram
 - Index Conversation **title + message content only**.
 - Search runs after a **3-character minimum** and a **400 ms debounce**; it requires **all** query
   terms (BM25 `threshold: 0`).
-- Stem with the Account holder's **active UI language** — one stemmer per index, rebuilt on locale
+- Stem with the Account holder's **active UI language** - one stemmer per index, rebuilt on locale
   change.
 - **Eagerly load project Conversations** on the first search of a session.
 - Cache hydrated message text **in memory only** for V1; the Orama index itself is the cache.
@@ -68,4 +68,5 @@ No plaintext search index in the backend. No plaintext search cache in localStor
 Search hydration may benefit from browser/CDN caching of encrypted API responses, but that is a
 separate platform concern. It needs principal-scoped keys, endpoint-specific TTLs, and purge tests.
 
-See [Search V2 and caching open points](../open-points.md#conversations-and-retrieval).
+Search V2 and authenticated caching remain deferred until observed search or performance failures
+justify the added security design.

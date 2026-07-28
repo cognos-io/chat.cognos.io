@@ -44,5 +44,5 @@ decryption and Redaction. Conversations can be created inside a Project or moved
 and Project scope through the transactional
 [Conversation Project membership](./conversation-project-membership.md) process.
 
-Shared Project files are not implemented; Attachments remain Account-owned. See
-[OP-023](../open-points.md#data-documents-and-sharing).
+Shared Project files are not planned; Attachments remain Account-owned. Any future shared-file work
+needs a fresh scoped-file security proposal rather than reusing the personal Library model.

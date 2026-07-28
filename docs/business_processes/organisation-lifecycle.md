@@ -30,7 +30,8 @@ every Organisation Project. Personal Accounts, Projects and billing remain untou
 The current handler schedules Paddle cancellation first, then deletes Organisation Projects,
 revokes Memberships and stamps `dissolved_at` in one local transaction. A Paddle failure leaves
 Cognos unchanged. The inverse failure window is tracked as
-[OP-013](../open-points.md#operations-and-billing) until a persisted reconciler replaces this flow.
+[OP-013](../open-points.md#product-and-security-risks) until a persisted reconciler replaces this
+flow.
 
 Account deletion is not Organisation dissolution. An Owner must transfer ownership or dissolve the
 Organisation before their Account can be deleted; see
