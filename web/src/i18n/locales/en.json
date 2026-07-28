@@ -4774,5 +4774,197 @@
         "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
+  },
+  "blog": {
+    "meta": {
+      "breadcrumb": "Breadcrumb",
+      "home": "Blog",
+      "pagerLabel": "Post navigation",
+      "newer": "Newer",
+      "older": "Older"
+    },
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Notes on private AI",
+      "lead": "Short pieces on privacy, security and how we build Cognos - written for people who would rather not become a search result.",
+      "metaTitle": "Blog - Cognos",
+      "metaDescription": "Short pieces on privacy, security and how we build Cognos, the AI chat app that keeps no copy of your conversations we can read.",
+      "feedTitle": "Cognos Blog",
+      "readMore": "Read the article"
+    },
+    "tags": {
+      "privacy": "Privacy",
+      "industry": "Industry"
+    },
+    "authors": {
+      "ewan": {
+        "role": "Founder, Cognos"
+      }
+    },
+    "cta": {
+      "title": "Chats we cannot read",
+      "body": "Cognos encrypts your conversations before they reach us, so we keep no copy we can read. Nothing to index, nothing to leak, nothing to hand over.",
+      "action": "Try Cognos"
+    },
+    "posts": {
+      "shared-ai-chats-are-public-web-pages": {
+        "title": "Your shared AI chat is a public web page",
+        "metaTitle": "Your shared AI chat is a public web page - Cognos Blog",
+        "metaDescription": "Hundreds of people's Claude conversations turned up in Google results. The mechanism is ordinary - what it reveals about where your chat history lives is not.",
+        "lead": "Hundreds of people's Claude conversations turned up in Google results this week: medical records, résumés, working API keys. The mechanism behind it is ordinary. What it reveals about where your chat history actually lives is the interesting part.",
+        "time": "5 min read",
+        "heroAlt": "A shared conversation open in a browser with its text plainly readable, being pulled by a search engine into a list of results.",
+        "sections": [
+          {
+            "heading": "What happened",
+            "blocks": [
+              {
+                "p": "Over the weekend of 25–26 July 2026, people searching Google for <code>site:claude.ai/share</code> found page after page of other people's conversations with Claude. 404 Media reported it first; <a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch</a>, <a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune</a> and <a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism</a> followed within a day."
+              },
+              {
+                "p": "The conversations were not exotic. Among them: clinical trial data and medical records, children's names and phone numbers, internal company documents, résumés, source code and working API keys."
+              },
+              {
+                "p": "Anthropic's position is that a shared conversation is public by definition. “When someone shares a conversation, they are making that content publicly accessible,” the company said, “and like other public web content, it may be archived by third-party services.” It added that it does not hand chat directories or sitemaps to search engines - the pages surfaced because the links had been posted publicly elsewhere."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "This has happened before. Shared ChatGPT conversations were indexed the same way in 2025, and Google later reported removing just under 600 of them from its results. It has begun delisting the Claude pages too - though delisting is not the same as deleting."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Sharing publishes a page - it doesn't send a copy",
+            "blocks": [
+              {
+                "p": "The word “share” does a lot of quiet work here. In most apps, sharing sends something to someone. In an AI chat app it usually means something else: it mints a URL and publishes your conversation at it, as an ordinary web page that anyone holding the address can read."
+              },
+              {
+                "p": "From that moment the conversation behaves like any other page on the web. It can be forwarded, pasted into a support ticket, committed to a public repository, linked from a post, crawled, cached and archived. Nobody has to guess the address - they only have to come across it once."
+              },
+              {
+                "p": "So the crawler isn't really the story. The story is that the page had something readable to serve. That is only possible because the provider holds a readable copy of your conversation, ready to render for whoever asks."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "title": "The uncomfortable version",
+                  "body": "Every conversation you have with a mainstream AI assistant is already stored in a form the provider can read. Sharing doesn't create that readable copy - it just points the open web at one."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Where the key lives",
+            "blocks": [
+              {
+                "p": "We should be straight about our own product first. Cognos has share links too, and a Cognos share link is a public page: anyone holding the link can open it without signing in. We are not claiming that sharing is impossible here, or magically safe."
+              },
+              {
+                "p": "What differs is what the link is made of. A Cognos share link has two halves, split by a <code>#</code>:"
+              },
+              {
+                "ul": [
+                  "<b>Before the <code>#</code></b> - the address. This is what our servers receive, what lands in our logs, and what a crawler or a web archive would record.",
+                  "<b>After the <code>#</code></b> - the key that unlocks the conversation. Browsers never put this part into a request. It stays in the reader's browser, and our servers never see it."
+                ]
+              },
+              {
+                "gallery": {
+                  "label": "How a shared conversation is exposed, and what a Cognos share link carries",
+                  "images": [
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/01-how-it-happens.svg",
+                      "alt": "Three steps: a share button is pressed on a conversation; a public web address now exists for it; a search engine lists that address among its results.",
+                      "caption": "How a conversation becomes a search result: share, publish, index."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/02-link-anatomy.svg",
+                      "alt": "A share link split at the hash symbol. The address half travels down to a server and is received. The key half is blocked from the server and instead stays in the reader's browser, where the conversation is readable.",
+                      "caption": "The address reaches our servers. The key, after the <code>#</code>, never does - browsers don't send it."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/03-what-a-crawler-gets.svg",
+                      "alt": "Top: a crawler captures only the address, fetches the page and gets sealed, unreadable blocks with a closed padlock, having no key. Bottom: the share is deleted and the same address now returns 404.",
+                      "caption": "A crawler that finds the address gets a page with nothing legible on it. Stop sharing, and the address stops resolving."
+                    }
+                  ]
+                }
+              },
+              {
+                "p": "The practical effect is that we can't read a shared conversation even while someone else is reading it. A search engine that finds the address gets a page with nothing legible on it, because the half of the link that unlocks it was never part of the address it crawled. And since we hold no readable copy of any conversation - shared or not - there is no pool of readable chats to index, leak or hand over in the first place."
+              },
+              {
+                "p": "Two further differences follow from the same design. A Cognos share hides <a href=\"/docs/redaction\">detected sensitive values</a> by default, so names, numbers and keys stay behind placeholders unless you deliberately choose to include them. And <a href=\"/docs/sharing-conversations\">stopping a share</a> deletes it outright - the address stops resolving immediately, rather than waiting to be delisted."
+              }
+            ]
+          },
+          {
+            "heading": "What this doesn't fix",
+            "blocks": [
+              {
+                "p": "A link is still a link. If you paste a Cognos share link somewhere public - the whole thing, including the part after the <code>#</code> - then anyone who follows it can read that conversation. The key never travels in a request, but it travels perfectly well in copied text."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Treat a share link as the conversation itself. What the design gives you is that sharing is always a deliberate act, always revocable, and never something that quietly happens to a conversation you didn't share."
+                }
+              },
+              {
+                "p": "Nor does any of this undo the past. Once a page has been public, copies may already sit in search caches and third-party archives. Removing the link stops new readers arriving; it doesn't retrieve the copies already taken."
+              }
+            ]
+          },
+          {
+            "heading": "What to do now",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Check what you have already shared",
+                    "body": "In Claude, open <b>Settings → Privacy → Shared chats</b> and review every public link. Delete the ones you didn't mean to publish. Do the same in any other AI tool you use."
+                  },
+                  {
+                    "title": "Search for yourself",
+                    "body": "Try your own name, employer or project alongside a share path in more than one search engine. Bing was still returning results after Google began delisting."
+                  },
+                  {
+                    "title": "Assume a past share is permanent",
+                    "body": "Where the content is genuinely sensitive - health, legal, credentials - act as though it is public, and rotate anything that can be rotated. Any API key that appeared in a shared chat should be considered compromised."
+                  },
+                  {
+                    "title": "Prefer redacted sharing",
+                    "body": "Where a tool offers it, share with sensitive values hidden rather than included. In Cognos that is the default."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "None of this requires switching product. Reviewing your shared links takes about two minutes, and it is worth doing today in every AI tool you use."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Further reading",
+            "blocks": [
+              {
+                "ul": [
+                  "<a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch - PSA: your Claude shared chats and Artifacts may have ended up on Google</a>",
+                  "<a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune - Users' seemingly private conversations with Claude showed up in Google search results</a>",
+                  "<a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism - A whole bunch of people's Claude chats are publicly accessible online</a>",
+                  "<a href=\"/docs/sharing-conversations\">Cognos docs - Sharing a conversation</a>",
+                  "<a href=\"/security\">Cognos - How we protect your conversations</a>"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
   }
 }

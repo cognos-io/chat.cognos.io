@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620" role="presentation">
+  <!--
+    Step 3 of 3: what a crawler ends up with, and what revoking does.
+
+    Top row: a crawler that finds a Cognos share address can fetch the page, but
+    the page has nothing readable to show it - the key was in the half of the link
+    the crawler never had. Bottom row: revoking deletes the share, so the address
+    stops resolving at all.
+
+    Text-free apart from the URL and the status code (see hero.svg).
+    Palette from packages/ui styles/themes.css.
+  -->
+  <style>
+    .surface { fill: #ffffff; }
+    .sunken { fill: #f7f8f9; }
+    .ink { fill: #172b4d; }
+    .sub { fill: #626f86; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 16px; fill: #626f86; }
+    .arrow { stroke: #626f86; stroke-width: 3; fill: none; stroke-linecap: round; }
+    .code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 30px; font-weight: 700; fill: #c9372c; }
+  </style>
+
+  <rect width="1200" height="620" fill="#f7f8f9" />
+  <path d="M60 320 h1080" stroke="#dfe1e6" stroke-width="2" stroke-dasharray="6 8" fill="none" />
+
+  <!-- ══ Top row: indexed, but unreadable ═══════════════════════════════ -->
+
+  <!-- The crawler, holding only the address. -->
+  <g>
+    <rect x="60" y="80" width="270" height="160" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+    <!-- Magnifier. -->
+    <g transform="translate(126 140)">
+      <circle r="26" fill="none" stroke="#626f86" stroke-width="4" />
+      <path d="M19 19 l22 22" stroke="#626f86" stroke-width="4" stroke-linecap="round" />
+    </g>
+    <!-- All it captured: the address, with no "#" half. -->
+    <rect x="84" y="192" width="222" height="28" rx="14" class="sunken" stroke="#dfe1e6" stroke-width="1" />
+    <text x="98" y="211" class="mono">/p/a7f3b91c</text>
+  </g>
+
+  <path d="M356 160 h64" class="arrow" stroke-dasharray="9 8" />
+  <path d="M414 150 l14 10 -14 10" class="arrow" stroke-linejoin="round" />
+
+  <!-- The page it gets back: served, but with nothing to read. -->
+  <g>
+    <rect x="448" y="60" width="380" height="200" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+    <path d="M448 96 h380" stroke="#dfe1e6" stroke-width="2" fill="none" />
+    <circle cx="470" cy="78" r="4.5" fill="#c9372c" />
+    <circle cx="486" cy="78" r="4.5" fill="#b8770b" />
+    <circle cx="502" cy="78" r="4.5" fill="#22a06b" />
+    <rect x="522" y="68" width="286" height="20" rx="10" class="sunken" stroke="#dfe1e6" stroke-width="1" />
+    <text x="534" y="83" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13" class="sub">/p/a7f3b91c</text>
+
+    <!-- Content as sealed blocks: present, but not legible. -->
+    <rect x="476" y="122" width="324" height="26" rx="8" fill="#dcfff1" stroke="#1f845a" stroke-width="1.5" />
+    <rect x="476" y="158" width="324" height="26" rx="8" fill="#dcfff1" stroke="#1f845a" stroke-width="1.5" />
+    <rect x="476" y="194" width="212" height="26" rx="8" fill="#dcfff1" stroke="#1f845a" stroke-width="1.5" />
+
+    <!-- Padlock, closed. -->
+    <g transform="translate(742 196)">
+      <rect x="-18" y="-6" width="36" height="28" rx="6" fill="#1f845a" />
+      <path d="M-10 -6 v-9 a10 10 0 0 1 20 0 v9" fill="none" stroke="#1f845a" stroke-width="4" />
+      <circle cx="0" cy="8" r="3.5" fill="#ffffff" />
+    </g>
+  </g>
+
+  <!-- No key available to the crawler. -->
+  <g transform="translate(940 160)">
+    <circle r="46" fill="#ffedeb" stroke="#c9372c" stroke-width="3" />
+    <g transform="translate(-14 0)">
+      <circle cx="0" cy="0" r="10" fill="none" stroke="#c9372c" stroke-width="3.5" />
+      <path d="M9 0 h26 M27 0 v10 M35 0 v10" stroke="#c9372c" stroke-width="3.5" stroke-linecap="round" fill="none" />
+    </g>
+    <path d="M-34 34 L34 -34" stroke="#c9372c" stroke-width="5" stroke-linecap="round" />
+  </g>
+
+  <!-- ══ Bottom row: revoked, so nothing resolves ════════════════════════ -->
+
+  <!-- The revoke action: the share row is deleted. -->
+  <g>
+    <rect x="60" y="382" width="270" height="160" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+    <rect x="84" y="410" width="222" height="28" rx="14" class="sunken" stroke="#dfe1e6" stroke-width="1" />
+    <text x="98" y="429" class="mono">/p/a7f3b91c</text>
+    <!-- Struck through. -->
+    <path d="M90 424 h210" stroke="#c9372c" stroke-width="3" stroke-linecap="round" />
+    <!-- Bin glyph. -->
+    <g transform="translate(195 490)">
+      <path d="M-26 -14 h52" stroke="#c9372c" stroke-width="3.5" stroke-linecap="round" fill="none" />
+      <path d="M-9 -14 v-7 h18 v7" stroke="#c9372c" stroke-width="3.5" stroke-linejoin="round" fill="none" />
+      <path d="M-20 -14 l4 40 h32 l4 -40" stroke="#c9372c" stroke-width="3.5" stroke-linejoin="round" fill="none" />
+      <path d="M-7 -4 v22 M7 -4 v22" stroke="#c9372c" stroke-width="3" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+
+  <path d="M356 462 h64" class="arrow" stroke-dasharray="9 8" />
+  <path d="M414 452 l14 10 -14 10" class="arrow" stroke-linejoin="round" />
+
+  <!-- The page is simply gone. -->
+  <g>
+    <rect x="448" y="382" width="380" height="160" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+    <path d="M448 418 h380" stroke="#dfe1e6" stroke-width="2" fill="none" />
+    <circle cx="470" cy="400" r="4.5" fill="#c9372c" />
+    <circle cx="486" cy="400" r="4.5" fill="#b8770b" />
+    <circle cx="502" cy="400" r="4.5" fill="#22a06b" />
+    <rect x="522" y="390" width="286" height="20" rx="10" class="sunken" stroke="#dfe1e6" stroke-width="1" />
+    <text x="534" y="405" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13" class="sub">/p/a7f3b91c</text>
+
+    <text x="638" y="492" text-anchor="middle" class="code">404</text>
+  </g>
+</svg>

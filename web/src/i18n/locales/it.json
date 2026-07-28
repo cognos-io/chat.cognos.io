@@ -3531,5 +3531,197 @@
         "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
+  },
+  "blog": {
+    "meta": {
+      "breadcrumb": "Percorso di navigazione",
+      "home": "Blog",
+      "pagerLabel": "Navigazione tra gli articoli",
+      "newer": "Più recente",
+      "older": "Più vecchio"
+    },
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Note sull'IA privata",
+      "lead": "Articoli brevi su privacy, sicurezza e su come costruiamo Cognos - per chi preferirebbe non diventare un risultato di ricerca.",
+      "metaTitle": "Blog - Cognos",
+      "metaDescription": "Articoli brevi su privacy, sicurezza e su come costruiamo Cognos, l'app di chat con l'IA che non conserva nessuna copia leggibile delle tue conversazioni.",
+      "feedTitle": "Blog di Cognos",
+      "readMore": "Leggi l'articolo"
+    },
+    "tags": {
+      "privacy": "Privacy",
+      "industry": "Settore"
+    },
+    "authors": {
+      "ewan": {
+        "role": "Fondatore, Cognos"
+      }
+    },
+    "cta": {
+      "title": "Conversazioni che non possiamo leggere",
+      "body": "Cognos cifra le tue conversazioni prima che ci arrivino, quindi non conserviamo nessuna copia che possiamo leggere. Nulla da indicizzare, nulla che possa uscire, nulla da consegnare.",
+      "action": "Prova Cognos"
+    },
+    "posts": {
+      "shared-ai-chats-are-public-web-pages": {
+        "title": "La tua chat con l'IA condivisa è una pagina web pubblica",
+        "metaTitle": "La tua chat con l'IA condivisa è una pagina web pubblica - Blog di Cognos",
+        "metaDescription": "Centinaia di conversazioni con Claude sono comparse nei risultati di Google. Il meccanismo è banale; ciò che rivela su dove vive la tua cronologia non lo è.",
+        "lead": "Questa settimana centinaia di conversazioni con Claude sono comparse nei risultati di Google: cartelle cliniche, curriculum, chiavi API funzionanti. Il meccanismo dietro è banale. La parte interessante è ciò che rivela su dove vive davvero la cronologia delle tue conversazioni.",
+        "time": "5 min di lettura",
+        "heroAlt": "Una conversazione condivisa aperta in un browser, con il testo perfettamente leggibile, trascinata da un motore di ricerca in un elenco di risultati.",
+        "sections": [
+          {
+            "heading": "Cosa è successo",
+            "blocks": [
+              {
+                "p": "Nel fine settimana del 25 e 26 luglio 2026, chi cercava <code>site:claude.ai/share</code> su Google ha trovato pagina dopo pagina le conversazioni di altre persone con Claude. 404 Media l'ha riportato per primo; <a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch</a>, <a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune</a> e <a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism</a> hanno seguito nel giro di un giorno."
+              },
+              {
+                "p": "Le conversazioni non avevano nulla di esotico. Tra queste: dati di studi clinici e cartelle cliniche, nomi e numeri di telefono di bambini, documenti aziendali interni, curriculum, codice sorgente e chiavi API funzionanti."
+              },
+              {
+                "p": "La posizione di Anthropic è che una conversazione condivisa sia pubblica per definizione. «Quando qualcuno condivide una conversazione, sta rendendo quel contenuto accessibile al pubblico», ha dichiarato l'azienda, «e come ogni altro contenuto web pubblico può essere archiviato da servizi terzi.» Ha aggiunto di non fornire ai motori di ricerca né elenchi di conversazioni né sitemap: le pagine sono emerse perché gli indirizzi erano stati pubblicati altrove."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Non è la prima volta. Nel 2025 le conversazioni condivise di ChatGPT sono state indicizzate nello stesso modo, e Google ha poi dichiarato di averne rimosse poco meno di 600 dai propri risultati. Ha iniziato a deindicizzare anche le pagine di Claude - ma deindicizzare non è cancellare."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Condividere pubblica una pagina, non spedisce una copia",
+            "blocks": [
+              {
+                "p": "La parola «condividere» fa qui molto lavoro silenzioso. Nella maggior parte delle app, condividere manda qualcosa a qualcuno. In un'app di chat con l'IA di solito significa altro: crea un indirizzo e vi pubblica la tua conversazione, come una normale pagina web che chiunque abbia l'indirizzo può leggere."
+              },
+              {
+                "p": "Da quel momento la conversazione si comporta come qualsiasi altra pagina del web. Può essere inoltrata, incollata in un ticket di assistenza, caricata in un repository pubblico, collegata da un post, scansionata, messa in cache e archiviata. Nessuno deve indovinare l'indirizzo: basta incontrarlo una volta."
+              },
+              {
+                "p": "Quindi il crawler non è il vero tema. Il vero tema è che la pagina aveva qualcosa di leggibile da servire. Questo è possibile solo perché il fornitore conserva una copia leggibile della tua conversazione, pronta da mostrare a chiunque la chieda."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "title": "La versione scomoda",
+                  "body": "Ogni conversazione che fai con un assistente IA diffuso è già archiviata in una forma che il fornitore può leggere. Condividere non crea quella copia leggibile: si limita a puntarci il web aperto."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Dove vive la chiave",
+            "blocks": [
+              {
+                "p": "Prima di tutto siamo chiari sul nostro prodotto. Anche Cognos ha link di condivisione, e un link di condivisione di Cognos è una pagina pubblica: chiunque lo possieda può aprirlo senza accedere. Non sosteniamo che condividere sia impossibile da noi, né sicuro per magia."
+              },
+              {
+                "p": "Ciò che cambia è di cosa è fatto il link. Un link di condivisione di Cognos ha due metà, separate da un <code>#</code>:"
+              },
+              {
+                "ul": [
+                  "<b>Prima del <code>#</code></b> - l'indirizzo. È ciò che i nostri server ricevono, ciò che finisce nei nostri log e ciò che un crawler o un archivio del web registrerebbe.",
+                  "<b>Dopo il <code>#</code></b> - la chiave che apre la conversazione. I browser non inseriscono mai questa parte in una richiesta. Resta nel browser di chi legge, e i nostri server non la vedono mai."
+                ]
+              },
+              {
+                "gallery": {
+                  "label": "Come una conversazione condivisa viene esposta e cosa contiene un link di condivisione di Cognos",
+                  "images": [
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/01-how-it-happens.svg",
+                      "alt": "Tre passaggi: si preme Condividi su una conversazione; ora per essa esiste un indirizzo web pubblico; un motore di ricerca elenca quell'indirizzo tra i suoi risultati.",
+                      "caption": "Come una conversazione diventa un risultato di ricerca: condividere, pubblicare, indicizzare."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/02-link-anatomy.svg",
+                      "alt": "Un link di condivisione tagliato in corrispondenza del cancelletto. La metà con l'indirizzo scende verso un server e viene ricevuta. La metà con la chiave è bloccata prima del server e resta nel browser di chi legge, dove la conversazione è leggibile.",
+                      "caption": "L'indirizzo raggiunge i nostri server. La chiave, dopo il <code>#</code>, mai: i browser non la inviano."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/03-what-a-crawler-gets.svg",
+                      "alt": "In alto: un crawler cattura solo l'indirizzo, carica la pagina e ottiene blocchi sigillati e illeggibili con un lucchetto chiuso, perché non ha la chiave. In basso: la condivisione viene eliminata e lo stesso indirizzo ora restituisce 404.",
+                      "caption": "Un crawler che trova l'indirizzo ottiene una pagina senza nulla di leggibile. Interrompi la condivisione e l'indirizzo smette di esistere."
+                    }
+                  ]
+                }
+              },
+              {
+                "p": "In pratica questo significa che non possiamo leggere una conversazione condivisa, nemmeno mentre qualcun altro la sta leggendo. Un motore di ricerca che trova l'indirizzo ottiene una pagina senza nulla di leggibile, perché la metà del link che la apre non ha mai fatto parte dell'indirizzo scansionato. E poiché non conserviamo nessuna copia leggibile di nessuna conversazione, condivisa o no, non esiste affatto un insieme di conversazioni leggibili da indicizzare, far uscire o consegnare."
+              },
+              {
+                "p": "Dallo stesso impianto derivano altre due differenze. Una condivisione di Cognos nasconde per impostazione predefinita i <a href=\"/docs/redaction\">valori sensibili rilevati</a>: nomi, numeri e chiavi restano dietro segnaposti, a meno che tu non scelga deliberatamente di includerli. E <a href=\"/docs/sharing-conversations\">interrompere una condivisione</a> la elimina del tutto: l'indirizzo smette subito di esistere, invece di attendere una deindicizzazione."
+              }
+            ]
+          },
+          {
+            "heading": "Cosa questo non risolve",
+            "blocks": [
+              {
+                "p": "Un link resta un link. Se incolli un link di condivisione di Cognos in un luogo pubblico - per intero, compresa la parte dopo il <code>#</code> -, chiunque lo segua può leggere quella conversazione. La chiave non viaggia mai in una richiesta, ma viaggia benissimo nel testo copiato."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Tratta un link di condivisione come la conversazione stessa. Ciò che l'impianto ti offre è che condividere sia sempre un atto deliberato, sempre revocabile, e che non accada mai in silenzio a una conversazione che non hai condiviso."
+                }
+              },
+              {
+                "p": "Non annulla nemmeno il passato. Una volta che una pagina è stata pubblica, delle copie potrebbero già trovarsi nelle cache dei motori di ricerca e negli archivi di terzi. Rimuovere il link impedisce l'arrivo di nuovi lettori; non recupera le copie già prese."
+              }
+            ]
+          },
+          {
+            "heading": "Cosa fare adesso",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Controlla cosa hai già condiviso",
+                    "body": "In Claude apri <b>Impostazioni → Privacy → Chat condivise</b> e passa in rassegna ogni link pubblico. Elimina quelli che non intendevi pubblicare. Fai lo stesso in ogni altro strumento di IA che usi."
+                  },
+                  {
+                    "title": "Cerca te stesso",
+                    "body": "Prova il tuo nome, il tuo datore di lavoro o il tuo progetto insieme a un percorso di condivisione, su più di un motore di ricerca. Bing restituiva ancora risultati dopo che Google aveva iniziato a deindicizzare."
+                  },
+                  {
+                    "title": "Considera definitiva una condivisione passata",
+                    "body": "Quando il contenuto è davvero sensibile - salute, questioni legali, credenziali -, comportati come se fosse pubblico e sostituisci tutto ciò che può essere sostituito. Qualsiasi chiave API comparsa in una chat condivisa va considerata compromessa."
+                  },
+                  {
+                    "title": "Preferisci la condivisione con i valori nascosti",
+                    "body": "Dove uno strumento lo consente, condividi con i valori sensibili nascosti invece che inclusi. In Cognos è l'impostazione predefinita."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Nulla di tutto questo richiede di cambiare prodotto. Rivedere i tuoi link condivisi richiede circa due minuti, e oggi vale la pena farlo in ogni strumento di IA che usi."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Per approfondire",
+            "blocks": [
+              {
+                "ul": [
+                  "<a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch - PSA: your Claude shared chats and Artifacts may have ended up on Google</a>",
+                  "<a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune - Users' seemingly private conversations with Claude showed up in Google search results</a>",
+                  "<a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism - A whole bunch of people's Claude chats are publicly accessible online</a>",
+                  "<a href=\"/docs/sharing-conversations\">Documentazione di Cognos - Condividere una conversazione</a>",
+                  "<a href=\"/security\">Cognos - Come proteggiamo le tue conversazioni</a>"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
   }
 }

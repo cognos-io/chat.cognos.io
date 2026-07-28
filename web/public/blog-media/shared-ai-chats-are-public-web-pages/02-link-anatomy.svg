@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620" role="presentation">
+  <!--
+    Step 2 of 3: the two halves of a Cognos share link.
+
+    Everything before the "#" is a request our servers receive and log. Everything
+    after it is the key, and browsers never put it in a request - so it reaches
+    the reader's browser and nothing else. This is the load-bearing claim of the
+    article; see docs/security-model.md §14.3.
+
+    Text-free apart from the URL itself (see hero.svg). Palette from
+    packages/ui styles/themes.css.
+  -->
+  <style>
+    .surface { fill: #ffffff; }
+    .sunken { fill: #f7f8f9; }
+    .ink { fill: #172b4d; }
+    .sub { fill: #626f86; }
+    .url { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 26px; }
+    .hashmark { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 34px; font-weight: 700; fill: #b8770b; }
+    .ok { stroke: #1f845a; stroke-width: 3.5; fill: none; stroke-linecap: round; }
+    .no { stroke: #c9372c; stroke-width: 3.5; fill: none; stroke-linecap: round; }
+  </style>
+
+  <rect width="1200" height="620" fill="#f7f8f9" />
+
+  <!-- ── The link ───────────────────────────────────────────────────────── -->
+  <g>
+    <!-- Left half: the address. Sent to our servers. -->
+    <rect x="120" y="64" width="484" height="76" rx="38" class="surface" stroke="#dfe1e6" stroke-width="2" />
+    <text x="150" y="112" class="url ink">cognos.io/p/a7f3b91c</text>
+
+    <!-- The boundary. -->
+    <text x="614" y="116" class="hashmark">#</text>
+
+    <!-- Right half: the key. Never sent anywhere. -->
+    <rect x="648" y="64" width="432" height="76" rx="38" fill="#dcfff1" stroke="#1f845a" stroke-width="2" />
+    <text x="678" y="112" class="url" fill="#164b35">k3Vb8Qz…</text>
+    <!-- A small key glyph, so the half reads as "secret" without a word. -->
+    <g transform="translate(1006 102)">
+      <circle cx="0" cy="0" r="10" fill="none" stroke="#164b35" stroke-width="3.5" />
+      <path d="M9 0 h30 M30 0 v11 M39 0 v11" stroke="#164b35" stroke-width="3.5" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+
+  <!-- ── Left half travels to the server ────────────────────────────────── -->
+  <path d="M362 152 V300" class="ok" stroke-dasharray="10 9" />
+  <path d="M352 292 l10 14 10 -14" class="ok" stroke-linejoin="round" />
+
+  <g>
+    <!-- Server rack. -->
+    <rect x="242" y="316" width="240" height="176" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+    <rect x="270" y="344" width="184" height="40" rx="8" class="sunken" stroke="#dfe1e6" stroke-width="2" />
+    <circle cx="292" cy="364" r="6" fill="#1f845a" />
+    <rect x="310" y="360" width="120" height="8" rx="4" class="sub" opacity="0.4" />
+    <rect x="270" y="396" width="184" height="40" rx="8" class="sunken" stroke="#dfe1e6" stroke-width="2" />
+    <circle cx="292" cy="416" r="6" fill="#1f845a" />
+    <rect x="310" y="412" width="96" height="8" rx="4" class="sub" opacity="0.4" />
+
+    <!-- Received: tick. -->
+    <circle cx="454" cy="464" r="22" fill="#1f845a" />
+    <path d="M444 464 l7 8 13 -16" stroke="#ffffff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- What the server therefore holds: the address only, no readable content. -->
+    <rect x="270" y="448" width="150" height="26" rx="13" class="sunken" stroke="#dfe1e6" stroke-width="1" />
+    <text x="282" y="466" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="14" class="sub">/p/a7f3b91c</text>
+  </g>
+
+  <!-- ── Right half never leaves the browser ────────────────────────────── -->
+  <path d="M864 152 V300" class="no" stroke-dasharray="10 9" />
+  <!-- Blocked, rather than delivered. -->
+  <g>
+    <circle cx="864" cy="330" r="26" fill="#ffedeb" stroke="#c9372c" stroke-width="3" />
+    <path d="M852 318 l24 24 M876 318 l-24 24" stroke="#c9372c" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <g>
+    <!-- The reader's browser: where the key stays, and the only place the
+         conversation is ever readable. -->
+    <rect x="718" y="380" width="292" height="180" rx="14" class="surface" stroke="#1f845a" stroke-width="2.5" />
+    <path d="M718 416 h292" stroke="#dfe1e6" stroke-width="2" fill="none" />
+    <circle cx="740" cy="398" r="4.5" fill="#c9372c" />
+    <circle cx="756" cy="398" r="4.5" fill="#b8770b" />
+    <circle cx="772" cy="398" r="4.5" fill="#22a06b" />
+
+    <rect x="746" y="444" width="196" height="7" rx="3.5" class="ink" opacity="0.75" />
+    <rect x="746" y="462" width="236" height="7" rx="3.5" class="ink" opacity="0.55" />
+    <rect x="746" y="480" width="170" height="7" rx="3.5" class="ink" opacity="0.7" />
+    <rect x="746" y="510" width="216" height="7" rx="3.5" class="ink" opacity="0.6" />
+    <rect x="746" y="528" width="140" height="7" rx="3.5" class="ink" opacity="0.75" />
+
+    <!-- The key, held locally. -->
+    <g transform="translate(978 528)">
+      <circle cx="0" cy="0" r="9" fill="none" stroke="#1f845a" stroke-width="3" />
+      <path d="M8 0 h22 M23 0 v9 M30 0 v9" stroke="#1f845a" stroke-width="3" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+</svg>

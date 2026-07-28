@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="presentation">
+  <!--
+    Shared chats become ordinary, crawlable web pages.
+
+    Deliberately free of prose: the same artwork ships in all six locales, so
+    meaning is carried by the translated alt text and caption. The only glyphs
+    are a URL path and abstract bars standing in for text - never a reproduction
+    of anyone's real conversation.
+
+    Colours are the light-theme emerald palette from packages/ui
+    (styles/themes.css). An SVG served from public/ cannot reach the cog design
+    tokens, so the hex values are copied from there.
+  -->
+  <style>
+    .ink { fill: #172b4d; }
+    .sub { fill: #626f86; }
+    .surface { fill: #ffffff; }
+    .sunken { fill: #f7f8f9; }
+    .line { stroke: #dfe1e6; stroke-width: 2; fill: none; }
+    .brand { fill: #1f845a; }
+    .brand-stroke { stroke: #1f845a; fill: none; stroke-width: 3; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 17px; }
+  </style>
+
+  <rect width="1200" height="630" fill="#f7f8f9" />
+
+  <!-- Two windows behind, implying many more of them. -->
+  <g opacity="0.35">
+    <rect x="96" y="70" width="480" height="330" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+  </g>
+  <g opacity="0.6">
+    <rect x="80" y="86" width="480" height="330" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+  </g>
+
+  <!-- Front window: a shared conversation, plainly readable. -->
+  <g>
+    <rect x="64" y="102" width="480" height="330" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+    <path d="M64 140 h480" class="line" />
+    <circle cx="88" cy="121" r="5" fill="#c9372c" />
+    <circle cx="106" cy="121" r="5" fill="#b8770b" />
+    <circle cx="124" cy="121" r="5" fill="#22a06b" />
+
+    <!-- URL bar: a public share path. -->
+    <rect x="148" y="110" width="372" height="22" rx="11" class="sunken" stroke="#dfe1e6" stroke-width="1" />
+    <text x="162" y="126" class="mono sub">/share/9f2c4b7e…</text>
+
+    <!-- Conversation: question bubble, then an answer as readable text bars. -->
+    <rect x="266" y="164" width="254" height="40" rx="12" fill="#dcfff1" />
+    <rect x="284" y="178" width="150" height="6" rx="3" class="brand" opacity="0.75" />
+    <rect x="284" y="190" width="96" height="6" rx="3" class="brand" opacity="0.5" />
+
+    <rect x="88" y="224" width="330" height="112" rx="12" class="sunken" stroke="#dfe1e6" stroke-width="1" />
+    <rect x="106" y="242" width="290" height="7" rx="3.5" class="ink" opacity="0.8" />
+    <rect x="106" y="258" width="256" height="7" rx="3.5" class="ink" opacity="0.65" />
+    <rect x="106" y="274" width="294" height="7" rx="3.5" class="ink" opacity="0.8" />
+    <rect x="106" y="290" width="180" height="7" rx="3.5" class="ink" opacity="0.55" />
+    <rect x="106" y="306" width="232" height="7" rx="3.5" class="ink" opacity="0.7" />
+
+    <rect x="266" y="356" width="254" height="40" rx="12" fill="#dcfff1" />
+    <rect x="284" y="370" width="188" height="6" rx="3" class="brand" opacity="0.75" />
+    <rect x="284" y="382" width="120" height="6" rx="3" class="brand" opacity="0.5" />
+  </g>
+
+  <!-- A crawler pulls it into an index. -->
+  <path d="M576 268 h64" class="brand-stroke" stroke-dasharray="9 8" stroke-linecap="round" />
+  <path d="M634 258 l14 10 -14 10" class="brand-stroke" stroke-linejoin="round" stroke-linecap="round" />
+
+  <!-- Search results: the same conversation, now a row in an index. -->
+  <g>
+    <rect x="672" y="102" width="456" height="330" rx="14" class="surface" stroke="#dfe1e6" stroke-width="2" />
+
+    <!-- Search field with a magnifier. -->
+    <rect x="700" y="132" width="400" height="38" rx="19" class="sunken" stroke="#dfe1e6" stroke-width="2" />
+    <circle cx="726" cy="151" r="9" stroke="#1f845a" stroke-width="3" fill="none" />
+    <path d="M733 158 l9 9" stroke="#1f845a" stroke-width="3" stroke-linecap="round" />
+    <rect x="752" y="147" width="150" height="7" rx="3.5" class="sub" opacity="0.5" />
+
+    <!-- Three indexed results. -->
+    <g>
+      <rect x="700" y="198" width="240" height="8" rx="4" fill="#0c66e4" opacity="0.85" />
+      <text x="700" y="228" class="mono sub">/share/9f2c4b7e…</text>
+      <rect x="700" y="240" width="390" height="6" rx="3" class="sub" opacity="0.45" />
+      <rect x="700" y="254" width="330" height="6" rx="3" class="sub" opacity="0.45" />
+    </g>
+    <g>
+      <rect x="700" y="286" width="206" height="8" rx="4" fill="#0c66e4" opacity="0.85" />
+      <text x="700" y="316" class="mono sub">/share/1a7d02f5…</text>
+      <rect x="700" y="328" width="366" height="6" rx="3" class="sub" opacity="0.45" />
+      <rect x="700" y="342" width="288" height="6" rx="3" class="sub" opacity="0.45" />
+    </g>
+    <g>
+      <rect x="700" y="374" width="228" height="8" rx="4" fill="#0c66e4" opacity="0.85" />
+      <rect x="700" y="396" width="352" height="6" rx="3" class="sub" opacity="0.45" />
+    </g>
+  </g>
+</svg>

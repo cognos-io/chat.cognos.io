@@ -3537,5 +3537,197 @@
         "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
+  },
+  "blog": {
+    "meta": {
+      "breadcrumb": "Trilho de navegação",
+      "home": "Blog",
+      "pagerLabel": "Navegação entre artigos",
+      "newer": "Mais recente",
+      "older": "Mais antigo"
+    },
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Notas sobre IA privada",
+      "lead": "Artigos curtos sobre privacidade, segurança e a forma como construímos o Cognos - para quem preferia não se tornar um resultado de pesquisa.",
+      "metaTitle": "Blog - Cognos",
+      "metaDescription": "Artigos curtos sobre privacidade, segurança e a forma como construímos o Cognos, a aplicação de conversa com IA que não guarda nenhuma cópia legível das tuas conversas.",
+      "feedTitle": "Blog do Cognos",
+      "readMore": "Ler o artigo"
+    },
+    "tags": {
+      "privacy": "Privacidade",
+      "industry": "Setor"
+    },
+    "authors": {
+      "ewan": {
+        "role": "Fundador, Cognos"
+      }
+    },
+    "cta": {
+      "title": "Conversas que não conseguimos ler",
+      "body": "O Cognos cifra as tuas conversas antes de chegarem até nós, por isso não guardamos nenhuma cópia que possamos ler. Nada para indexar, nada que possa vazar, nada para entregar.",
+      "action": "Experimentar o Cognos"
+    },
+    "posts": {
+      "shared-ai-chats-are-public-web-pages": {
+        "title": "A tua conversa de IA partilhada é uma página web pública",
+        "metaTitle": "A tua conversa de IA partilhada é uma página web pública - Blog do Cognos",
+        "metaDescription": "Centenas de conversas do Claude apareceram nos resultados do Google. O mecanismo é banal - o que revela sobre onde vive o teu histórico não é.",
+        "lead": "Centenas de conversas do Claude apareceram esta semana nos resultados do Google: registos clínicos, currículos, chaves de API a funcionar. O mecanismo por trás é banal. O interessante é o que revela sobre onde vive realmente o teu histórico de conversas.",
+        "time": "5 min de leitura",
+        "heroAlt": "Uma conversa partilhada aberta num navegador, com o texto perfeitamente legível, a ser arrastada por um motor de busca para uma lista de resultados.",
+        "sections": [
+          {
+            "heading": "O que aconteceu",
+            "blocks": [
+              {
+                "p": "No fim de semana de 25 e 26 de julho de 2026, quem pesquisou <code>site:claude.ai/share</code> no Google encontrou página após página de conversas de outras pessoas com o Claude. A 404 Media noticiou primeiro; a <a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch</a>, a <a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune</a> e a <a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism</a> seguiram-se em menos de um dia."
+              },
+              {
+                "p": "As conversas não tinham nada de exótico. Entre elas: dados de ensaios clínicos e registos clínicos, nomes e números de telefone de crianças, documentos internos de empresas, currículos, código-fonte e chaves de API a funcionar."
+              },
+              {
+                "p": "A posição da Anthropic é que uma conversa partilhada é pública por definição. «Quando alguém partilha uma conversa, está a tornar esse conteúdo publicamente acessível», afirmou a empresa, «e, como qualquer outro conteúdo público da web, pode ser arquivado por serviços de terceiros.» Acrescentou que não fornece aos motores de busca diretórios de conversas nem sitemaps: as páginas apareceram porque os endereços tinham sido publicados noutros locais."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Não é a primeira vez. Conversas partilhadas do ChatGPT foram indexadas da mesma maneira em 2025, e o Google indicou depois ter retirado pouco menos de 600 dos seus resultados. Já começou também a desindexar as páginas do Claude - mas desindexar não é apagar."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Partilhar publica uma página; não envia uma cópia",
+            "blocks": [
+              {
+                "p": "A palavra «partilhar» faz aqui muito trabalho silencioso. Na maioria das aplicações, partilhar envia algo a alguém. Numa aplicação de conversa com IA costuma significar outra coisa: cria um endereço e publica lá a tua conversa, como uma página web comum que qualquer pessoa com o endereço pode ler."
+              },
+              {
+                "p": "A partir desse momento, a conversa comporta-se como qualquer outra página da web. Pode ser reencaminhada, colada num pedido de apoio, enviada para um repositório público, ligada a partir de uma publicação, rastreada, guardada em cache e arquivada. Ninguém tem de adivinhar o endereço: basta encontrá-lo uma vez."
+              },
+              {
+                "p": "Portanto, o rastreador não é o essencial. O essencial é que a página tinha algo legível para servir. Isso só é possível porque o fornecedor guarda uma cópia legível da tua conversa, pronta a mostrar a quem a pedir."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "title": "A versão incómoda",
+                  "body": "Todas as conversas que tens com um assistente de IA de grande utilização já estão guardadas numa forma que o fornecedor consegue ler. Partilhar não cria essa cópia legível: apenas aponta a web aberta para ela."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Onde vive a chave",
+            "blocks": [
+              {
+                "p": "Comecemos por ser claros quanto ao nosso próprio produto. O Cognos também tem endereços de partilha, e um endereço de partilha do Cognos é uma página pública: qualquer pessoa que o tenha pode abri-lo sem iniciar sessão. Não afirmamos que partilhar seja impossível aqui, nem magicamente seguro."
+              },
+              {
+                "p": "O que muda é aquilo de que o endereço é feito. Um endereço de partilha do Cognos tem duas metades, separadas por um <code>#</code>:"
+              },
+              {
+                "ul": [
+                  "<b>Antes do <code>#</code></b> - o endereço em si. É o que os nossos servidores recebem, o que fica nos nossos registos e o que um rastreador ou um arquivo da web anotaria.",
+                  "<b>Depois do <code>#</code></b> - a chave que abre a conversa. Os navegadores nunca colocam esta parte num pedido. Fica no navegador de quem lê, e os nossos servidores nunca a veem."
+                ]
+              },
+              {
+                "gallery": {
+                  "label": "Como uma conversa partilhada fica exposta e o que um endereço de partilha do Cognos transporta",
+                  "images": [
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/01-how-it-happens.svg",
+                      "alt": "Três passos: prime-se Partilhar numa conversa; passa a existir um endereço web público para ela; um motor de busca apresenta esse endereço entre os seus resultados.",
+                      "caption": "Como uma conversa se torna um resultado de pesquisa: partilhar, publicar, indexar."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/02-link-anatomy.svg",
+                      "alt": "Um endereço de partilha dividido no símbolo cardinal. A metade do endereço desce até um servidor e é recebida. A metade da chave é bloqueada antes do servidor e fica no navegador de quem lê, onde a conversa é legível.",
+                      "caption": "O endereço chega aos nossos servidores. A chave, depois do <code>#</code>, nunca - os navegadores não a enviam."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/03-what-a-crawler-gets.svg",
+                      "alt": "Em cima: um rastreador capta apenas o endereço, carrega a página e obtém blocos selados e ilegíveis com um cadeado fechado, por não ter a chave. Em baixo: a partilha é eliminada e o mesmo endereço devolve agora 404.",
+                      "caption": "Um rastreador que encontre o endereço obtém uma página sem nada legível. Termina a partilha e o endereço deixa de existir."
+                    }
+                  ]
+                }
+              },
+              {
+                "p": "Na prática, isto significa que não conseguimos ler uma conversa partilhada, nem mesmo enquanto outra pessoa a está a ler. Um motor de busca que encontre o endereço obtém uma página sem nada legível, porque a metade do endereço que a abre nunca fez parte daquilo que foi rastreado. E porque não guardamos nenhuma cópia legível de nenhuma conversa, partilhada ou não, simplesmente não existe um conjunto de conversas legíveis para indexar, deixar vazar ou entregar."
+              },
+              {
+                "p": "Do mesmo desenho decorrem duas outras diferenças. Uma partilha do Cognos oculta por predefinição os <a href=\"/docs/redaction\">valores sensíveis detetados</a>: nomes, números e chaves ficam atrás de marcadores, a não ser que escolhas deliberadamente incluí-los. E <a href=\"/docs/sharing-conversations\">terminar uma partilha</a> elimina-a por completo: o endereço deixa de existir imediatamente, em vez de ficar à espera de ser desindexado."
+              }
+            ]
+          },
+          {
+            "heading": "O que isto não resolve",
+            "blocks": [
+              {
+                "p": "Um endereço continua a ser um endereço. Se colares um endereço de partilha do Cognos num local público - inteiro, incluindo a parte depois do <code>#</code> -, qualquer pessoa que o siga pode ler essa conversa. A chave nunca viaja num pedido, mas viaja muito bem em texto copiado."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Trata um endereço de partilha como a própria conversa. O que o desenho te dá é que partilhar seja sempre um ato deliberado, sempre reversível, e que nunca aconteça em silêncio a uma conversa que não partilhaste."
+                }
+              },
+              {
+                "p": "Também não desfaz o passado. Depois de uma página ter sido pública, podem já existir cópias em caches de pesquisa e em arquivos de terceiros. Remover o endereço impede a chegada de novos leitores; não recupera as cópias já feitas."
+              }
+            ]
+          },
+          {
+            "heading": "O que fazer agora",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Vê o que já partilhaste",
+                    "body": "No Claude, abre <b>Definições → Privacidade → Conversas partilhadas</b> e revê cada endereço público. Apaga os que não pretendias publicar. Faz o mesmo em qualquer outra ferramenta de IA que utilizes."
+                  },
+                  {
+                    "title": "Procura por ti",
+                    "body": "Experimenta o teu nome, a tua entidade empregadora ou o teu projeto juntamente com um caminho de partilha, em mais do que um motor de busca. O Bing continuava a devolver resultados depois de o Google ter começado a desindexar."
+                  },
+                  {
+                    "title": "Considera definitiva uma partilha antiga",
+                    "body": "Quando o conteúdo for realmente sensível - saúde, assuntos jurídicos, credenciais -, age como se fosse público e substitui tudo o que possa ser substituído. Qualquer chave de API que tenha aparecido numa conversa partilhada deve ser considerada comprometida."
+                  },
+                  {
+                    "title": "Prefere partilhar com os valores ocultos",
+                    "body": "Quando uma ferramenta o permitir, partilha com os valores sensíveis ocultos em vez de incluídos. No Cognos é a opção predefinida."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Nada disto exige mudar de produto. Rever os teus endereços partilhados leva cerca de dois minutos, e vale a pena fazê-lo hoje em todas as ferramentas de IA que utilizes."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Para ler a seguir",
+            "blocks": [
+              {
+                "ul": [
+                  "<a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch - PSA: your Claude shared chats and Artifacts may have ended up on Google</a>",
+                  "<a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune - Users' seemingly private conversations with Claude showed up in Google search results</a>",
+                  "<a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism - A whole bunch of people's Claude chats are publicly accessible online</a>",
+                  "<a href=\"/docs/sharing-conversations\">Documentação do Cognos - Partilhar uma conversa</a>",
+                  "<a href=\"/security\">Cognos - Como protegemos as tuas conversas</a>"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
   }
 }

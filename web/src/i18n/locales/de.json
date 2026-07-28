@@ -3535,5 +3535,197 @@
         "related": ["signing-in", "unlock-and-lock", "your-first-chat"]
       }
     }
+  },
+  "blog": {
+    "meta": {
+      "breadcrumb": "Navigationspfad",
+      "home": "Blog",
+      "pagerLabel": "Beitragsnavigation",
+      "newer": "Neuer",
+      "older": "Älter"
+    },
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Notizen zu privater KI",
+      "lead": "Kurze Beiträge über Privatsphäre, Sicherheit und die Entwicklung von Cognos - für alle, die lieber nicht zum Suchergebnis werden.",
+      "metaTitle": "Blog - Cognos",
+      "metaDescription": "Kurze Beiträge über Privatsphäre, Sicherheit und die Entwicklung von Cognos, der KI-Chat-App, die keine für uns lesbare Kopie deiner Unterhaltungen aufbewahrt.",
+      "feedTitle": "Cognos Blog",
+      "readMore": "Beitrag lesen"
+    },
+    "tags": {
+      "privacy": "Privatsphäre",
+      "industry": "Branche"
+    },
+    "authors": {
+      "ewan": {
+        "role": "Gründer, Cognos"
+      }
+    },
+    "cta": {
+      "title": "Chats, die wir nicht lesen können",
+      "body": "Cognos verschlüsselt deine Unterhaltungen, bevor sie bei uns ankommen - wir bewahren keine Kopie auf, die wir lesen können. Nichts zu indexieren, nichts, was auslaufen kann, nichts zum Herausgeben.",
+      "action": "Cognos ausprobieren"
+    },
+    "posts": {
+      "shared-ai-chats-are-public-web-pages": {
+        "title": "Dein geteilter KI-Chat ist eine öffentliche Webseite",
+        "metaTitle": "Dein geteilter KI-Chat ist eine öffentliche Webseite - Cognos Blog",
+        "metaDescription": "Hunderte Claude-Unterhaltungen tauchten in Google-Ergebnissen auf. Der Mechanismus dahinter ist alltäglich - was er darüber verrät, wo dein Chatverlauf liegt, nicht.",
+        "lead": "Hunderte Claude-Unterhaltungen sind diese Woche in Google-Ergebnissen aufgetaucht: Krankenakten, Lebensläufe, funktionierende API-Schlüssel. Der Mechanismus dahinter ist alltäglich. Interessant ist, was er darüber verrät, wo dein Chatverlauf tatsächlich liegt.",
+        "time": "5 Min. Lesezeit",
+        "heroAlt": "Eine geteilte Unterhaltung im Browser, deren Text gut lesbar ist, wird von einer Suchmaschine in eine Ergebnisliste aufgenommen.",
+        "sections": [
+          {
+            "heading": "Was passiert ist",
+            "blocks": [
+              {
+                "p": "Am Wochenende des 25./26. Juli 2026 fanden Menschen, die bei Google nach <code>site:claude.ai/share</code> suchten, Seite um Seite mit fremden Claude-Unterhaltungen. 404 Media berichtete zuerst darüber; <a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch</a>, <a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune</a> und <a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism</a> folgten innerhalb eines Tages."
+              },
+              {
+                "p": "Die Unterhaltungen waren nichts Exotisches. Darunter: Daten aus klinischen Studien und Krankenakten, Namen und Telefonnummern von Kindern, interne Firmenunterlagen, Lebensläufe, Quellcode und funktionierende API-Schlüssel."
+              },
+              {
+                "p": "Anthropic steht auf dem Standpunkt, dass eine geteilte Unterhaltung per Definition öffentlich ist. «Wenn jemand eine Unterhaltung teilt, macht er diesen Inhalt öffentlich zugänglich», so das Unternehmen, «und wie andere öffentliche Webinhalte kann er von Dritten archiviert werden.» Man übergebe Suchmaschinen weder Chat-Verzeichnisse noch Sitemaps - die Seiten seien aufgetaucht, weil die Links anderswo öffentlich gepostet worden waren."
+              },
+              {
+                "note": {
+                  "variant": "info",
+                  "body": "Das ist nicht neu. Geteilte ChatGPT-Unterhaltungen wurden 2025 auf dieselbe Weise indexiert; Google entfernte später nach eigenen Angaben knapp 600 davon aus den Ergebnissen. Auch die Claude-Seiten werden inzwischen ausgelistet - doch Auslisten ist nicht Löschen."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Teilen veröffentlicht eine Seite - es verschickt keine Kopie",
+            "blocks": [
+              {
+                "p": "Das Wort «teilen» leistet hier viel stille Arbeit. In den meisten Apps schickt Teilen etwas an jemanden. In einer KI-Chat-App bedeutet es meist etwas anderes: Es erzeugt eine URL und veröffentlicht deine Unterhaltung dort - als gewöhnliche Webseite, die jede Person mit der Adresse lesen kann."
+              },
+              {
+                "p": "Von diesem Moment an verhält sich die Unterhaltung wie jede andere Seite im Web. Sie kann weitergeleitet, in ein Support-Ticket kopiert, in ein öffentliches Repository eingecheckt, aus einem Beitrag verlinkt, gecrawlt, zwischengespeichert und archiviert werden. Niemand muss die Adresse erraten - es genügt, ihr einmal zu begegnen."
+              },
+              {
+                "p": "Der Crawler ist also nicht die eigentliche Geschichte. Die Geschichte ist, dass die Seite überhaupt etwas Lesbares ausliefern konnte. Das ist nur möglich, weil der Anbieter eine lesbare Kopie deiner Unterhaltung vorhält, bereit zur Anzeige für jeden, der fragt."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "title": "Die unbequeme Fassung",
+                  "body": "Jede Unterhaltung mit einem verbreiteten KI-Assistenten liegt bereits in einer Form vor, die der Anbieter lesen kann. Teilen erzeugt diese lesbare Kopie nicht - es richtet nur das offene Web darauf aus."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Wo der Schlüssel liegt",
+            "blocks": [
+              {
+                "p": "Zuerst in aller Offenheit zu unserem eigenen Produkt: Auch Cognos hat Freigabelinks, und ein Cognos-Freigabelink ist eine öffentliche Seite. Jede Person mit dem Link kann sie ohne Anmeldung öffnen. Wir behaupten nicht, dass Teilen bei uns unmöglich oder auf magische Weise sicher wäre."
+              },
+              {
+                "p": "Der Unterschied liegt darin, woraus der Link besteht. Ein Cognos-Freigabelink hat zwei Hälften, getrennt durch ein <code>#</code>:"
+              },
+              {
+                "ul": [
+                  "<b>Vor dem <code>#</code></b> - die Adresse. Sie erreicht unsere Server, landet in unseren Logs und wird von einem Crawler oder einem Webarchiv festgehalten.",
+                  "<b>Nach dem <code>#</code></b> - der Schlüssel, der die Unterhaltung aufschliesst. Browser nehmen diesen Teil nie in eine Anfrage auf. Er bleibt im Browser der lesenden Person, und unsere Server sehen ihn nie."
+                ]
+              },
+              {
+                "gallery": {
+                  "label": "Wie eine geteilte Unterhaltung offengelegt wird und was ein Cognos-Freigabelink enthält",
+                  "images": [
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/01-how-it-happens.svg",
+                      "alt": "Drei Schritte: Bei einer Unterhaltung wird auf Teilen gedrückt; dafür existiert nun eine öffentliche Webadresse; eine Suchmaschine führt diese Adresse in ihren Ergebnissen.",
+                      "caption": "Wie eine Unterhaltung zum Suchergebnis wird: teilen, veröffentlichen, indexieren."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/02-link-anatomy.svg",
+                      "alt": "Ein Freigabelink, am Rautezeichen geteilt. Die Adress-Hälfte wandert zum Server und wird empfangen. Die Schlüssel-Hälfte wird vom Server abgeblockt und bleibt stattdessen im Browser der lesenden Person, wo die Unterhaltung lesbar ist.",
+                      "caption": "Die Adresse erreicht unsere Server. Der Schlüssel nach dem <code>#</code> nie - Browser senden ihn nicht mit."
+                    },
+                    {
+                      "src": "/blog-media/shared-ai-chats-are-public-web-pages/03-what-a-crawler-gets.svg",
+                      "alt": "Oben: Ein Crawler erfasst nur die Adresse, ruft die Seite ab und erhält versiegelte, unlesbare Blöcke mit geschlossenem Vorhängeschloss, weil er keinen Schlüssel hat. Unten: Die Freigabe wird gelöscht und dieselbe Adresse liefert nun 404.",
+                      "caption": "Ein Crawler, der die Adresse findet, erhält eine Seite ohne alles Lesbare. Freigabe beenden - und die Adresse löst nicht mehr auf."
+                    }
+                  ]
+                }
+              },
+              {
+                "p": "Praktisch bedeutet das: Wir können eine geteilte Unterhaltung nicht lesen, nicht einmal während jemand anderes sie liest. Eine Suchmaschine, die die Adresse findet, erhält eine Seite ohne alles Lesbare - weil die Hälfte des Links, die sie aufschliesst, nie Teil der gecrawlten Adresse war. Und weil wir von keiner Unterhaltung eine lesbare Kopie vorhalten, geteilt oder nicht, gibt es überhaupt keinen Bestand lesbarer Chats, der indexiert werden, auslaufen oder herausgegeben werden könnte."
+              },
+              {
+                "p": "Zwei weitere Unterschiede folgen aus derselben Bauweise. Eine Cognos-Freigabe verbirgt <a href=\"/docs/redaction\">erkannte sensible Werte</a> standardmässig - Namen, Nummern und Schlüssel bleiben hinter Platzhaltern, sofern du sie nicht bewusst mitgibst. Und <a href=\"/docs/sharing-conversations\">eine Freigabe zu beenden</a> löscht sie vollständig: Die Adresse löst sofort nicht mehr auf, statt darauf zu warten, ausgelistet zu werden."
+              }
+            ]
+          },
+          {
+            "heading": "Was das nicht löst",
+            "blocks": [
+              {
+                "p": "Ein Link bleibt ein Link. Wenn du einen Cognos-Freigabelink irgendwo öffentlich einfügst - vollständig, samt dem Teil nach dem <code>#</code> -, dann kann jede Person, die ihm folgt, diese Unterhaltung lesen. Der Schlüssel reist nie in einer Anfrage mit, in kopiertem Text aber bestens."
+              },
+              {
+                "note": {
+                  "variant": "warning",
+                  "body": "Behandle einen Freigabelink wie die Unterhaltung selbst. Was die Bauweise dir gibt: Teilen ist immer eine bewusste Entscheidung, immer widerrufbar und passiert nie unbemerkt mit einer Unterhaltung, die du nicht geteilt hast."
+                }
+              },
+              {
+                "p": "Auch die Vergangenheit macht das nicht rückgängig. War eine Seite einmal öffentlich, liegen Kopien möglicherweise längst in Such-Caches und Archiven Dritter. Den Link zu entfernen hält neue Leser fern; die bereits gezogenen Kopien holt es nicht zurück."
+              }
+            ]
+          },
+          {
+            "heading": "Was jetzt zu tun ist",
+            "blocks": [
+              {
+                "steps": [
+                  {
+                    "title": "Prüfe, was du schon geteilt hast",
+                    "body": "Öffne in Claude <b>Einstellungen → Datenschutz → Geteilte Chats</b> und sieh jeden öffentlichen Link durch. Lösche, was du nicht veröffentlichen wolltest. Mach dasselbe in jedem anderen KI-Werkzeug, das du nutzt."
+                  },
+                  {
+                    "title": "Suche nach dir selbst",
+                    "body": "Probiere deinen Namen, Arbeitgeber oder Projektnamen zusammen mit einem Freigabepfad in mehr als einer Suchmaschine. Bing lieferte noch Ergebnisse, nachdem Google mit dem Auslisten begonnen hatte."
+                  },
+                  {
+                    "title": "Betrachte eine frühere Freigabe als endgültig",
+                    "body": "Wo der Inhalt wirklich sensibel ist - Gesundheit, Recht, Zugangsdaten -, handle so, als wäre er öffentlich, und wechsle alles, was gewechselt werden kann. Jeder API-Schlüssel, der in einem geteilten Chat aufgetaucht ist, gilt als kompromittiert."
+                  },
+                  {
+                    "title": "Teile bevorzugt mit verborgenen Werten",
+                    "body": "Wo ein Werkzeug es anbietet, teile mit verborgenen statt mitgegebenen sensiblen Werten. In Cognos ist das die Voreinstellung."
+                  }
+                ]
+              },
+              {
+                "note": {
+                  "variant": "tip",
+                  "body": "Nichts davon verlangt einen Produktwechsel. Deine geteilten Links durchzusehen dauert etwa zwei Minuten - und lohnt sich heute in jedem KI-Werkzeug, das du nutzt."
+                }
+              }
+            ]
+          },
+          {
+            "heading": "Weiterlesen",
+            "blocks": [
+              {
+                "ul": [
+                  "<a href=\"https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/\">TechCrunch - PSA: your Claude shared chats and Artifacts may have ended up on Google</a>",
+                  "<a href=\"https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/\">Fortune - Users' seemingly private conversations with Claude showed up in Google search results</a>",
+                  "<a href=\"https://futurism.com/artificial-intelligence/claude-chats-publicly-accessible\">Futurism - A whole bunch of people's Claude chats are publicly accessible online</a>",
+                  "<a href=\"/docs/sharing-conversations\">Cognos-Dokumentation - Eine Unterhaltung teilen</a>",
+                  "<a href=\"/security\">Cognos - Wie wir deine Unterhaltungen schützen</a>"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
   }
 }
