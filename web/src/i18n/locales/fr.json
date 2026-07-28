@@ -342,7 +342,115 @@
       "title": "Politique de remboursement",
       "lead": "Résiliez à tout moment. Demandez un remboursement dans les 14 jours suivant un paiement et nous vous remboursons intégralement.",
       "effectiveLabel": "En vigueur depuis",
-      "effectiveDate": "28 juillet 2026"
+      "effectiveDate": "28 juillet 2026",
+      "facts": [
+        {
+          "label": "Fournisseur",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Délai de remboursement",
+          "value": "14 jours"
+        },
+        {
+          "label": "Contact",
+          "value": "support@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos est une application de chat IA chiffrée fournie par <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Suisse."
+        },
+        {
+          "p": "Notre processus de commande est géré par notre revendeur en ligne Paddle.com. Paddle.com est le Merchant of Record pour toutes nos commandes, et les remboursements sont versés via Paddle sur votre moyen de paiement d'origine. Cette politique suit la <a href=\"https://www.paddle.com/legal/refund-policy\">politique de remboursement de Paddle</a>."
+        },
+        {
+          "p": "Cette politique explique comment résilier et comment demander un remboursement. Si quelque chose n'est pas clair, écrivez à <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "En bref",
+          "blocks": [
+            {
+              "ul": [
+                "Vous pouvez résilier vous-même n'importe quelle formule, à tout moment, dans l'application. Votre formule reste active jusqu'à la fin de la période déjà payée.",
+                "Demandez un remboursement dans les 14 jours suivant un paiement et nous vous remboursons intégralement ce paiement.",
+                "Vous n'avez pas besoin de donner de raison, et rien à justifier.",
+                "Les remboursements sont versés via Paddle sur le moyen de paiement que vous avez utilisé.",
+                "Vos droits statutaires de consommateur s'appliquent toujours en plus de cette politique."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Résilier votre formule",
+          "blocks": [
+            {
+              "p": "La résiliation se fait en autonomie : ouvrez vos paramètres de facturation dans l'application et résiliez-y. Pas d'e-mail, pas d'appel, pas de manœuvres de rétention."
+            },
+            {
+              "p": "La résiliation arrête le prochain renouvellement. Vous conservez un accès complet jusqu'à la fin de la période payée, et rien ne se renouvelle ensuite."
+            }
+          ]
+        },
+        {
+          "heading": "Demander un remboursement",
+          "blocks": [
+            {
+              "p": "Demandez dans les <b>14 jours</b> suivant le paiement que vous souhaitez rembourser, et nous vous le remboursons intégralement."
+            },
+            {
+              "p": "Utilisez l'option « Demander un remboursement » dans l'application, ou écrivez à <a href=\"mailto:support@cognos.io\">support@cognos.io</a> depuis l'adresse e-mail de votre compte. Vous pouvez aussi demander un remboursement directement depuis le reçu que Paddle vous a envoyé par e-mail."
+            },
+            {
+              "p": "Nous répondons sous quelques jours ouvrables. Paddle verse ensuite le remboursement sur votre moyen de paiement d'origine, dans les 14 jours suivant l'approbation de la demande ; le délai d'apparition sur votre compte dépend de votre banque ou de votre émetteur de carte."
+            },
+            {
+              "p": "Nous ne lisons jamais vos conversations pour traiter un remboursement. Nous examinons uniquement le paiement lui-même ; vos conversations restent verrouillées."
+            }
+          ]
+        },
+        {
+          "heading": "Ce qu'un remboursement change",
+          "blocks": [
+            {
+              "p": "Un paiement remboursé met fin à l'accès qu'il a payé : la formule est résiliée et les fonctionnalités payantes s'arrêtent. Vous pouvez vous réabonner quand vous le souhaitez."
+            },
+            {
+              "p": "Chaque paiement ne peut être remboursé qu'une seule fois."
+            },
+            {
+              "p": "Paddle n'effectue pas de remboursements en cas de fraude, d'abus de remboursement ou d'autre comportement manipulateur - voir la <a href=\"https://www.paddle.com/legal/refund-policy\">politique de remboursement de Paddle</a>."
+            },
+            {
+              "p": "Indépendamment des remboursements, nos <a href=\"/fr/terms\">Conditions</a> nous permettent de suspendre ou de fermer les comptes utilisés pour la fraude, l'abus automatisé, le partage d'identifiants ou la revente de Cognos. Il s'agit de la façon dont un compte peut être utilisé, pas de savoir si vous pouvez récupérer votre argent."
+            }
+          ]
+        },
+        {
+          "heading": "Vos droits statutaires",
+          "blocks": [
+            {
+              "p": "Les consommateurs en Suisse, dans l'UE, l'EEE et au Royaume-Uni disposent également d'un droit de rétractation de 14 jours pour un achat, conformément à la <a href=\"https://www.paddle.com/legal/refund-policy\">politique de remboursement de Paddle</a> et, le cas échéant, au droit local."
+            },
+            {
+              "p": "Rien dans cette politique ne limite les droits obligatoires de remboursement, de rétractation, de résiliation ou autres droits des consommateurs applicables selon la loi du pays où vous vivez. Lorsque ces droits vont au-delà de cette politique, ils priment."
+            },
+            {
+              "p": "Paddle étant le Merchant of Record, vous pouvez aussi adresser vos questions de paiement directement à Paddle via le reçu qu'ils vous ont envoyé par e-mail."
+            }
+          ]
+        },
+        {
+          "heading": "Modifications de cette politique",
+          "blocks": [
+            {
+              "p": "Nous pouvons mettre à jour cette politique de temps à autre. La version en vigueur se trouve toujours à cette adresse, et nous annoncerons les changements importants dans l'application ou par e-mail."
+            }
+          ]
+        }
+      ]
     },
     "subprocessors": {
       "metaTitle": "Sous-traitants - Cognos",

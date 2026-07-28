@@ -342,7 +342,115 @@
       "title": "Política de reembolso",
       "lead": "Cancela quando quiseres. Pede um reembolso no prazo de 14 dias após um pagamento e devolvemos o valor por inteiro.",
       "effectiveLabel": "Em vigor desde",
-      "effectiveDate": "28 de julho de 2026"
+      "effectiveDate": "28 de julho de 2026",
+      "facts": [
+        {
+          "label": "Fornecedor",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Prazo de reembolso",
+          "value": "14 dias"
+        },
+        {
+          "label": "Contacto",
+          "value": "support@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "O Cognos é uma aplicação de chat com IA encriptada fornecida pela <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Suíça."
+        },
+        {
+          "p": "O nosso processo de encomenda é gerido pelo nosso revendedor online Paddle.com. A Paddle.com é o Merchant of Record de todas as nossas encomendas, e os reembolsos são devolvidos através da Paddle para o teu método de pagamento original. Esta política segue a <a href=\"https://www.paddle.com/legal/refund-policy\">política de reembolso da Paddle</a>."
+        },
+        {
+          "p": "Esta política explica como cancelar e como pedir um reembolso. Se algo não estiver claro, escreve para <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Em resumo",
+          "blocks": [
+            {
+              "ul": [
+                "Podes cancelar qualquer plano por ti, a qualquer momento, na app. O teu plano mantém-se ativo até ao fim do período que já pagaste.",
+                "Pede um reembolso no prazo de 14 dias após um pagamento e devolvemos esse pagamento na íntegra.",
+                "Não precisas de dar uma razão, nem há nada a justificar.",
+                "Os reembolsos são pagos através da Paddle para o método de pagamento que utilizaste.",
+                "Os teus direitos legais de consumidor aplicam-se sempre para além desta política."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Cancelar o teu plano",
+          "blocks": [
+            {
+              "p": "O cancelamento é autosserviço: abre as definições de faturação na app e cancela aí. Sem e-mail, sem telefonema, sem truques de retenção."
+            },
+            {
+              "p": "O cancelamento impede a próxima renovação. Manténs acesso total até ao fim do período que pagaste, e nada renova depois disso."
+            }
+          ]
+        },
+        {
+          "heading": "Pedir um reembolso",
+          "blocks": [
+            {
+              "p": "Pede no prazo de <b>14 dias</b> após o pagamento que queres reembolsar, e devolvemo-lo na íntegra."
+            },
+            {
+              "p": "Usa a opção «Pedir um reembolso» na app, ou envia e-mail para <a href=\"mailto:support@cognos.io\">support@cognos.io</a> a partir do endereço de e-mail da tua conta. Também podes pedir um reembolso diretamente a partir do recibo que a Paddle te enviou por e-mail."
+            },
+            {
+              "p": "Respondemos em poucos dias úteis. A Paddle paga o reembolso de volta para o teu método de pagamento original, no prazo de 14 dias após aprovação do pedido; o tempo que demora a aparecer depende do teu banco ou fornecedor do cartão."
+            },
+            {
+              "p": "Nunca lemos as tuas conversas para tratar de um reembolso. Só analisamos o pagamento em si; as tuas conversas permanecem bloqueadas."
+            }
+          ]
+        },
+        {
+          "heading": "O que muda um reembolso",
+          "blocks": [
+            {
+              "p": "Um pagamento reembolsado termina o acesso que pagou: o plano é cancelado e as funcionalidades pagas deixam de estar disponíveis. Podes subscrever novamente quando quiseres."
+            },
+            {
+              "p": "Cada pagamento só pode ser reembolsado uma vez."
+            },
+            {
+              "p": "A Paddle não emite reembolsos quando há indícios de fraude, abuso de reembolsos ou outro comportamento manipulador - consulta a <a href=\"https://www.paddle.com/legal/refund-policy\">política de reembolso da Paddle</a>."
+            },
+            {
+              "p": "Para além dos reembolsos, os nossos <a href=\"/pt/terms\">Termos</a> permitem-nos suspender ou encerrar contas usadas para fraude, abuso automatizado, credenciais partilhadas ou revenda do Cognos. Isso diz respeito a como uma conta pode ser usada, não a se podes recuperar o teu dinheiro."
+            }
+          ]
+        },
+        {
+          "heading": "Os teus direitos legais",
+          "blocks": [
+            {
+              "p": "Os consumidores na Suíça, na UE, no EEE e no Reino Unido também têm um direito de 14 dias de desistência de uma compra ao abrigo da <a href=\"https://www.paddle.com/legal/refund-policy\">política de reembolso da Paddle</a> e, quando aplicável, ao abrigo da lei local."
+            },
+            {
+              "p": "Nada nesta política limita reembolsos obrigatórios, desistência, cancelamento ou outros direitos de consumidor que se apliquem ao abrigo da lei do país onde vives. Quando esses direitos forem mais amplos do que esta política, prevalecem."
+            },
+            {
+              "p": "Como a Paddle é o Merchant of Record, também podes colocar questões de pagamento diretamente à Paddle através do recibo que te enviaram por e-mail."
+            }
+          ]
+        },
+        {
+          "heading": "Alterações a esta política",
+          "blocks": [
+            {
+              "p": "Podemos atualizar esta política de tempos a tempos. A versão atual está sempre neste endereço, e anunciaremos alterações importantes na app ou por e-mail."
+            }
+          ]
+        }
+      ]
     },
     "subprocessors": {
       "metaTitle": "Subcontratantes - Cognos",

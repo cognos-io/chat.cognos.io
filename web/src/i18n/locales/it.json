@@ -342,7 +342,115 @@
       "title": "Politica di rimborso",
       "lead": "Disdici quando vuoi. Chiedi un rimborso entro 14 giorni da un pagamento e te lo rimborsiamo per intero.",
       "effectiveLabel": "In vigore dal",
-      "effectiveDate": "28 luglio 2026"
+      "effectiveDate": "28 luglio 2026",
+      "facts": [
+        {
+          "label": "Fornitore",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Termine di rimborso",
+          "value": "14 giorni"
+        },
+        {
+          "label": "Contatto",
+          "value": "support@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos è un'applicazione di chat con IA crittografata fornita da <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Svizzera."
+        },
+        {
+          "p": "Il nostro processo d'ordine è gestito dal nostro rivenditore online Paddle.com. Paddle.com è il Merchant of Record per tutti i nostri ordini, e i rimborsi vengono restituiti tramite Paddle al tuo metodo di pagamento originale. Questa politica segue la <a href=\"https://www.paddle.com/legal/refund-policy\">politica di rimborso di Paddle</a>."
+        },
+        {
+          "p": "Questa politica spiega come disdire e come chiedere un rimborso. Se qualcosa non è chiaro, scrivi a <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "In breve",
+          "blocks": [
+            {
+              "ul": [
+                "Puoi disdire qualsiasi piano in autonomia, in qualsiasi momento, nell'app. Il tuo piano resta attivo fino alla fine del periodo che hai già pagato.",
+                "Chiedi un rimborso entro 14 giorni da un pagamento e te lo rimborsiamo per intero.",
+                "Non devi dare alcuna motivazione, e non c'è nulla da giustificare.",
+                "I rimborsi vengono pagati tramite Paddle sul metodo di pagamento che hai usato.",
+                "I tuoi diritti legali di consumatore si applicano sempre oltre a questa politica."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Disdire il tuo piano",
+          "blocks": [
+            {
+              "p": "La disdetta è in autonomia: apri le impostazioni di fatturazione nell'app e disdici lì. Niente e-mail, niente telefonate, niente trucchi per trattenerti."
+            },
+            {
+              "p": "La disdetta blocca il rinnovo successivo. Mantieni l'accesso completo fino alla fine del periodo che hai pagato, e nulla si rinnova dopo."
+            }
+          ]
+        },
+        {
+          "heading": "Richiedere un rimborso",
+          "blocks": [
+            {
+              "p": "Chiedi entro <b>14 giorni</b> dal pagamento che vuoi rimborsare, e te lo rimborsiamo per intero."
+            },
+            {
+              "p": "Usa l'opzione «Richiedi un rimborso» nell'app, o scrivi a <a href=\"mailto:support@cognos.io\">support@cognos.io</a> dall'indirizzo e-mail del tuo account. Puoi anche richiedere un rimborso direttamente dalla ricevuta che Paddle ti ha inviato per e-mail."
+            },
+            {
+              "p": "Rispondiamo entro pochi giorni lavorativi. Paddle restituisce il rimborso al tuo metodo di pagamento originale, entro 14 giorni dall'approvazione della richiesta; quanto tempo ci mette a comparire dipende dalla tua banca o dal fornitore della carta."
+            },
+            {
+              "p": "Non leggiamo mai le tue chat per gestire un rimborso. Guardiamo solo il pagamento in sé; le tue conversazioni restano bloccate."
+            }
+          ]
+        },
+        {
+          "heading": "Cosa cambia un rimborso",
+          "blocks": [
+            {
+              "p": "Un pagamento rimborsato termina l'accesso che ha pagato: il piano viene disdetto e le funzionalità a pagamento cessano. Puoi abbonarti di nuovo quando vuoi."
+            },
+            {
+              "p": "Ogni pagamento può essere rimborsato una sola volta."
+            },
+            {
+              "p": "Paddle non emette rimborsi in presenza di indizi di frode, abuso dei rimborsi o altro comportamento manipolatorio - vedi la <a href=\"https://www.paddle.com/legal/refund-policy\">politica di rimborso di Paddle</a>."
+            },
+            {
+              "p": "Separatamente dai rimborsi, i nostri <a href=\"/it/terms\">Termini</a> ci permettono di sospendere o chiudere account usati per frode, abuso automatizzato, credenziali condivise o rivendita di Cognos. Riguarda come un account può essere usato, non se puoi riavere i tuoi soldi."
+            }
+          ]
+        },
+        {
+          "heading": "I tuoi diritti legali",
+          "blocks": [
+            {
+              "p": "I consumatori in Svizzera, nell'UE, nello SEE e nel Regno Unito hanno anche un diritto di recesso di 14 giorni da un acquisto ai sensi della <a href=\"https://www.paddle.com/legal/refund-policy\">politica di rimborso di Paddle</a> e, ove applicabile, della legge locale."
+            },
+            {
+              "p": "Nulla in questa politica limita rimborsi obbligatori, recesso, cancellazione o altri diritti del consumatore previsti dalla legge del paese in cui vivi. Quando tali diritti vanno oltre questa politica, hanno la precedenza."
+            },
+            {
+              "p": "Poiché Paddle è il Merchant of Record, puoi anche sollevare questioni sui pagamenti direttamente con Paddle tramite la ricevuta che ti hanno inviato per e-mail."
+            }
+          ]
+        },
+        {
+          "heading": "Modifiche a questa politica",
+          "blocks": [
+            {
+              "p": "Possiamo aggiornare questa politica di tanto in tanto. La versione attuale resta sempre a questo indirizzo, e annunceremo le modifiche importanti nell'app o per e-mail."
+            }
+          ]
+        }
+      ]
     },
     "subprocessors": {
       "metaTitle": "Subincaricati - Cognos",

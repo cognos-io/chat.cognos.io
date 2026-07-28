@@ -342,7 +342,115 @@
       "title": "Rückerstattungsrichtlinie",
       "lead": "Kündige jederzeit. Beantrage innerhalb von 14 Tagen nach einer Zahlung eine Rückerstattung - wir erstatten sie vollständig.",
       "effectiveLabel": "Gültig ab",
-      "effectiveDate": "28. Juli 2026"
+      "effectiveDate": "28. Juli 2026",
+      "facts": [
+        {
+          "label": "Anbieter",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Rückerstattungsfrist",
+          "value": "14 Tage"
+        },
+        {
+          "label": "Kontakt",
+          "value": "support@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos ist eine verschlüsselte KI-Chat-App von <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Schweiz."
+        },
+        {
+          "p": "Unser Bestellprozess läuft über unseren Online-Wiederverkäufer Paddle.com. Paddle.com ist der Merchant of Record für alle unsere Bestellungen, und Rückerstattungen werden über Paddle an deine ursprüngliche Zahlungsmethode zurückgezahlt. Diese Richtlinie folgt der <a href=\"https://www.paddle.com/legal/refund-policy\">Rückerstattungsrichtlinie von Paddle</a>."
+        },
+        {
+          "p": "Diese Richtlinie erklärt, wie du kündigst und wie du eine Rückerstattung beantragst. Wenn etwas unklar ist, schreib an <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Kurzfassung",
+          "blocks": [
+            {
+              "ul": [
+                "Du kannst jeden Tarif jederzeit selbst in der App kündigen. Dein Tarif läuft dann bis zum Ende der Periode, die du bereits bezahlt hast.",
+                "Beantrage innerhalb von 14 Tagen nach einer Zahlung eine Rückerstattung - wir erstatten diese Zahlung vollständig.",
+                "Du musst keinen Grund angeben, und es gibt nichts zu rechtfertigen.",
+                "Rückerstattungen werden über Paddle an die von dir verwendete Zahlungsmethode ausgezahlt.",
+                "Deine gesetzlichen Verbraucherrechte gelten immer zusätzlich zu dieser Richtlinie."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Deinen Tarif kündigen",
+          "blocks": [
+            {
+              "p": "Kündigen ist Self-Service: Öffne deine Abrechnungseinstellungen in der App und kündige dort. Keine E-Mail, kein Anruf, keine Tricks, um dich zu halten."
+            },
+            {
+              "p": "Die Kündigung stoppt die nächste Verlängerung. Du behältst vollen Zugang bis zum Ende der bezahlten Periode, und danach verlängert sich nichts mehr."
+            }
+          ]
+        },
+        {
+          "heading": "Rückerstattung beantragen",
+          "blocks": [
+            {
+              "p": "Beantrage innerhalb von <b>14 Tagen</b> nach der Zahlung, die du zurückerstattet haben möchtest - wir erstatten sie vollständig."
+            },
+            {
+              "p": "Nutze die Option «Rückerstattung beantragen» in der App oder schreib von deiner Konto-E-Mail-Adresse an <a href=\"mailto:support@cognos.io\">support@cognos.io</a>. Du kannst auch direkt über die Quittung eine Rückerstattung beantragen, die Paddle dir per E-Mail geschickt hat."
+            },
+            {
+              "p": "Wir antworten innerhalb weniger Werktage. Paddle zahlt die Rückerstattung dann an deine ursprüngliche Zahlungsmethode zurück, innerhalb von 14 Tagen nach Genehmigung des Antrags; wie lange es dauert, bis sie sichtbar ist, hängt von deiner Bank oder deinem Kartenanbieter ab."
+            },
+            {
+              "p": "Wir lesen deine Chats nie, um eine Rückerstattung zu bearbeiten. Wir schauen nur die Zahlung selbst an; deine Gespräche bleiben gesperrt."
+            }
+          ]
+        },
+        {
+          "heading": "Was sich durch eine Rückerstattung ändert",
+          "blocks": [
+            {
+              "p": "Eine zurückerstattete Zahlung beendet den Zugang, den sie bezahlt hat: Der Tarif wird gekündigt und kostenpflichtige Funktionen enden. Du kannst jederzeit wieder abonnieren."
+            },
+            {
+              "p": "Jede Zahlung kann einmal zurückerstattet werden."
+            },
+            {
+              "p": "Paddle erstattet nicht, wenn Anzeichen für Betrug, Rückerstattungsmissbrauch oder anderes manipulatives Verhalten vorliegen - siehe die <a href=\"https://www.paddle.com/legal/refund-policy\">Rückerstattungsrichtlinie von Paddle</a>."
+            },
+            {
+              "p": "Unabhängig von Rückerstattungen erlauben unsere <a href=\"/de/terms\">Nutzungsbedingungen</a>, Konten zu sperren oder zu schliessen, die für Betrug, automatisierten Missbrauch, geteilte Zugangsdaten oder Weiterverkauf von Cognos genutzt werden. Das betrifft, wie ein Konto genutzt werden darf - nicht, ob du dein Geld zurückbekommen kannst."
+            }
+          ]
+        },
+        {
+          "heading": "Deine gesetzlichen Rechte",
+          "blocks": [
+            {
+              "p": "Verbraucher in der Schweiz, der EU, dem EWR und im Vereinigten Königreich haben ausserdem ein 14-tägiges Widerrufsrecht beim Kauf gemäss der <a href=\"https://www.paddle.com/legal/refund-policy\">Rückerstattungsrichtlinie von Paddle</a> und, wo anwendbar, nach lokalem Recht."
+            },
+            {
+              "p": "Nichts in dieser Richtlinie schränkt zwingende Rechte auf Rückerstattung, Widerruf, Kündigung oder andere Verbraucherrechte ein, die nach dem Recht gelten, wo du wohnst. Wo diese Rechte über diese Richtlinie hinausgehen, haben sie Vorrang."
+            },
+            {
+              "p": "Da Paddle der Merchant of Record ist, kannst du Zahlungsfragen auch direkt bei Paddle über die Quittung klären, die sie dir per E-Mail geschickt haben."
+            }
+          ]
+        },
+        {
+          "heading": "Änderungen an dieser Richtlinie",
+          "blocks": [
+            {
+              "p": "Wir können diese Richtlinie von Zeit zu Zeit aktualisieren. Die aktuelle Version ist immer unter dieser Adresse verfügbar, und wir kündigen wesentliche Änderungen in der App oder per E-Mail an."
+            }
+          ]
+        }
+      ]
     },
     "subprocessors": {
       "metaTitle": "Unterauftragsverarbeiter - Cognos",
