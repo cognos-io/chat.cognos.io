@@ -213,9 +213,12 @@ const legalBodyFields = ['facts', 'intro', 'sections'];
  * Privacy and Terms are drafted with counsel. A mistranslated warranty
  * disclaimer or data-processing claim is legal exposure, not a UX papercut, so
  * these are not translated speculatively; they wait for counsel-reviewed copy in
- * each language (OP-015 in docs/open-points.md). `useTranslations().raw` falls
- * back to English for a missing key, so a French reader gets the English body
- * rather than a blank page.
+ * each language. `useTranslations().raw` falls back to English for a missing key,
+ * so a French reader gets the English body rather than a blank page.
+ *
+ * Shipping English here is a decision, not a backlog item: the open point that
+ * tracked it was closed on that basis (see the note under "Blocked external /
+ * manual" in docs/open-points.md, and docs/i18n.md).
  *
  * PIN: asserted in both directions below - present in `en`, absent everywhere
  * else. Absent rather than merely optional, because an empty `[]` stub is truthy
