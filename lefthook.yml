@@ -1,11 +1,30 @@
 pre-commit:
   jobs:
-    # Runs first and alone: it rewrites characters, which changes line lengths,
-    # so the formatters below must get the last word on wrapping.
-    - name: remove-ai-slop
+    # These two run first and alone: they rewrite characters, which changes line
+    # lengths, so the formatters below must get the last word on wrapping.
+    #
+    # Invisible characters are stripped from every file. They are not a style
+    # problem: they survive code review because nobody can see them, and they are
+    # a text-watermarking vector.
+    - name: strip-invisible-characters
       glob: "*"
       exclude:
         - "pnpm-lock.yaml"
+      run: node scripts/remove-ai-slop.mjs --invisible-only {staged_files}
+      stage_fixed: true
+
+    # The prose rules (em dash, phrasing) are scoped to English prose. A hyphen
+    # is no improvement on an em dash inside a Go comment, and rewriting one
+    # drags churn into whatever commit happens to touch the file. The script
+    # re-checks scope per file, so the glob is a speed filter, not the rule.
+    - name: remove-ai-slop
+      glob:
+        - "*.md"
+        # Both shapes we ship: frontend/src/assets/i18n/en.json sits directly in
+        # the i18n dir, web/src/i18n/locales/en.json a level below it. `**/`
+        # does not match an empty segment, so one pattern cannot cover both.
+        - "**/i18n/en.json"
+        - "**/i18n/**/en.json"
       run: node scripts/remove-ai-slop.mjs {staged_files}
       stage_fixed: true
 

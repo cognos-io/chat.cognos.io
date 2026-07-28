@@ -54,11 +54,14 @@ knowledge because that is how you can make the best decisions.
 - ask clarifying questions. minimise assumptions. use the decision maker skill for fast decisions
   but ask if that also is unsure.
 - Write and maintain documentation for humans with poor attention spans.
-- **Write plainly: no em dashes, no AI-slop phrasing.** Pre-commit rewrites em dashes and
-  zero-width characters, then fails the commit on filler openers, hedging stacks,
-  not-just-X-but-Y reveals, three-adjective triads and a short banned-word list. Checks cover
-  English prose only (`*.md` and `en.json`); the rules live in `scripts/remove-ai-slop.mjs`. Run
-  `node scripts/remove-ai-slop.mjs $(git ls-files)` to check everything, and reserve `--no-verify`
+- **Write plainly: no em dashes, no AI-slop phrasing.** Pre-commit rewrites em dashes, then fails
+  the commit on filler openers, hedging stacks, not-just-X-but-Y reveals, three-adjective triads
+  and a short banned-word list. Both apply to English prose only (`*.md` and `i18n/en.json`), so
+  code comments and translated catalogues are never restyled. Zero-width characters are stripped
+  from **every** file, being invisible to review and a watermarking vector. The rules live in
+  `scripts/remove-ai-slop.mjs` (tests: `node --test scripts/*.test.mjs`).
+  `node scripts/remove-ai-slop.mjs $(git ls-files)` sweeps the whole repo, but it **rewrites in
+  place** rather than reporting, so run it on a clean tree and read the diff. Reserve `--no-verify`
   for a deliberate exception explained in the commit message.
 - **Accessibility is very important.** Ship accessible UI by default: semantic HTML, correct ARIA
   (labels, live regions, expanded/haspopup, landmarks), keyboard operability and focus management

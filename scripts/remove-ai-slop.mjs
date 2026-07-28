@@ -2,27 +2,37 @@
 //
 // Keep the tells of machine-written prose out of the repository.
 //
-// Two kinds of rule, deliberately treated differently:
+// Three kinds of rule, each with its own scope:
 //
-//   FIXES are characters with exactly one right answer, so they are rewritten in
-//   place. An em dash becomes a hyphen; zero-width characters are deleted.
+//   UNIVERSAL_FIXES delete characters no file should contain. Zero-width
+//   characters are invisible, so they survive review, and they are a
+//   text-watermarking vector rather than only a style tell. Every text file.
+//
+//   PROSE_FIXES rewrite characters that are only wrong in prose. An em dash
+//   becomes a hyphen in a document; in a Go comment it is nobody's business, and
+//   rewriting it churns unrelated files into whatever commit touches them.
+//   English prose only.
 //
 //   CHECKS are phrasings. There is no mechanical rewrite for "it's worth noting
 //   that" that leaves a grammatical sentence behind, so these fail the commit
 //   and ask a human to rewrite. A hook that rewrites prose just produces its own
-//   slop.
+//   slop. English prose only.
 //
-// Fixes run over every staged text file. Checks run only over English prose -
-// markdown and `en.json` - because code comments legitimately say things that
-// read as filler in marketing copy, and because several banned English words are
-// ordinary vocabulary in the languages we ship (French "utilise" is just "uses").
+// English prose means markdown and `en.json`: code comments legitimately say
+// things that read as filler in marketing copy, and several banned English words
+// are ordinary vocabulary in the languages we ship (French "utilise" is just
+// "uses").
 //
 // Runs first in pre-commit, before the formatters: changing a three-byte
 // character for a one-byte one changes line lengths, so prettier and rumdl need
 // the last word on wrapping.
 //
-// Lefthook passes the staged file list. Safe to run by hand over everything:
+// Lefthook passes the staged file list, in two jobs: `--invisible-only` over
+// every file, then the full pass over prose. Safe to run by hand over
+// everything, since the scoping is enforced here rather than by the glob:
 //   node scripts/remove-ai-slop.mjs $(git ls-files)
+//
+// Tests: node --test scripts/*.test.mjs
 //
 // To land a deliberate exception, commit with --no-verify and say why in the
 // commit message.
@@ -30,19 +40,7 @@ import { readFileSync, statSync, writeFileSync } from 'node:fs';
 
 // ---------------------------------------------------------------- fixes ------
 
-const FIXES = [
-  {
-    name: 'em dash',
-    // U+2014. Reads as a signature of generated copy, so we write in a register
-    // that does not need it. The en dash (U+2013) is left alone: it is doing
-    // real work in ranges like "1-5 people".
-    //
-    // Written as an escape, never as the literal character: this file is itself
-    // a staged file, so a literal em dash here would be rewritten to a hyphen
-    // and quietly turn the rule into a no-op.
-    find: /\u2014/g,
-    replace: '-',
-  },
+const UNIVERSAL_FIXES = [
   {
     name: 'zero-width character',
     // ZWSP, ZWNJ, ZWJ, word joiner, ZWNBSP/BOM. These are invisible, so they
@@ -54,10 +52,28 @@ const FIXES = [
     // ship code plus six Latin-script European languages and have none of
     // either, so stripping is safe here. Revisit if that ever changes.
     //
-    // Escapes, not literals, for the same self-erasure reason as above - a
-    // literal zero-width character in this class would delete itself.
+    // Escapes, not literals: this file is itself a staged file, so a literal
+    // zero-width character in this class would delete itself.
     find: /[\u200B\u200C\u200D\u2060\uFEFF]/g,
     replace: '',
+  },
+];
+
+const PROSE_FIXES = [
+  {
+    name: 'em dash',
+    // U+2014. Reads as a signature of generated copy, so we write in a register
+    // that does not need it. The en dash (U+2013) is left alone: it is doing
+    // real work in ranges like "1-5 people".
+    //
+    // Prose only. A hyphen is no better than an em dash inside a Go comment or a
+    // German catalogue, and rewriting either drags noise into unrelated diffs.
+    //
+    // Written as an escape, never as the literal character: this file is itself
+    // a staged file, so a literal em dash here would be rewritten to a hyphen
+    // and quietly turn the rule into a no-op.
+    find: /\u2014/g,
+    replace: '-',
   },
 ];
 
@@ -158,16 +174,22 @@ function fencedLines(path, lines) {
 
 // ------------------------------------------------------------------ run ------
 
-const paths = process.argv.slice(2).filter(isText);
+// --invisible-only runs the universal pass and nothing else, so the pre-commit
+// hook can sweep every staged file for invisible characters without applying
+// prose rules to code.
+const args = process.argv.slice(2);
+const invisibleOnly = args.includes('--invisible-only');
+const paths = args.filter((arg) => !arg.startsWith('--')).filter(isText);
 let fixedFiles = 0;
 const violations = [];
 
 for (const path of paths) {
   const original = readFileSync(path, 'utf8');
+  const prose = !invisibleOnly && isEnglishProse(path);
 
   let text = original;
   const applied = [];
-  for (const fix of FIXES) {
+  for (const fix of prose ? [...UNIVERSAL_FIXES, ...PROSE_FIXES] : UNIVERSAL_FIXES) {
     const next = text.replace(fix.find, fix.replace);
     if (next !== text) applied.push(fix.name);
     text = next;
@@ -178,7 +200,7 @@ for (const path of paths) {
     fixedFiles += 1;
   }
 
-  if (!isEnglishProse(path)) continue;
+  if (!prose) continue;
 
   const lines = text.split('\n');
   const fenced = fencedLines(path, lines);
