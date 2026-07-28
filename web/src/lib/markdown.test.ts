@@ -91,17 +91,24 @@ test('blocks: steps become a numbered list', () => {
   );
 });
 
-test('blocks: notes become a labelled blockquote', () => {
+test('blocks: notes become GitHub alerts, keeping their severity', () => {
+  // Alert syntax rather than a prose label: it is a markdown convention, so a
+  // `security` callout keeps its weight in every locale without shipping an
+  // English word our i18n rules would require translating six ways.
   assert.equal(
     blocksToMarkdown([
       { note: { variant: 'security', title: 'Careful', body: 'Keep it.' } },
     ]),
-    '> **Security: Careful**\n>\n> Keep it.',
+    '> [!CAUTION]\n> **Careful**\n>\n> Keep it.',
   );
-  // No title and no variant: still labelled, so the aside reads as an aside.
+  assert.equal(
+    blocksToMarkdown([{ note: { variant: 'warning', body: 'Mind this.' } }]),
+    '> [!WARNING]\n> Mind this.',
+  );
+  // No variant is a tip, matching the renderer's default icon.
   assert.equal(
     blocksToMarkdown([{ note: { body: 'A hint.' } }]),
-    '> **Tip**\n>\n> A hint.',
+    '> [!TIP]\n> A hint.',
   );
 });
 
@@ -138,28 +145,71 @@ test('blocks: cards become a link list with absolute targets', () => {
   );
 });
 
-test('blocks: figures and galleries keep alt text, drop the image', () => {
-  // Screenshots of the app carry no information an LLM can use, and the
-  // resolved paths differ per locale. The alt text is the content.
+test('blocks: figures and galleries become absolute image links', () => {
+  const resolveImage = (src: string) => src;
   assert.equal(
-    blocksToMarkdown([
-      { figure: { src: '/docs-media/x.png', alt: 'The unlock screen' } },
-    ]),
-    '(Screenshot: The unlock screen)',
+    blocksToMarkdown(
+      [{ figure: { src: '/docs-media/x.png', alt: 'The unlock screen' } }],
+      {
+        resolveImage,
+      },
+    ),
+    '![The unlock screen](https://cognos.io/docs-media/x.png)',
   );
   assert.equal(
-    blocksToMarkdown([
-      {
-        gallery: {
-          label: 'Tour',
-          images: [
-            { src: '/a.png', alt: 'First shot' },
-            { src: '/b.png', alt: 'Second shot' },
-          ],
+    blocksToMarkdown(
+      [{ figure: { src: '/a.png', alt: 'A shot', caption: 'What you see.' } }],
+      { resolveImage },
+    ),
+    '![A shot](https://cognos.io/a.png)\n\nWhat you see.',
+  );
+  assert.equal(
+    blocksToMarkdown(
+      [
+        {
+          gallery: {
+            label: 'Tour',
+            images: [
+              { src: '/a.png', alt: 'First shot' },
+              { src: '/b.png', alt: 'Second shot' },
+            ],
+          },
         },
+      ],
+      { resolveImage },
+    ),
+    '![First shot](https://cognos.io/a.png)\n\n![Second shot](https://cognos.io/b.png)',
+  );
+});
+
+test('blocks: an image the resolver cannot find is omitted, as on the page', () => {
+  // Mirrors `DocsBlock.astro`: a figure whose file does not exist under public/
+  // renders nothing, so a page authored ahead of its screenshots stays clean.
+  const missing = () => null;
+  assert.equal(
+    blocksToMarkdown([{ p: 'Before.' }, { figure: { src: '/x.png', alt: 'Gone' } }], {
+      resolveImage: missing,
+    }),
+    'Before.',
+  );
+  // With no resolver at all (unit tests, llms-full.txt) images are dropped too.
+  assert.equal(blocksToMarkdown([{ figure: { src: '/x.png', alt: 'Gone' } }]), '');
+});
+
+test('blocks: a localised capture wins for its locale', () => {
+  // The resolver is the page's own `resolveMedia`, so `/docs-media/de/x.png`
+  // beats the English shot once a translator's capture lands.
+  const resolveImage = (src: string, lang: string) =>
+    lang === 'de' ? src.replace('/docs-media/', '/docs-media/de/') : src;
+  assert.equal(
+    blocksToMarkdown(
+      [{ figure: { src: '/docs-media/x.png', alt: 'Der Bildschirm' } }],
+      {
+        lang: 'de',
+        resolveImage,
       },
-    ]),
-    '(Screenshot: First shot)\n\n(Screenshot: Second shot)',
+    ),
+    '![Der Bildschirm](https://cognos.io/docs-media/de/x.png)',
   );
 });
 
@@ -181,14 +231,27 @@ test('document: front matter, heading and canonical source URL', () => {
     title: 'Terms of Service',
     description: 'The terms you agree to.',
     url: 'https://cognos.io/terms',
+    locale: 'en-GB',
     updated: '2026-07-01',
     body: 'Some body text.',
   });
-  assert.match(out, /^# Terms of Service\n/);
-  assert.match(out, /^> The terms you agree to\.$/m);
-  assert.match(out, /^Source: https:\/\/cognos\.io\/terms$/m);
-  assert.match(out, /^Last updated: 2026-07-01$/m);
-  assert.match(out, /Some body text\.\n$/);
+  assert.equal(
+    out,
+    [
+      '---',
+      'title: "Terms of Service"',
+      'description: "The terms you agree to."',
+      'source: "https://cognos.io/terms"',
+      'locale: "en-GB"',
+      'updated: "2026-07-01"',
+      '---',
+      '',
+      '# Terms of Service',
+      '',
+      'Some body text.',
+      '',
+    ].join('\n'),
+  );
   assert.ok(!out.includes('<'), 'a rendered document contains no HTML');
   assert.ok(out.endsWith('\n'), 'files end with a newline');
 });
@@ -199,5 +262,29 @@ test('document: optional fields are omitted rather than left blank', () => {
     url: 'https://cognos.io/contact',
     body: 'Hi.',
   });
-  assert.equal(out, '# Contact\n\nSource: https://cognos.io/contact\n\nHi.\n');
+  assert.equal(
+    out,
+    '---\ntitle: "Contact"\nsource: "https://cognos.io/contact"\n---\n\n# Contact\n\nHi.\n',
+  );
+});
+
+test('document: extra front matter is appended, empty values dropped', () => {
+  const out = mdDocument({
+    title: 'A post',
+    url: 'https://cognos.io/blog/a-post',
+    extra: { published: '2026-07-28', author: 'Ewan Jones', tags: undefined },
+    body: 'Words.',
+  });
+  assert.match(out, /^published: "2026-07-28"$/m);
+  assert.match(out, /^author: "Ewan Jones"$/m);
+  assert.ok(!out.includes('tags:'), 'an absent value adds no key');
+});
+
+test('document: a quote or colon in the title cannot break the front matter', () => {
+  const out = mdDocument({
+    title: 'Cognos: the "private" AI chat',
+    url: 'https://cognos.io/',
+    body: 'Hi.',
+  });
+  assert.match(out, /^title: "Cognos: the \\"private\\" AI chat"$/m);
 });

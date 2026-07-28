@@ -159,17 +159,46 @@ export function inlineToMarkdown(html: string, lang: Lang = defaultLang): string
 /** Every block shape the two renderers accept. */
 export type AnyBlock = LegalBlock | DocsBlock;
 
-/** Labels for `note` callouts, so an aside still reads as an aside in markdown. */
-const noteLabels: Record<string, string> = {
-  tip: 'Tip',
-  info: 'Note',
-  warning: 'Warning',
-  security: 'Security',
+// Callout variants map onto GitHub's alert syntax. It is a recognised markdown
+// convention rather than prose, so the severity of a `security` note survives
+// into the markdown twin without inventing an English label that our i18n rules
+// would (rightly) require translating into all six locales.
+const noteAlerts: Record<string, string> = {
+  tip: 'TIP',
+  info: 'NOTE',
+  warning: 'WARNING',
+  security: 'CAUTION',
 };
 
+/** How a block renderer turns an image `src` into a URL, or null to omit it. */
+export type ImageResolver = (src: string, lang: Lang) => string | null;
+
+export interface BlockOptions {
+  lang?: Lang;
+  /**
+   * Resolves figure and gallery images the way the page does - localised
+   * capture if one exists, and nothing at all when the file is missing. Without
+   * a resolver, images are omitted entirely.
+   */
+  resolveImage?: ImageResolver;
+}
+
 /** Render one block, or null if the shape is unknown (see the pin test). */
-function blockToMarkdown(block: AnyBlock, lang: Lang): string | null {
+function blockToMarkdown(
+  block: AnyBlock,
+  lang: Lang,
+  resolveImage?: ImageResolver,
+): string | null {
   const inline = (html: string) => inlineToMarkdown(html, lang);
+
+  // Mirrors `DocsBlock.astro`: an image appears only once its file exists, so a
+  // page authored ahead of its screenshots stays clean in markdown too.
+  const image = (src: string, alt: string): string | null => {
+    const resolved = resolveImage?.(src, lang);
+    if (!resolved) return null;
+    const url = resolved.startsWith('/') ? `${siteOrigin}${resolved}` : resolved;
+    return `![${inline(alt)}](${url})`;
+  };
 
   if ('p' in block) return inline(block.p);
   if ('h3' in block) return `### ${inline(block.h3)}`;
@@ -185,18 +214,26 @@ function blockToMarkdown(block: AnyBlock, lang: Lang): string | null {
   }
 
   if ('note' in block) {
-    const label = noteLabels[block.note.variant ?? 'tip'] ?? noteLabels.tip;
-    const heading = block.note.title ? `${label}: ${inline(block.note.title)}` : label;
-    return `> **${heading}**\n>\n> ${inline(block.note.body)}`;
+    const alert = noteAlerts[block.note.variant ?? 'tip'] ?? noteAlerts.tip;
+    const lines = [`> [!${alert}]`];
+    if (block.note.title) lines.push(`> **${inline(block.note.title)}**`, '>');
+    lines.push(`> ${inline(block.note.body)}`);
+    return lines.join('\n');
   }
 
-  // Screenshots carry nothing an LLM can read, and their resolved paths differ
-  // per locale, so the alt text is the content that travels.
-  if ('figure' in block) return `(Screenshot: ${inline(block.figure.alt)})`;
+  if ('figure' in block) {
+    const rendered = image(block.figure.src, block.figure.alt);
+    if (!rendered) return null;
+    return block.figure.caption
+      ? `${rendered}\n\n${inline(block.figure.caption)}`
+      : rendered;
+  }
+
   if ('gallery' in block) {
-    return block.gallery.images
-      .map((image) => `(Screenshot: ${inline(image.alt)})`)
-      .join('\n\n');
+    const rendered = block.gallery.images
+      .map((item) => image(item.src, item.alt))
+      .filter((part): part is string => part !== null);
+    return rendered.length > 0 ? rendered.join('\n\n') : null;
   }
 
   if ('table' in block) {
@@ -220,9 +257,13 @@ function blockToMarkdown(block: AnyBlock, lang: Lang): string | null {
 }
 
 /** Render a list of blocks as markdown paragraphs. */
-export function blocksToMarkdown(blocks: AnyBlock[], lang: Lang = defaultLang): string {
+export function blocksToMarkdown(
+  blocks: AnyBlock[],
+  options: BlockOptions = {},
+): string {
+  const { lang = defaultLang, resolveImage } = options;
   return blocks
-    .map((block) => blockToMarkdown(block, lang))
+    .map((block) => blockToMarkdown(block, lang, resolveImage))
     .filter((part): part is string => part !== null && part !== '')
     .join('\n\n');
 }
@@ -235,31 +276,55 @@ export function mdSection(level: number, heading: string, body: string): string 
 
 export interface MdDocument {
   title: string;
-  /** One-line summary, rendered as the leading blockquote. */
+  /** One-line summary; the page's `metaDescription`. */
   description?: string;
   /** Absolute URL of the human page this file mirrors. */
   url: string;
+  /** Locale of the copy, as a BCP 47 tag. */
+  locale?: string;
   /** Effective / last-updated date, when the page states one. */
   updated?: string;
+  /**
+   * Extra front-matter fields for one kind of page (a post's `published`,
+   * `author` and `tags`, an article's `reading_time`). Empty values are dropped.
+   */
+  extra?: Record<string, string | undefined>;
   body: string;
 }
 
+/** A YAML scalar, quoted so a colon or quote in a title cannot break the block. */
+function yamlValue(value: string): string {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
 /**
- * Wrap a rendered body in the envelope every markdown twin shares: an H1, the
- * summary, and a pointer back to the canonical page so a citation resolves to
- * something a person can open.
+ * Wrap a rendered body in the envelope every markdown twin shares: YAML front
+ * matter, then an H1.
+ *
+ * The metadata is front matter rather than prose because the field names are
+ * machine identifiers - like `user_id` in code, they stay English across all six
+ * locales without becoming untranslated copy. `source` points back at the
+ * canonical page, so an agent quoting us cites a URL a person can open.
  */
 export function mdDocument({
   title,
   description,
   url,
+  locale,
   updated,
+  extra,
   body,
 }: MdDocument): string {
-  const parts = [`# ${title}`];
-  if (description) parts.push(`> ${description}`);
-  parts.push(`Source: ${url}`);
-  if (updated) parts.push(`Last updated: ${updated}`);
+  const front = [`title: ${yamlValue(title)}`];
+  if (description) front.push(`description: ${yamlValue(description)}`);
+  front.push(`source: ${yamlValue(url)}`);
+  if (locale) front.push(`locale: ${yamlValue(locale)}`);
+  if (updated) front.push(`updated: ${yamlValue(updated)}`);
+  for (const [key, value] of Object.entries(extra ?? {})) {
+    if (value) front.push(`${key}: ${yamlValue(value)}`);
+  }
+
+  const parts = [`---\n${front.join('\n')}\n---`, `# ${title}`];
   if (body.trim()) parts.push(body.trim());
   return `${parts.join('\n\n')}\n`;
 }
