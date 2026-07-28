@@ -15,7 +15,7 @@ import (
 // Proration modes for a plan switch. Upgrades bill the prorated difference now
 // (prorated_immediately is valid even across a billing-cycle change). Downgrades
 // and lateral (monthly↔annual) switches use do_not_bill: no charge today and no
-// pro-rata credit (spec §3.4, decisions #7/#11) — and, unlike
+// pro-rata credit (spec §3.4, decisions #7/#11) - and, unlike
 // full_next_billing_period, Paddle accepts it when the billing cycle changes
 // (monthly↔annual), where the *_next_billing_period modes are rejected.
 const (
@@ -46,7 +46,7 @@ type changePlanResponse struct {
 }
 
 // BillingChangePlan switches a user between plans by modifying their existing
-// Paddle subscription — never creating a second one. If the user has no active
+// Paddle subscription - never creating a second one. If the user has no active
 // subscription (trial / inactive / resubscribe), it falls back to checkout and
 // returns a checkout URL instead.
 func BillingChangePlan(params BillingChangePlanParams) func(e *core.RequestEvent) error {
@@ -108,7 +108,7 @@ func BillingChangePlan(params BillingChangePlanParams) func(e *core.RequestEvent
 			if params.Logger != nil {
 				params.Logger.Error("paddle change-plan failed", "err", err, "plan", req.Plan)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to change plan", nil)
+			return upstreamError("Failed to change plan", err)
 		}
 
 		// Optimistically reflect the new plan locally; subscription.updated
@@ -172,7 +172,7 @@ func startCheckoutFallback(
 		if params.Logger != nil {
 			params.Logger.Error("change-plan checkout fallback failed", "err", err)
 		}
-		return apis.NewApiError(http.StatusBadGateway, "Failed to start checkout", nil)
+		return upstreamError("Failed to start checkout", err)
 	}
 
 	if result.CustomerID != "" && result.CustomerID != user.GetString("paddle_customer_id") {

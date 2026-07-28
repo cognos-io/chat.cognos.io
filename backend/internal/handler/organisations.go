@@ -31,7 +31,7 @@ import (
 //   - updates additionally require the owner or admin role (403 otherwise).
 //
 // Everything returned here is operational metadata (names, member ids,
-// roles) — never message content, titles, or memory.
+// roles) - never message content, titles, or memory.
 
 type organisationResponse struct {
 	ID         string `json:"id"`
@@ -56,7 +56,7 @@ type orgMemberResponse struct {
 }
 
 type upsertOrganisationRequest struct {
-	// Name is the organisation's display name — plaintext operational
+	// Name is the organisation's display name - plaintext operational
 	// metadata (an Organisation is not content), validated to 1..120 chars
 	// by the collection schema.
 	Name string `json:"name"`
@@ -289,7 +289,7 @@ func OrganisationDissolve(params OrganisationDissolveParams) func(e *core.Reques
 					if params.Logger != nil {
 						params.Logger.Error("paddle org cancellation failed", "err", err, "org_id", org.ID)
 					}
-					return apis.NewApiError(http.StatusBadGateway, "Failed to cancel Organisation subscription", nil)
+					return upstreamError("Failed to cancel Organisation subscription", err)
 				}
 			}
 		}
@@ -403,9 +403,11 @@ func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(
 		})
 		if err != nil {
 			if params.Logger != nil {
-				params.Logger.Error("paddle org checkout failed", "err", err, "org_id", org.ID)
+				params.Logger.Error("paddle org checkout failed",
+					"err", err, "org_id", org.ID, "seats", quantity,
+				)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to start checkout", nil)
+			return upstreamError("Failed to start checkout", err)
 		}
 
 		if result.CustomerID != "" {
@@ -419,7 +421,7 @@ func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(
 			}
 		}
 
-		// Target is the opaque Paddle transaction id — useful for billing
+		// Target is the opaque Paddle transaction id - useful for billing
 		// reconciliation, never content.
 		organisations.RecordAudit(
 			params.App, org.ID, user.ID,
@@ -434,7 +436,7 @@ func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(
 
 // OrganisationBillingGet returns the Organisation's current billing snapshot:
 // plan, seat count, cycle window, and pooled PAYG usage so far. All amounts
-// are in whole rappen — the internal micro-rappen precision is never leaked.
+// are in whole rappen - the internal micro-rappen precision is never leaked.
 func OrganisationBillingGet(params OrganisationBillingGetParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		org, role, err := memberOrganisationOr404(params.App, e)
@@ -528,7 +530,7 @@ func OrganisationBillingPortal(params OrganisationBillingPortalParams) func(e *c
 			if params.Logger != nil {
 				params.Logger.Error("paddle org portal session failed", "err", err, "org_id", org.ID)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to open billing portal", nil)
+			return upstreamError("Failed to open billing portal", err)
 		}
 
 		return e.JSON(http.StatusOK, map[string]string{
@@ -538,8 +540,8 @@ func OrganisationBillingPortal(params OrganisationBillingPortalParams) func(e *c
 }
 
 // OrganisationUsage returns per-member usage metadata for the current billing
-// cycle. It aggregates only ledger metadata (model ids, counts, cost) — never
-// conversation content — so it is safe despite end-to-end encryption.
+// cycle. It aggregates only ledger metadata (model ids, counts, cost) - never
+// conversation content - so it is safe despite end-to-end encryption.
 func OrganisationUsage(params OrganisationUsageParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		org, role, err := memberOrganisationOr404(params.App, e)
@@ -669,8 +671,8 @@ func orgUsageSince(app core.App, orgID string, start, end time.Time) ([]orgUsage
 
 // memberOrganisationOr404 loads the organisation from the {orgID} path value
 // only when the caller is an active member, returning the caller's role.
-// Non-members and revoked members get 404 — the same shape a missing
-// organisation returns — so the response can't be used to probe for ids.
+// Non-members and revoked members get 404 - the same shape a missing
+// organisation returns - so the response can't be used to probe for ids.
 func memberOrganisationOr404(
 	app core.App,
 	e *core.RequestEvent,
@@ -709,7 +711,7 @@ func memberOrganisationOr404(
 }
 
 // organisationWriteError maps a repo write failure to an HTTP error: schema
-// validation failures (e.g. an overlong name — PocketBase surfaces them as
+// validation failures (e.g. an overlong name - PocketBase surfaces them as
 // ozzo validation.Errors) are the caller's fault and get 400; anything else
 // (transaction/database/internal failures) defaults to 500 so internal
 // errors never masquerade as client mistakes.

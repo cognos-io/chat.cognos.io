@@ -272,6 +272,10 @@ func TestBillingCheckoutSurfacesPaddleFailure(t *testing.T) {
 		Body:            strings.NewReader(`{"plan":"payg"}`),
 		ExpectedStatus:  http.StatusBadGateway,
 		ExpectedContent: []string{"Failed to start checkout"},
+		// The upstream cause rides along as the ApiError's raw data so it lands
+		// in PocketBase's request log (data.details); it must never be
+		// serialized back to the caller.
+		NotExpectedContent: []string{"context deadline exceeded"},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupCheckoutApp(t, fake)
 		},

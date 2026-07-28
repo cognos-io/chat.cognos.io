@@ -210,7 +210,7 @@ func TestBillingUsageAggregatesByModel(t *testing.T) {
 			seedUsageRow(t, app, "usagerowaaaaaa1", testUserID, "model-a", 100, "2026-06-05 00:00:00.000Z")
 			seedUsageRow(t, app, "usagerowaaaaaa2", testUserID, "model-a", 40, "2026-06-07 00:00:00.000Z")
 			seedUsageRow(t, app, "usagerowbbbbbb1", testUserID, "model-b", 310, "2026-06-10 00:00:00.000Z")
-			// Before the period — excluded.
+			// Before the period - excluded.
 			seedUsageRow(t, app, "usagerowoldddd1", testUserID, "model-a", 999, "2026-05-20 00:00:00.000Z")
 			return app
 		},
@@ -227,13 +227,13 @@ func TestBillingUsageAggregatesByModel(t *testing.T) {
 				} `json:"by_model"`
 			}
 			if err := json.Unmarshal(body, &payload); err != nil {
-				t.Fatalf("unmarshal: %v — body: %s", err, body)
+				t.Fatalf("unmarshal: %v - body: %s", err, body)
 			}
 			if payload.MessageCount != 3 {
-				t.Errorf("message_count = %d, want 3 (old row excluded) — body: %s", payload.MessageCount, body)
+				t.Errorf("message_count = %d, want 3 (old row excluded) - body: %s", payload.MessageCount, body)
 			}
 			if len(payload.ByModel) != 2 {
-				t.Fatalf("by_model len = %d, want 2 — body: %s", len(payload.ByModel), body)
+				t.Fatalf("by_model len = %d, want 2 - body: %s", len(payload.ByModel), body)
 			}
 			// Ordered by spend desc: model-b (3.10) before model-a (1.40).
 			if payload.ByModel[0].ModelID != "model-b" || payload.ByModel[0].CostCHF != 3.10 {
@@ -248,7 +248,7 @@ func TestBillingUsageAggregatesByModel(t *testing.T) {
 }
 
 // OP-014: PAYG soft alert fires once per cycle when usage reaches the minimum
-// commit. Completions are never gated on this — the field is informational.
+// commit. Completions are never gated on this - the field is informational.
 func TestBillingUsagePaygSoftAlertSunny(t *testing.T) {
 	t.Parallel()
 	scenario := tests.ApiScenario{
@@ -284,7 +284,7 @@ func TestBillingUsagePaygSoftAlertSunny(t *testing.T) {
 				} `json:"payg_soft_alert"`
 			}
 			if err := json.Unmarshal(body, &payload); err != nil {
-				t.Fatalf("unmarshal: %v — body: %s", err, body)
+				t.Fatalf("unmarshal: %v - body: %s", err, body)
 			}
 			if payload.PaygSoftAlert == nil || !payload.PaygSoftAlert.Show {
 				t.Fatalf("expected soft alert show=true, body: %s", body)
@@ -485,7 +485,7 @@ func TestBillingUsagePaygSoftAlertRearmsNextCycle(t *testing.T) {
 func TestBillingPaygSoftAlertAckDoesNotTouchOtherUser(t *testing.T) {
 	t.Parallel()
 	scenario := tests.ApiScenario{
-		Name:           "ack is self-scoped — other user's stamp stays empty",
+		Name:           "ack is self-scoped - other user's stamp stays empty",
 		Method:         http.MethodPost,
 		URL:            "/api/v1/billing/payg-soft-alert/ack",
 		ExpectedStatus: http.StatusNoContent,
@@ -495,7 +495,7 @@ func TestBillingPaygSoftAlertAckDoesNotTouchOtherUser(t *testing.T) {
 				"plan_type":             "payg",
 				"paddle_cycle_start_at": "2026-06-01 00:00:00.000Z",
 			})
-			// Other seeded user (test2) also on PAYG this cycle — must stay
+			// Other seeded user (test2) also on PAYG this cycle - must stay
 			// untouched when test1 acks.
 			other, err := app.FindAuthRecordByEmail("users", "test2@example.com")
 			if err != nil {
@@ -518,7 +518,7 @@ func TestBillingPaygSoftAlertAckDoesNotTouchOtherUser(t *testing.T) {
 				t.Fatalf("find other user_billing: %v", err)
 			}
 			if !record.GetDateTime("payg_soft_alert_cycle_start_at").Time().IsZero() {
-				t.Fatal("other user's soft-alert stamp was written — ack must be self-scoped")
+				t.Fatal("other user's soft-alert stamp was written - ack must be self-scoped")
 			}
 		},
 	}
@@ -582,6 +582,8 @@ func TestBillingCancelSurfacesPaddleError(t *testing.T) {
 		URL:             "/api/v1/billing/cancel",
 		ExpectedStatus:  http.StatusBadGateway,
 		ExpectedContent: []string{"Failed to cancel subscription"},
+		// Cause goes to the log's data.details, never to the caller.
+		NotExpectedContent: []string{"context deadline exceeded"},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			app := setupBillingApp(t, fake)
 			updateUserBilling(t, app, testUserID, map[string]any{

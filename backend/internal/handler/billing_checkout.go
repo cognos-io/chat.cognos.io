@@ -84,9 +84,14 @@ func BillingCheckout(params BillingCheckoutParams) func(e *core.RequestEvent) er
 		})
 		if err != nil {
 			if params.Logger != nil {
-				params.Logger.Error("paddle checkout failed", "err", err, "plan", req.Plan)
+				params.Logger.Error("paddle checkout failed",
+					"err", err,
+					"plan", req.Plan,
+					"has_customer", user.GetString("paddle_customer_id") != "",
+					"has_business", req.Business != nil,
+				)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to start checkout", nil)
+			return upstreamError("Failed to start checkout", err)
 		}
 
 		// Remember the Paddle customer so future checkouts reuse it.

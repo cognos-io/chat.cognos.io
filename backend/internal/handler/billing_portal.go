@@ -38,12 +38,12 @@ func BillingPortal(params BillingPortalParams) func(e *core.RequestEvent) error 
 
 		customerID := customerIDForUser(e.App, user)
 		if customerID == "" {
-			// No Paddle customer yet (never checked out) — nothing to manage.
+			// No Paddle customer yet (never checked out) - nothing to manage.
 			return apis.NewApiError(http.StatusConflict, "No billing account yet", nil)
 		}
 
 		// Pass the active subscription (if any) so the portal can deep-link the
-		// payment-method form. A missing billing row is fine — the overview link
+		// payment-method form. A missing billing row is fine - the overview link
 		// still works.
 		var subscriptionIDs []string
 		if record, err := e.App.FindFirstRecordByData(
@@ -61,7 +61,7 @@ func BillingPortal(params BillingPortalParams) func(e *core.RequestEvent) error 
 			if params.Logger != nil {
 				params.Logger.Error("paddle portal session failed", "err", err)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to open billing portal", nil)
+			return upstreamError("Failed to open billing portal", err)
 		}
 
 		return e.JSON(http.StatusOK, portalResponse{

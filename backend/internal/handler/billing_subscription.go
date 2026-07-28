@@ -17,7 +17,7 @@ type BillingSubscriptionParams struct {
 }
 
 // BillingCancel schedules the user's subscription to cancel at the end of the
-// current period. The plan keeps working until then ("cancels soon") — Paddle's
+// current period. The plan keeps working until then ("cancels soon") - Paddle's
 // subscription.canceled webhook flips it to inactive when the period ends.
 func BillingCancel(params BillingSubscriptionParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
@@ -30,7 +30,7 @@ func BillingCancel(params BillingSubscriptionParams) func(e *core.RequestEvent) 
 			if params.Logger != nil {
 				params.Logger.Error("paddle cancel failed", "err", err)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to cancel subscription", nil)
+			return upstreamError("Failed to cancel subscription", err)
 		}
 
 		// Reflect "cancels soon" immediately: access lasts until the cycle end.
@@ -57,7 +57,7 @@ func BillingResume(params BillingSubscriptionParams) func(e *core.RequestEvent) 
 			if params.Logger != nil {
 				params.Logger.Error("paddle resume failed", "err", err)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to resume subscription", nil)
+			return upstreamError("Failed to resume subscription", err)
 		}
 
 		record.Set("plan_ends_at", "")

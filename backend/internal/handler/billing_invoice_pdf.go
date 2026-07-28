@@ -40,7 +40,7 @@ func BillingInvoicePDF(params BillingInvoicePDFParams) func(e *core.RequestEvent
 			return apis.NewNotFoundError("Invoice not found", nil)
 		}
 
-		// Ownership check first — never call the invoice endpoint for a
+		// Ownership check first - never call the invoice endpoint for a
 		// transaction the caller doesn't own.
 		owner, err := params.Client.GetTransactionCustomerID(e.Request.Context(), transactionID)
 		if err != nil {
@@ -59,7 +59,7 @@ func BillingInvoicePDF(params BillingInvoicePDFParams) func(e *core.RequestEvent
 			if params.Logger != nil {
 				params.Logger.Error("paddle get invoice pdf failed", "err", err)
 			}
-			return apis.NewApiError(http.StatusBadGateway, "Failed to fetch invoice", nil)
+			return upstreamError("Failed to fetch invoice", err)
 		}
 
 		return e.JSON(http.StatusOK, map[string]string{"url": url})

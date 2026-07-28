@@ -65,7 +65,7 @@ func TestBillingPortalReturnsLinks(t *testing.T) {
 }
 
 // Rainy: a user who never checked out has no Paddle customer, so there is
-// nothing to manage — 409.
+// nothing to manage - 409.
 func TestBillingPortalWithoutCustomer(t *testing.T) {
 	t.Parallel()
 	scenario := tests.ApiScenario{
@@ -92,6 +92,8 @@ func TestBillingPortalSurfacesPaddleError(t *testing.T) {
 		URL:             "/api/v1/billing/portal",
 		ExpectedStatus:  http.StatusBadGateway,
 		ExpectedContent: []string{"Failed to open billing portal"},
+		// Cause goes to the log's data.details, never to the caller.
+		NotExpectedContent: []string{"context deadline exceeded"},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			app := setupBillingApp(t, fake)
 			setUserField(t, app, "test1@example.com", "paddle_customer_id", "ctm_1")
