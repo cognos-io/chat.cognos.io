@@ -1,40 +1,51 @@
 pre-commit:
-  parallel: true
-  commands:
-    gitleaks:
+  jobs:
+    # Runs first and alone: it rewrites characters, which changes line lengths,
+    # so the formatters below must get the last word on wrapping.
+    - name: remove-ai-slop
       glob: "*"
-      run: gitleaks protect --staged --no-banner
-    markdown-format:
-      run: uv run rumdl check --fix {staged_files}
-      stage_fixed: true
-      glob:
-        - "*.md"
       exclude:
-        - "ai/**"
-        - ".specify/**"
-        - ".cursor/**"
-        - ".claude/**"
-    prettier:
-      glob: "*.{ts,js,json,html,scss,css}"
-      run: pnpm exec prettier --write --ignore-unknown {staged_files}
-      stage_fixed: true
-      exclude:
-        - "backend/**"
         - "pnpm-lock.yaml"
-    frontend-eslint:
-      root: "frontend/"
-      glob: "*.{js,ts}"
-      run: pnpm exec eslint --cache --fix {staged_files}
+      run: scripts/remove-ai-slop.sh {staged_files}
       stage_fixed: true
-    ui-eslint:
-      root: "packages/ui/"
-      glob: "*.js"
-      exclude:
-        - "packages/ui-angular/**"
-      run: pnpm exec eslint --cache --fix {staged_files}
-      stage_fixed: true
-    ui-angular-eslint:
-      root: "packages/ui-angular/"
-      glob: "*.{ts,html}"
-      run: pnpm exec eslint --cache --fix {staged_files}
-      stage_fixed: true
+
+    - group:
+        parallel: true
+        jobs:
+          - name: gitleaks
+            glob: "*"
+            run: gitleaks protect --staged --no-banner
+          - name: markdown-format
+            glob:
+              - "*.md"
+            exclude:
+              - "ai/**"
+              - ".specify/**"
+              - ".cursor/**"
+              - ".claude/**"
+            run: uv run rumdl check --fix {staged_files}
+            stage_fixed: true
+          - name: prettier
+            glob: "*.{ts,js,json,html,scss,css}"
+            exclude:
+              - "backend/**"
+              - "pnpm-lock.yaml"
+            run: pnpm exec prettier --write --ignore-unknown {staged_files}
+            stage_fixed: true
+          - name: frontend-eslint
+            root: "frontend/"
+            glob: "*.{js,ts}"
+            run: pnpm exec eslint --cache --fix {staged_files}
+            stage_fixed: true
+          - name: ui-eslint
+            root: "packages/ui/"
+            glob: "*.js"
+            exclude:
+              - "packages/ui-angular/**"
+            run: pnpm exec eslint --cache --fix {staged_files}
+            stage_fixed: true
+          - name: ui-angular-eslint
+            root: "packages/ui-angular/"
+            glob: "*.{ts,html}"
+            run: pnpm exec eslint --cache --fix {staged_files}
+            stage_fixed: true
