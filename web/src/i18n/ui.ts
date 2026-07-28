@@ -2,6 +2,10 @@
 // (`frontend/src/app/i18n/languages.ts`). English is the default and served
 // unprefixed; catalogs live in ./locales/<code>.json and share the app's
 // nested-key + `{{ var }}` interpolation convention.
+//
+// The locale list and path helpers live in `./config.ts` and are re-exported
+// here, so every existing `from '../i18n/ui'` import keeps working.
+import { type Lang, defaultLang } from './config';
 import de from './locales/de.json';
 import en from './locales/en.json';
 import es from './locales/es.json';
@@ -9,65 +13,20 @@ import fr from './locales/fr.json';
 import it from './locales/it.json';
 import pt from './locales/pt.json';
 
-export const defaultLang = 'en' as const;
-
-/** Endonym shown in the language switcher (each language in its own words). */
-export const languages = {
-  en: 'English',
-  de: 'Deutsch',
-  fr: 'Français',
-  es: 'Español',
-  pt: 'Português',
-  it: 'Italiano',
-} as const;
-
-export type Lang = keyof typeof languages;
-
-/**
- * BCP 47 tags for the European regional variants the copy is written in - used
- * for `Intl` date formatting and (with `-` swapped for `_`) Open Graph locales.
- * Keep in step with the variants documented in the root CLAUDE.md.
- */
-export const bcp47 = {
-  en: 'en-GB',
-  de: 'de-CH',
-  fr: 'fr-CH',
-  es: 'es-ES',
-  pt: 'pt-PT',
-  it: 'it-CH',
-} as const satisfies Record<Lang, string>;
-
-export const locales = Object.keys(languages) as Lang[];
-
-/** The non-default locales - used to generate prefixed routes. */
-export const nonDefaultLocales = locales.filter((l) => l !== defaultLang);
+export {
+  bcp47,
+  defaultLang,
+  getLangFromUrl,
+  homeAnchor,
+  isLang,
+  languages,
+  locales,
+  localizedPath,
+  nonDefaultLocales,
+} from './config';
+export type { Lang } from './config';
 
 const catalogs: Record<Lang, unknown> = { en, de, fr, es, pt, it };
-
-export function isLang(value: string | undefined): value is Lang {
-  return !!value && value in languages;
-}
-
-/** Resolve the active locale from an Astro URL pathname (`/de/…` → `de`). */
-export function getLangFromUrl(url: URL): Lang {
-  const [, maybeLang] = url.pathname.split('/');
-  return isLang(maybeLang) ? maybeLang : defaultLang;
-}
-
-/** Build a locale-aware path. Default locale stays unprefixed. */
-export function localizedPath(lang: Lang, path = '/'): string {
-  const clean = path.startsWith('/') ? path : `/${path}`;
-  return lang === defaultLang ? clean : `/${lang}${clean === '/' ? '' : clean}`;
-}
-
-/**
- * An in-page anchor that stays a plain hash on the homepage but points back to
- * the (locale-aware) homepage from any other page - so the shared navbar and
- * footer section links work from the standalone pages too.
- */
-export function homeAnchor(lang: Lang, currentPath: string, hash: string): string {
-  return currentPath === '/' ? hash : `${localizedPath(lang)}${hash}`;
-}
 
 type Dict = Record<string, unknown>;
 
