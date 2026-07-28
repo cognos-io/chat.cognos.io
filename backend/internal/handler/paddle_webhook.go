@@ -29,9 +29,12 @@ const (
 	refundsColl             = "refunds"
 	orgBillingColl          = "org_billing"
 	orgCycleSummariesColl   = "org_cycle_summaries"
-	refundGuaranteeDays     = 60
-	cycleSummaryIDLen       = 15
-	webhookPBDateLayout     = "2006-01-02 15:04:05.000Z"
+	// refundGuaranteeDays mirrors the published Refund Policy window, which
+	// matches Paddle's own 14-day policy (Paddle payment verification rejects
+	// seller windows with extra conditions).
+	refundGuaranteeDays = 14
+	cycleSummaryIDLen   = 15
+	webhookPBDateLayout = "2006-01-02 15:04:05.000Z"
 )
 
 // CycleReconciler records a paid Paddle cycle transaction against its PAYG cycle

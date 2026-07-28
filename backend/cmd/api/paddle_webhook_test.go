@@ -596,7 +596,7 @@ func TestPaddleWebhookAdjustmentRecordsRefund(t *testing.T) {
 		t.Errorf("gross_refund_rappen = %d, want 10000", got)
 	}
 	if !r.GetBool("inside_guarantee_window") {
-		t.Error("inside_guarantee_window should be true (activation set a 60-day window)")
+		t.Error("inside_guarantee_window should be true (activation set a 14-day window)")
 	}
 	if got := r.GetString("paddle_adjustment_ids_json"); !strings.Contains(got, "adj_1") || !strings.Contains(got, "txn_inv_1") {
 		t.Errorf("paddle_adjustment_ids_json = %q, want adj_1 + txn_inv_1", got)

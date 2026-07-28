@@ -69,7 +69,7 @@ test('the pricing page presents both plans, the guarantee and a working interval
   await expect(page.getByText('CHF 150', { exact: true })).toBeVisible();
 
   // Guarantee + assurances + footer.
-  await expect(page.getByText('60-day refund window')).toBeVisible();
+  await expect(page.getByText('14-day refund window')).toBeVisible();
   await expect(page.getByText('Your chats stay readable')).toBeVisible();
   await expect(page.getByText(/Prices in CHF, VAT added at checkout/)).toBeVisible();
 

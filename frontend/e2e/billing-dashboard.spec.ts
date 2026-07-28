@@ -267,7 +267,7 @@ test('dashboard renders the saved card and Paddle invoices', async ({ page }) =>
   await expect(page.getByRole('img', { name: 'Paddle' }).first()).toBeVisible();
 
   // Within the refund window, the refund-window note shows.
-  await expect(page.getByText('60-day refund window')).toBeVisible();
+  await expect(page.getByText('14-day refund window')).toBeVisible();
 });
 
 test('the refund-window note hides once the refund window has lapsed', async ({
@@ -296,7 +296,7 @@ test('the refund-window note hides once the refund window has lapsed', async ({
   await page.goto('/account/billing');
 
   await expect(page.getByRole('heading', { name: /Unlimited/ })).toBeVisible();
-  await expect(page.getByText('60-day refund window')).toHaveCount(0);
+  await expect(page.getByText('14-day refund window')).toHaveCount(0);
 });
 
 test('cancels-soon dashboard offers resume', async ({ page }) => {
