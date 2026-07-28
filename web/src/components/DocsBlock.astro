@@ -1,35 +1,29 @@
 ---
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import '../styles/content-blocks.css';
 import Icon from './Icon.astro';
+import Slideshow from './Slideshow.astro';
 import { localizeHtml, type DocsBlock } from '../lib/docs';
-import type { Lang } from '../i18n/ui';
+import { resolveMedia } from '../lib/media';
+import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
   block: DocsBlock;
   lang: Lang;
+  /**
+   * Make figures open in the page's lightbox. Requires `Lightbox.astro` on the
+   * page, so it is opt-in: docs pages render plain figures, blog posts zoom.
+   * `gallery` blocks are always zoomable - the slideshow crops hard by design.
+   */
+  zoomable?: boolean;
 }
-const { block, lang } = Astro.props;
+const { block, lang, zoomable = false } = Astro.props;
+const t = useTranslations(lang);
 /** Localize internal links in trusted HTML before rendering with set:html. */
 const h = (html: string) => localizeHtml(html, lang);
 
-// A figure renders only once its screenshot exists under public/ — so a page
-// stays clean (no broken image) until the screenshot has been captured.
-// cwd is the web/ project root during `astro dev`/`astro build`.
-//
-// Localised screenshots live under public/docs-media/<lang>/<name>.png; when one
-// exists for the active locale it wins, otherwise the English (root) shot is
-// used, so a French reader never sees English chrome once its capture lands.
-const publicDir = join(process.cwd(), 'public');
-function resolveFigure(src: string): string | null {
-  if (/^https?:/.test(src)) return src;
-  if (lang !== 'en') {
-    const localised = src.replace('/docs-media/', `/docs-media/${lang}/`);
-    if (existsSync(join(publicDir, localised))) return localised;
-  }
-  return existsSync(join(publicDir, src)) ? src : null;
-}
-const figureSrc = 'figure' in block ? resolveFigure(block.figure.src) : null;
+// A figure renders only once its image exists under public/ (see lib/media.ts),
+// so a page authored ahead of its screenshots stays clean.
+const figureSrc = 'figure' in block ? resolveMedia(block.figure.src, lang) : null;
 
 // Callout variants map to a tint + a leading icon. `security` is the strongest,
 // reserved for "you can lose your data" warnings around the Account Key.
@@ -89,9 +83,28 @@ const noteIcons: Record<string, string> = {
 {
   'figure' in block && figureSrc && (
     <figure class="docs-figure">
-      <img src={figureSrc} alt={block.figure.alt} loading="lazy" decoding="async" />
+      {zoomable ? (
+        /* A standalone figure is its own lightbox group, keyed by src so two
+           figures on one page never browse into each other. */
+        <button
+          type="button"
+          class="zoom-trigger"
+          data-lightbox={`figure-${figureSrc}`}
+          aria-label={t('a11y.media.enlarge', { alt: block.figure.alt })}
+        >
+          <img src={figureSrc} alt={block.figure.alt} loading="lazy" decoding="async" />
+        </button>
+      ) : (
+        <img src={figureSrc} alt={block.figure.alt} loading="lazy" decoding="async" />
+      )}
       {block.figure.caption && <figcaption set:html={block.figure.caption} />}
     </figure>
+  )
+}
+
+{
+  'gallery' in block && (
+    <Slideshow lang={lang} label={block.gallery.label} images={block.gallery.images} />
   )
 }
 

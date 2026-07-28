@@ -1,0 +1,183 @@
+---
+// A single, page-wide image viewer.
+//
+// Include it once on any page that renders zoomable images; it binds itself to
+// every `[data-lightbox]` trigger on the page and groups them by the trigger's
+// value, so a slideshow's images browse as one set while a standalone figure
+// opens on its own.
+//
+// Built on the native `<dialog>` element, which gives Escape-to-close, a real
+// focus trap and focus restoration to the trigger for free. Without JavaScript
+// no trigger is ever rendered as a button (see `DocsBlock.astro`), so nothing
+// here is reachable and the images are simply shown inline.
+//
+// Translated strings the script needs at runtime are handed over as
+// `data-*` templates rather than imported: `i18n/ui.ts` pulls in all six locale
+// catalogs, so importing it from a client script would ship them to the browser.
+import '../styles/media.css';
+import Icon from './Icon.astro';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<dialog
+  class="lightbox"
+  data-lightbox-dialog
+  aria-label={t('a11y.media.viewer')}
+  data-counter-template={t('a11y.media.counter')}
+>
+  <div class="lightbox__inner">
+    <div class="lightbox__bar">
+      <p class="lightbox__counter" data-lightbox-counter aria-live="polite"></p>
+      <button
+        type="button"
+        class="lightbox__close"
+        data-lightbox-close
+        aria-label={t('a11y.media.close')}
+      >
+        <Icon name="X" size={20} />
+      </button>
+    </div>
+
+    <div class="lightbox__stage">
+      {/* No `src` until an image is opened: `src=""` resolves against the
+          current document, making every page load fetch itself as an image. */}
+      <img class="lightbox__image" data-lightbox-image alt="" />
+    </div>
+
+    <div class="lightbox__foot">
+      <button
+        type="button"
+        class="lightbox__arrow"
+        data-lightbox-prev
+        aria-label={t('a11y.media.previousImage')}
+      >
+        <Icon name="ArrowLeft" size={18} />
+      </button>
+      <p class="lightbox__caption" data-lightbox-caption></p>
+      <button
+        type="button"
+        class="lightbox__arrow"
+        data-lightbox-next
+        aria-label={t('a11y.media.nextImage')}
+      >
+        <Icon name="ArrowRight" size={18} />
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('[data-lightbox-dialog]');
+  const triggers = Array.from(document.querySelectorAll<HTMLElement>('[data-lightbox]'));
+
+  if (dialog && triggers.length > 0) {
+    const image = dialog.querySelector<HTMLImageElement>('[data-lightbox-image]')!;
+    const caption = dialog.querySelector<HTMLElement>('[data-lightbox-caption]')!;
+    const counter = dialog.querySelector<HTMLElement>('[data-lightbox-counter]')!;
+    const prev = dialog.querySelector<HTMLButtonElement>('[data-lightbox-prev]')!;
+    const next = dialog.querySelector<HTMLButtonElement>('[data-lightbox-next]')!;
+    const close = dialog.querySelector<HTMLButtonElement>('[data-lightbox-close]')!;
+    const counterTemplate = dialog.dataset.counterTemplate ?? '{{ current }} / {{ total }}';
+
+    // Group the triggers by their `data-lightbox` value, preserving DOM order
+    // so "next" follows reading order.
+    const groups = new Map<string, HTMLElement[]>();
+    for (const trigger of triggers) {
+      const key = trigger.dataset.lightbox || 'default';
+      const group = groups.get(key);
+      if (group) group.push(trigger);
+      else groups.set(key, [trigger]);
+    }
+
+    let current: HTMLElement[] = [];
+    let index = 0;
+
+    /** Fill a translated `{{ current }} / {{ total }}` template. */
+    const fill = (template: string, values: Record<string, number>) =>
+      template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, name: string) =>
+        name in values ? String(values[name]) : match,
+      );
+
+    function render() {
+      const trigger = current[index];
+      const img = trigger?.querySelector('img');
+      if (!img) return;
+
+      image.src = img.currentSrc || img.src;
+      image.alt = img.alt;
+
+      // The caption is cloned from the figure's own <figcaption> rather than
+      // copied through a data-attribute: captions are authored HTML (`<code>`,
+      // entities), which textContent would render as literal tags and innerHTML
+      // would need re-parsing. Cloning reuses what the parser already built.
+      const source = trigger.closest('figure')?.querySelector('figcaption');
+      caption.replaceChildren(...(source ? [...source.cloneNode(true).childNodes] : []));
+
+      const single = current.length < 2;
+      counter.textContent = single
+        ? ''
+        : fill(counterTemplate, { current: index + 1, total: current.length });
+      // A one-image group has nothing to step through, so the arrows go away
+      // entirely rather than sitting there permanently disabled.
+      prev.hidden = single;
+      next.hidden = single;
+      prev.disabled = index === 0;
+      next.disabled = index === current.length - 1;
+    }
+
+    // An arrow function rather than a declaration, so TypeScript keeps the
+    // non-null narrowing of `dialog` from the guard above: a hoisted `function`
+    // could in principle be called before it.
+    const open = (trigger: HTMLElement) => {
+      current = groups.get(trigger.dataset.lightbox || 'default') ?? [trigger];
+      index = Math.max(0, current.indexOf(trigger));
+      render();
+      dialog.showModal();
+      close.focus();
+    };
+
+    function step(delta: number) {
+      const target = index + delta;
+      if (target < 0 || target >= current.length) return;
+      index = target;
+      render();
+    }
+
+    for (const trigger of triggers) {
+      trigger.addEventListener('click', () => open(trigger));
+    }
+
+    prev.addEventListener('click', () => step(-1));
+    next.addEventListener('click', () => step(1));
+    close.addEventListener('click', () => dialog.close());
+
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        step(-1);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        step(1);
+      }
+    });
+
+    // Clicking the scrim (the dialog itself, never its content) dismisses.
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    // Release the large source when closed so a long page does not hold every
+    // full-size image it has shown in memory.
+    dialog.addEventListener('close', () => {
+      image.removeAttribute('src');
+      image.alt = '';
+      caption.replaceChildren();
+    });
+  }
+</script>

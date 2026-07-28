@@ -1,0 +1,199 @@
+---
+// A slideshow of images, following the ARIA authoring practices for a carousel.
+//
+// The viewport is a scroll-snapping strip, which is the whole widget without
+// JavaScript: focusable, pannable with the arrow keys by the browser itself, and
+// every slide reachable. The script then unhides the previous/next arrows and
+// the position dots, and announces movement through a live region because
+// stepping a slide does not move focus.
+//
+// Images double as lightbox triggers - `Lightbox.astro` must be present on the
+// page for that to do anything.
+import '../styles/media.css';
+import Icon from './Icon.astro';
+import { resolveMedia } from '../lib/media';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** Names the carousel for assistive tech. Falls back to a generic label. */
+  label?: string;
+  images: { src: string; alt: string; caption?: string }[];
+}
+const { lang, label, images } = Astro.props;
+const t = useTranslations(lang);
+
+// Drop anything whose file has not landed yet, so a half-captured gallery
+// degrades to the shots that do exist rather than to broken images.
+const slides = images
+  .map((image) => ({ ...image, src: resolveMedia(image.src, lang) }))
+  .filter((image): image is typeof image & { src: string } => image.src !== null);
+
+// Stable per-page lightbox group id, so this gallery's images browse together
+// and separately from any other gallery or standalone figure on the page.
+const group = `gallery-${slides[0]?.src.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`;
+
+const total = slides.length;
+const slideLabel = (index: number) =>
+  t('a11y.media.slideCounter', { current: index + 1, total });
+---
+
+{
+  total > 0 && (
+    <div class="slideshow" data-slideshow>
+      <div
+        class="slideshow__viewport"
+        data-slideshow-viewport
+        role="group"
+        aria-roledescription={t('a11y.media.carousel')}
+        aria-label={label ?? t('a11y.media.carouselLabel')}
+        tabindex="0"
+      >
+        {slides.map((slide, index) => (
+          <figure
+            class="slideshow__slide"
+            data-slideshow-slide
+            role="group"
+            aria-roledescription={t('a11y.media.slide')}
+            aria-label={slideLabel(index)}
+          >
+            <button
+              type="button"
+              class="zoom-trigger"
+              data-lightbox={group}
+              aria-label={t('a11y.media.enlarge', { alt: slide.alt })}
+            >
+              <img src={slide.src} alt={slide.alt} loading="lazy" decoding="async" />
+            </button>
+            {slide.caption && (
+              <figcaption class="slideshow__caption" set:html={slide.caption} />
+            )}
+          </figure>
+        ))}
+      </div>
+
+      {total > 1 && (
+        <div class="slideshow__controls" data-slideshow-controls hidden>
+          <button
+            type="button"
+            class="slideshow__arrow"
+            data-slideshow-prev
+            aria-label={t('a11y.media.previousSlide')}
+          >
+            <Icon name="ChevronLeft" size={18} />
+          </button>
+          <div class="slideshow__dots">
+            {slides.map((_slide, index) => (
+              <button
+                type="button"
+                class="slideshow__dot"
+                data-slideshow-dot
+                aria-label={t('a11y.media.goToSlide', { current: index + 1, total })}
+                aria-current={index === 0 ? 'true' : 'false'}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            class="slideshow__arrow"
+            data-slideshow-next
+            aria-label={t('a11y.media.nextSlide')}
+          >
+            <Icon name="ChevronRight" size={18} />
+          </button>
+        </div>
+      )}
+
+      <p
+        class="visually-hidden"
+        data-slideshow-status
+        data-slide-template={t('a11y.media.slideStatus')}
+        aria-live="polite"
+      />
+    </div>
+  )
+}
+
+<script>
+  // Translated strings arrive as `data-*` templates: `i18n/ui.ts` imports all
+  // six locale catalogs, so importing it here would ship them to the browser.
+  for (const root of document.querySelectorAll<HTMLElement>('[data-slideshow]')) {
+    const viewport = root.querySelector<HTMLElement>('[data-slideshow-viewport]');
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slideshow-slide]'));
+    if (!viewport || slides.length < 2) continue;
+
+    const controls = root.querySelector<HTMLElement>('[data-slideshow-controls]');
+    const prevButton = root.querySelector<HTMLButtonElement>('[data-slideshow-prev]');
+    const nextButton = root.querySelector<HTMLButtonElement>('[data-slideshow-next]');
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-slideshow-dot]'));
+    const status = root.querySelector<HTMLElement>('[data-slideshow-status]');
+    const template = status?.dataset.slideTemplate ?? '{{ current }} / {{ total }}';
+    const last = slides.length - 1;
+
+    // Only now that scripting is confirmed do the controls become visible.
+    if (controls) controls.hidden = false;
+
+    let index = 0;
+
+    /** Point the dots and arrows at `next` without moving the strip. */
+    function sync(next: number) {
+      index = next;
+      dots.forEach((dot, i) => dot.setAttribute('aria-current', String(i === index)));
+      if (prevButton) prevButton.disabled = index === 0;
+      if (nextButton) nextButton.disabled = index === last;
+    }
+
+    /** Stepping a slide moves no focus, so say what happened out loud. */
+    function announce() {
+      if (!status) return;
+      status.textContent = template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, name: string) => {
+        if (name === 'current') return String(index + 1);
+        if (name === 'total') return String(slides.length);
+        return match;
+      });
+    }
+
+    function goTo(target: number) {
+      const clamped = Math.min(Math.max(target, 0), last);
+      // `behavior: 'auto'` defers to the viewport's CSS scroll-behavior, which
+      // is smooth except under prefers-reduced-motion. `block: 'nearest'` keeps
+      // a horizontal step from scrolling the page vertically.
+      slides[clamped].scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+      sync(clamped);
+      announce();
+    }
+
+    prevButton?.addEventListener('click', () => goTo(index - 1));
+    nextButton?.addEventListener('click', () => goTo(index + 1));
+    dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+
+    viewport.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goTo(index - 1);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goTo(index + 1);
+      }
+    });
+
+    // Keep the dots honest when the reader swipes or drags the strip instead of
+    // using the controls.
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const seen = slides.indexOf(entry.target as HTMLElement);
+            // No announcement here: the reader drove the scroll themselves.
+            if (seen !== -1 && seen !== index) sync(seen);
+          }
+        },
+        { root: viewport, threshold: 0.6 },
+      );
+      slides.forEach((slide) => observer.observe(slide));
+    }
+
+    sync(0);
+  }
+</script>

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Cognos — l'IA a cui puoi dire tutto",
+    "title": "Cognos - l'IA a cui puoi dire tutto",
     "description": "Chat IA privata con cronologia salvata in una forma che non possiamo leggere. Cognos nasconde i dati personali rilevati prima dell'invio e usa fornitori di IA approvati per le risposte in diretta nella regione che scegli."
   },
   "nav": {
@@ -12,17 +12,18 @@
     "security": "Sicurezza",
     "business": "Per le aziende",
     "signIn": "Accedi",
-    "cta": "Inizia ora"
+    "cta": "Inizia ora",
+    "blog": "Blog"
   },
   "hero": {
     "badge": "IA privata",
     "titleBefore": "L'IA a cui puoi finalmente",
     "titleEm": "dire tutto.",
     "titleAfter": "",
-    "lead": "L'IA può aiutarti con salute, soldi e preoccupazioni — proprio ciò che potresti non volere in una cronologia leggibile. Cognos salva le tue chat in una forma che non possiamo leggere. Prima di una richiesta in diretta a un fornitore di IA approvato, Cognos nasconde i dati personali che rileva.",
+    "lead": "L'IA può aiutarti con salute, soldi e preoccupazioni - proprio ciò che potresti non volere in una cronologia leggibile. Cognos salva le tue chat in una forma che non possiamo leggere. Prima di una richiesta in diretta a un fornitore di IA approvato, Cognos nasconde i dati personali che rileva.",
     "ctaPrimary": "Inizia ora",
     "ctaSecondary": "Guarda come funziona",
-    "finehint": "Provalo prima — credito iniziale in regalo, senza carta · Da CHF 15/mese · Disdici quando vuoi",
+    "finehint": "Provalo prima - credito iniziale in regalo, senza carta · Da CHF 15/mese · Disdici quando vuoi",
     "assure": {
       "zeroKnowledge": "Nessuna copia leggibile",
       "swiss": "Tenuta in Svizzera o in Europa",
@@ -30,7 +31,7 @@
     },
     "them": {
       "label": "other-ai.com · salvato per sempre",
-      "snippet": "\"Ecco i miei estratti conto — posso permettermi di prendermi tre mesi di pausa dal lavoro?\"",
+      "snippet": "\"Ecco i miei estratti conto - posso permettermi di prendermi tre mesi di pausa dal lavoro?\"",
       "tagStored": "Salvato",
       "tagTrained": "Usato per l'addestramento",
       "tagReadable": "Leggibile",
@@ -39,8 +40,8 @@
     "us": {
       "name": "Cognos",
       "badge": "Privato",
-      "bubble": "\"Ecco i miei estratti conto — posso permettermi di prendermi tre mesi di pausa dal lavoro?\"",
-      "reply": "Sì — e con un po' di margine. Ecco un piano mese per mese basato su quanto spendi davvero…",
+      "bubble": "\"Ecco i miei estratti conto - posso permettermi di prendermi tre mesi di pausa dal lavoro?\"",
+      "reply": "Sì - e con un po' di margine. Ecco un piano mese per mese basato su quanto spendi davvero…",
       "fpTitle": "Solo tu puoi aprirla",
       "fpMeta": "Chiusa con la tua chiave"
     }
@@ -52,7 +53,7 @@
     "them": {
       "title": "Una tipica IA",
       "items": [
-        "Conserva i tuoi messaggi — spesso per sempre",
+        "Conserva i tuoi messaggi - spesso per sempre",
         "Li usa per addestrare il suo prossimo modello",
         "Dipendenti e collaboratori possono leggerli",
         "Possono essere consegnati se un tribunale lo chiede",
@@ -64,21 +65,21 @@
       "items": [
         "<b>Non tiene nessuna copia leggibile</b>",
         "<b>Mai usata per addestrare l'IA</b>",
-        "<b>Solo tu puoi aprire le tue chat</b> — con la tua chiave",
+        "<b>Solo tu puoi aprire le tue chat</b> - con la tua chiave",
         "<b>Nasconde i tuoi dati personali</b> prima che parta qualsiasi cosa",
-        "<b>Tenuta in Svizzera o in Europa</b> — scegli tu"
+        "<b>Tenuta in Svizzera o in Europa</b> - scegli tu"
       ]
     }
   },
   "how": {
     "eyebrow": "Come funziona",
     "title": "Qui la privacy non è un'impostazione. È come è fatta.",
-    "lead": "Quattro cose succedono ogni volta che premi invio — in automatico, senza che tu muova un dito.",
+    "lead": "Quattro cose succedono ogni volta che premi invio - in automatico, senza che tu muova un dito.",
     "cta": "Inizia ora",
     "steps": [
       {
         "title": "1 · I tuoi dati vengono nascosti",
-        "body": "Cose come la tua email, i dati bancari e il documento vengono sostituiti con segnaposti — prima che il messaggio lasci il tuo schermo."
+        "body": "Cose come la tua email, i dati bancari e il documento vengono sostituiti con segnaposti - prima che il messaggio lasci il tuo schermo."
       },
       {
         "title": "2 · Risponde un'IA approvata",
@@ -90,7 +91,7 @@
       },
       {
         "title": "4 · La chiave ce l'hai solo tu",
-        "body": "Le tue chat si aprono con la tua chiave — una chiave privata che hai solo tu. La password serve solo per accedere."
+        "body": "Le tue chat si aprono con la tua chiave - una chiave privata che hai solo tu. La password serve solo per accedere."
       }
     ]
   },
@@ -104,7 +105,7 @@
     "drag": "Trascina per confrontare",
     "letter": [
       {
-        "text": "PRATICA CLIENTE — CHIUSURA ANNUALE\n\nCiao Sofia,\n\nPrepara il bilancio di fine anno, per favore. La cliente confermerà via e-mail a "
+        "text": "PRATICA CLIENTE - CHIUSURA ANNUALE\n\nCiao Sofia,\n\nPrepara il bilancio di fine anno, per favore. La cliente confermerà via e-mail a "
       },
       {
         "v": "michael.weber@example.com",
@@ -161,7 +162,7 @@
           "text": "."
         }
       ],
-      "sent": "Inviato — dati nascosti",
+      "sent": "Inviato - dati nascosti",
       "thinking": "Cognos sta pensando…",
       "reply": [
         {
@@ -175,7 +176,7 @@
           "text": " pronta da inviare."
         }
       ],
-      "restored": "Ripristinato — visibile solo a te",
+      "restored": "Ripristinato - visibile solo a te",
       "steps": ["Nascondi i dati", "Chiedi all’IA", "Ripristina per te"]
     },
     "cta": "Inizia"
@@ -200,7 +201,7 @@
       },
       {
         "title": "Messaggi che si cancellano da soli",
-        "body": "Imposta un timer e la tua chat sparisce — dal tuo dispositivo e da noi. Sparita vuol dire sparita."
+        "body": "Imposta un timer e la tua chat sparisce - dal tuo dispositivo e da noi. Sparita vuol dire sparita."
       },
       {
         "title": "Modalità in incognito",
@@ -208,7 +209,7 @@
       },
       {
         "title": "La tua chiave, i tuoi dati",
-        "body": "Solo la tua chiave apre le tue chat. Hai dimenticato la password? Reimpostala — le tue chat restano al sicuro."
+        "body": "Solo la tua chiave apre le tue chat. Hai dimenticato la password? Reimpostala - le tue chat restano al sicuro."
       }
     ]
   },
@@ -216,14 +217,14 @@
     "eyebrow": "Prezzi semplici",
     "titleLine1": "Paghi per l'IA.",
     "titleLine2": "La privacy è inclusa.",
-    "lead": "Due modi per pagare. La stessa privacy in entrambi i casi. Non fa per te? Disdici quando vuoi — e puoi chiedere un rimborso entro 14 giorni.",
+    "lead": "Due modi per pagare. La stessa privacy in entrambi i casi. Non fa per te? Disdici quando vuoi - e puoi chiedere un rimborso entro 14 giorni.",
     "vatNote": "Prezzi in CHF, IVA aggiunta al pagamento.",
     "individuals": {
       "title": "Paghi quanto usi",
       "currency": "CHF",
       "amount": "15",
       "period": "/ mese minimo",
-      "tagline": "Paghi solo per quello che usi, da CHF 15 al mese — tutto ciò che supera quella cifra viene fatturato automaticamente. La maggior parte delle chat di tutti i giorni costa solo pochi centesimi.",
+      "tagline": "Paghi solo per quello che usi, da CHF 15 al mese - tutto ciò che supera quella cifra viene fatturato automaticamente. La maggior parte delle chat di tutti i giorni costa solo pochi centesimi.",
       "items": [
         "Ogni chat riceve <b>la privacy completa</b>",
         "Messaggi che si cancellano da soli e incognito inclusi",
@@ -238,27 +239,27 @@
       "currency": "CHF",
       "amount": "150",
       "period": "/ mese",
-      "annual": "oppure <b>CHF 1500 / anno</b> — due mesi gratis.",
+      "annual": "oppure <b>CHF 1500 / anno</b> - due mesi gratis.",
       "items": [
         "<b>Chat illimitate</b>, su ogni modello di IA che offriamo",
         "Resta in Svizzera ogni volta che vuoi",
-        "Tieni tutta la tua cronologia — sempre privata",
+        "Tieni tutta la tua cronologia - sempre privata",
         "Scarica o cancella tutto, quando vuoi"
       ],
       "cta": "Passa a Illimitato"
     },
-    "roadmap": "Team: da CHF 45/mese (minimo 3 posti) + utilizzo, una fattura — disponibile per partner pilota selezionati. ",
+    "roadmap": "Team: da CHF 45/mese (minimo 3 posti) + utilizzo, una fattura - disponibile per partner pilota selezionati. ",
     "roadmapLink": "Scrivici",
     "roadmapAfter": "."
   },
   "security": {
     "eyebrow": "In breve",
     "title": "Il controllo resta a te.",
-    "lead": "Niente scritte in piccolo. Ecco esattamente cosa facciamo — e cosa non facciamo — con le tue chat.",
+    "lead": "Niente scritte in piccolo. Ecco esattamente cosa facciamo - e cosa non facciamo - con le tue chat.",
     "items": [
       {
         "title": "Non teniamo nessuna copia leggibile",
-        "body": "Le tue chat vengono salvate sotto chiave. Non teniamo mai una versione che noi — o chiunque altro — possa leggere."
+        "body": "Le tue chat vengono salvate sotto chiave. Non teniamo mai una versione che noi - o chiunque altro - possa leggere."
       },
       {
         "title": "Mai usate per addestrare l'IA",
@@ -270,7 +271,7 @@
       },
       {
         "title": "La chiave ce l'hai solo tu",
-        "body": "Le tue chat si aprono solo con la tua chiave — e puoi cancellare tutto quando vuoi."
+        "body": "Le tue chat si aprono solo con la tua chiave - e puoi cancellare tutto quando vuoi."
       }
     ]
   },
@@ -283,14 +284,15 @@
     "business": "Per le aziende"
   },
   "footer": {
-    "desc": "IA privata. Non teniamo nessuna copia leggibile delle tue chat — la chiave ce l'hai solo tu.",
+    "desc": "IA privata. Non teniamo nessuna copia leggibile delle tue chat - la chiave ce l'hai solo tu.",
     "product": {
       "heading": "Prodotto",
       "features": "Funzioni",
       "how": "Come funziona",
       "compare": "Confronta",
       "pricing": "Piani",
-      "business": "Per le aziende"
+      "business": "Per le aziende",
+      "blog": "Blog"
     },
     "security": {
       "heading": "Privacy",
@@ -316,16 +318,16 @@
   "pages": {
     "tocLabel": "Indice",
     "privacy": {
-      "metaTitle": "Privacy — Cognos",
+      "metaTitle": "Privacy - Cognos",
       "metaDescription": "Come Cognos tratta i tuoi dati. Non conserviamo nessuna copia leggibile delle tue chat.",
       "eyebrow": "Privacy",
       "title": "Informativa sulla privacy",
-      "lead": "Come trattiamo le tue informazioni — in parole semplici e con la privacy al primo posto.",
+      "lead": "Come trattiamo le tue informazioni - in parole semplici e con la privacy al primo posto.",
       "effectiveLabel": "In vigore dal",
       "effectiveDate": "10 luglio 2026"
     },
     "terms": {
-      "metaTitle": "Termini di servizio — Cognos",
+      "metaTitle": "Termini di servizio - Cognos",
       "metaDescription": "I termini per usare Cognos.",
       "eyebrow": "Termini",
       "title": "Termini di servizio",
@@ -334,7 +336,7 @@
       "effectiveDate": "2 luglio 2026"
     },
     "refund": {
-      "metaTitle": "Politica di rimborso — Cognos",
+      "metaTitle": "Politica di rimborso - Cognos",
       "metaDescription": "Come funzionano disdetta e rimborsi su Cognos. Disdici quando vuoi; chiedi un rimborso entro 14 giorni dal pagamento.",
       "eyebrow": "Rimborsi",
       "title": "Politica di rimborso",
@@ -343,11 +345,11 @@
       "effectiveDate": "28 luglio 2026"
     },
     "subprocessors": {
-      "metaTitle": "Subincaricati — Cognos",
-      "metaDescription": "I fornitori che ci aiutano a far funzionare Cognos — cosa fa ciascuno, cosa può trattare e dove. La maggior parte tocca i dati solo in una forma che non possiamo leggere.",
+      "metaTitle": "Subincaricati - Cognos",
+      "metaDescription": "I fornitori che ci aiutano a far funzionare Cognos - cosa fa ciascuno, cosa può trattare e dove. La maggior parte tocca i dati solo in una forma che non possiamo leggere.",
       "eyebrow": "Subincaricati",
       "title": "Subincaricati",
-      "lead": "La breve lista di fornitori affidabili dietro Cognos — cosa fa ciascuno, cosa può trattare e dove.",
+      "lead": "La breve lista di fornitori affidabili dietro Cognos - cosa fa ciascuno, cosa può trattare e dove.",
       "effectiveLabel": "Ultimo aggiornamento",
       "effectiveDate": "10 luglio 2026",
       "facts": [
@@ -362,7 +364,7 @@
       ],
       "intro": [
         {
-          "p": "Far funzionare Cognos richiede una manciata di fornitori specializzati — per hosting, backup, e-mail dell’account, pagamenti, distribuzione del sito e l’IA stessa. Teniamo la lista corta di proposito."
+          "p": "Far funzionare Cognos richiede una manciata di fornitori specializzati - per hosting, backup, e-mail dell’account, pagamenti, distribuzione del sito e l’IA stessa. Teniamo la lista corta di proposito."
         },
         {
           "p": "Questa pagina nomina ogni fornitore su cui contiamo, cosa fa e cosa può trattare. Accompagna la nostra <a href=\"/it/privacy\">informativa sulla privacy</a>, che spiega il quadro d’insieme."
@@ -380,7 +382,7 @@
                 "i fornitori di hosting e backup trattano soprattutto dati archiviati che restano bloccati, oltre a dettagli tecnici come le marche temporali",
                 "il fornitore di pagamenti tratta i dettagli di pagamento e fattura",
                 "il fornitore di e-mail tratta il tuo indirizzo e-mail e le e-mail che ti inviamo",
-                "i fornitori di IA trattano il tuo messaggio e la sua risposta mentre l’IA risponde — l’unico momento in cui il tuo messaggio è leggibile, e non viene mai conservato dopo"
+                "i fornitori di IA trattano il tuo messaggio e la sua risposta mentre l’IA risponde - l’unico momento in cui il tuo messaggio è leggibile, e non viene mai conservato dopo"
               ]
             },
             {
@@ -406,7 +408,7 @@
                     "Hosting",
                     "Dati dell’account, dati archiviati bloccati, log, dettagli tecnici",
                     "Germania / UE",
-                    "No — le chat archiviate restano bloccate"
+                    "No - le chat archiviate restano bloccate"
                   ],
                   [
                     "Bunny.net",
@@ -428,7 +430,7 @@
                     "Pagamenti e abbonamenti",
                     "Dettagli di fatturazione, imposte e fatture",
                     "USA / UE / UK",
-                    "No — solo dati di fatturazione"
+                    "No - solo dati di fatturazione"
                   ],
                   [
                     "Infomaniak",
@@ -463,7 +465,7 @@
                     "Accesso Google facoltativo",
                     "Che usi Cognos, più gli identificatori dell’account Google necessari per accedere",
                     "Globale (Google)",
-                    "No — solo autenticazione; mai i contenuti delle chat né la tua chiave account"
+                    "No - solo autenticazione; mai i contenuti delle chat né la tua chiave account"
                   ]
                 ]
               }
@@ -490,7 +492,7 @@
       ]
     },
     "security": {
-      "metaTitle": "Sicurezza — Cognos",
+      "metaTitle": "Sicurezza - Cognos",
       "metaDescription": "Come Cognos mantiene private le tue chat: bloccate in una forma che non possiamo leggere, aperte solo da una chiave che possiedi tu, e trattate in Svizzera o in Europa.",
       "eyebrow": "Sicurezza",
       "title": "Sicurezza",
@@ -535,7 +537,7 @@
           "heading": "Come vengono bloccate le tue chat",
           "blocks": [
             {
-              "p": "Quando una conversazione viene salvata, viene bloccata sul tuo dispositivo prima di arrivare a noi — i messaggi, i titoli, i riassunti e gli eventuali file. Archiviamo solo la versione bloccata, che non possiamo leggere."
+              "p": "Quando una conversazione viene salvata, viene bloccata sul tuo dispositivo prima di arrivare a noi - i messaggi, i titoli, i riassunti e gli eventuali file. Archiviamo solo la versione bloccata, che non possiamo leggere."
             },
             {
               "p": "Solo la tua chiave può riaprirla, e ciò avviene sul tuo dispositivo quando accedi."
@@ -550,8 +552,8 @@
             },
             {
               "ul": [
-                "<b>La tua password</b> ti fa accedere. Se la dimentichi, puoi reimpostarla via e-mail — le tue chat restano al sicuro, perché la password non le sblocca.",
-                "<b>La tua chiave dell’account</b> è quella che apre le tue chat. Non la riceviamo né la archiviamo mai, quindi conservala in un luogo sicuro. Se la perdi, non possiamo recuperare le tue chat al posto tuo — è il prezzo del non conservare alcuna copia che possiamo leggere."
+                "<b>La tua password</b> ti fa accedere. Se la dimentichi, puoi reimpostarla via e-mail - le tue chat restano al sicuro, perché la password non le sblocca.",
+                "<b>La tua chiave dell’account</b> è quella che apre le tue chat. Non la riceviamo né la archiviamo mai, quindi conservala in un luogo sicuro. Se la perdi, non possiamo recuperare le tue chat al posto tuo - è il prezzo del non conservare alcuna copia che possiamo leggere."
               ]
             }
           ]
@@ -560,13 +562,13 @@
           "heading": "Cosa possiamo e non possiamo vedere",
           "blocks": [
             {
-              "p": "Possiamo vedere i dati necessari a far funzionare il servizio — le tue informazioni di account e fatturazione, quale modello hai usato e dettagli tecnici come le marche temporali. Mentre l’IA risponde, il tuo messaggio è leggibile affinché l’IA possa lavorarci."
+              "p": "Possiamo vedere i dati necessari a far funzionare il servizio - le tue informazioni di account e fatturazione, quale modello hai usato e dettagli tecnici come le marche temporali. Mentre l’IA risponde, il tuo messaggio è leggibile affinché l’IA possa lavorarci."
             },
             {
               "p": "Non possiamo leggere le tue chat salvate, i titoli, i riassunti, la memoria o i file dall’archivio. Restano bloccati con una chiave che non possediamo."
             },
             {
-              "p": "Prima che il tuo messaggio lasci il tuo dispositivo, Cognos nasconde anche i dati personali comuni — come e-mail, numeri di telefono, dati bancari e numeri di documenti — dietro segnaposto, così l’IA lavora con i segnaposto invece che con i valori reali."
+              "p": "Prima che il tuo messaggio lasci il tuo dispositivo, Cognos nasconde anche i dati personali comuni - come e-mail, numeri di telefono, dati bancari e numeri di documenti - dietro segnaposto, così l’IA lavora con i segnaposto invece che con i valori reali."
             }
           ]
         },
@@ -588,7 +590,7 @@
               "p": "Una breve lista di fornitori specializzati ci aiuta a ospitare l’app, inviare e-mail, incassare i pagamenti e fornire l’IA. La maggior parte tratta i dati solo in una forma che non possiamo leggere."
             },
             {
-              "p": "Consulta la lista completa — chi sono, cosa trattano e dove — nella pagina <a href=\"/it/subprocessors\">Subincaricati</a>."
+              "p": "Consulta la lista completa - chi sono, cosa trattano e dove - nella pagina <a href=\"/it/subprocessors\">Subincaricati</a>."
             }
           ]
         },
@@ -612,33 +614,33 @@
             {
               "ul": [
                 "Mentre l’IA risponde, il tuo messaggio deve essere leggibile per i nostri sistemi e per il fornitore di IA. È l’unico momento in cui non è bloccato, e non viene mai conservato dopo.",
-                "Nascondere i dati personali è automatico ma al meglio possibile — coglie le cose comuni come e-mail e numeri di carta, non tutto.",
+                "Nascondere i dati personali è automatico ma al meglio possibile - coglie le cose comuni come e-mail e numeri di carta, non tutto.",
                 "Se qualcuno raggiunge il tuo dispositivo mentre è sbloccato, può vedere ciò che vedi tu. Bloccare o disconnettersi protegge un dispositivo da cui ti sei allontanato.",
                 "Se perdi la tua chiave dell’account, le tue chat non possono essere recuperate."
               ]
             },
             {
-              "p": "Cognos è costruito per proteggere le tue chat salvate se il nostro archivio o database venisse mai compromesso — non per nascondere il tuo messaggio all’IA mentre risponde."
+              "p": "Cognos è costruito per proteggere le tue chat salvate se il nostro archivio o database venisse mai compromesso - non per nascondere il tuo messaggio all’IA mentre risponde."
             }
           ]
         }
       ]
     },
     "about": {
-      "metaTitle": "Chi siamo — Cognos",
+      "metaTitle": "Chi siamo - Cognos",
       "metaDescription": "Perché Cognos esiste, ciò a cui ci teniamo fedeli e il piccolo team svizzero che costruisce un'IA privata per architettura, non per policy.",
       "eyebrow": "Chi siamo",
       "title": "La privacy non dovrebbe essere un'impostazione. Dovrebbe essere le fondamenta.",
-      "lead": "Costruiamo un'IA privata per architettura, non per policy — perché una promessa si può infrangere e a un mandato si può rispondere, ma con la matematica non si discute.",
+      "lead": "Costruiamo un'IA privata per architettura, non per policy - perché una promessa si può infrangere e a un mandato si può rispondere, ma con la matematica non si discute.",
       "origin": {
         "eyebrow": "Perché abbiamo iniziato",
         "title": "La cosa più privata che possiedi non dovrebbe stare leggibile sul server di qualcun altro.",
         "body": [
-          "Ogni assistente IA vede i tuoi pensieri incompiuti prima di chiunque altro — le tue domande sulla salute, le tue finanze, il messaggio che stai scrivendo al tuo capo. La maggior parte di tutto ciò viene conservata, leggibile, a tempo indeterminato, su un'infrastruttura che non controlli e non puoi verificare.",
-          "Non abbiamo ritenuto necessario quel compromesso. L'idea di non conservare alcuna copia leggibile non è nuova — è così che la messaggistica privata funziona da oltre un decennio. Abbiamo costruito Cognos per portarla all'IA: le tue conversazioni vengono salvate sotto chiave e si aprono solo con una chiave che possiedi tu, così l'assistente funziona esattamente allo stesso modo — ma a noi non resta nulla da divulgare, vendere o essere costretti a consegnare.",
-          "Abbiamo sede in Svizzera, di proposito — uno dei regimi di protezione dei dati più solidi al mondo e uno stimolo utile a costruire le cose bene fin dall'inizio."
+          "Ogni assistente IA vede i tuoi pensieri incompiuti prima di chiunque altro - le tue domande sulla salute, le tue finanze, il messaggio che stai scrivendo al tuo capo. La maggior parte di tutto ciò viene conservata, leggibile, a tempo indeterminato, su un'infrastruttura che non controlli e non puoi verificare.",
+          "Non abbiamo ritenuto necessario quel compromesso. L'idea di non conservare alcuna copia leggibile non è nuova - è così che la messaggistica privata funziona da oltre un decennio. Abbiamo costruito Cognos per portarla all'IA: le tue conversazioni vengono salvate sotto chiave e si aprono solo con una chiave che possiedi tu, così l'assistente funziona esattamente allo stesso modo - ma a noi non resta nulla da divulgare, vendere o essere costretti a consegnare.",
+          "Abbiamo sede in Svizzera, di proposito - uno dei regimi di protezione dei dati più solidi al mondo e uno stimolo utile a costruire le cose bene fin dall'inizio."
         ],
-        "quote": "L'abbiamo costruito in modo che l'unica copia che conserviamo sia una che non possiamo leggere. Non è una promessa — è qualcosa che puoi verificare.",
+        "quote": "L'abbiamo costruito in modo che l'unica copia che conserviamo sia una che non possiamo leggere. Non è una promessa - è qualcosa che puoi verificare.",
         "quoteAttribution": "Principi di Cognos"
       },
       "principles": {
@@ -655,7 +657,7 @@
           },
           {
             "title": "Aperta di default",
-            "body": "Le parti che toccano i tuoi dati sono aperte all'ispezione. Fidati meno di noi — verificaci invece."
+            "body": "Le parti che toccano i tuoi dati sono aperte all'ispezione. Fidati meno di noi - verificaci invece."
           },
           {
             "title": "Nessun trucco ingannevole",
@@ -688,7 +690,7 @@
       "team": {
         "eyebrow": "Il team",
         "title": "Piccolo, e di proposito",
-        "lead": "Un gruppo ristretto che unisce crittografia, prodotto e infrastruttura di livello svizzero — abbastanza piccolo perché nessuno prenda una scorciatoia senza che si noti.",
+        "lead": "Un gruppo ristretto che unisce crittografia, prodotto e infrastruttura di livello svizzero - abbastanza piccolo perché nessuno prenda una scorciatoia senza che si noti.",
         "items": [
           {
             "title": "Crittografia",
@@ -712,13 +714,13 @@
         "titleBefore": "Vieni a vedere com'è",
         "titleEm": "davvero",
         "titleAfter": "costruito.",
-        "lead": "Oppure, se preferisci semplicemente iniziare a usarlo — va bene anche così.",
+        "lead": "Oppure, se preferisci semplicemente iniziare a usarlo - va bene anche così.",
         "primary": "Registrati oggi",
         "secondary": "Contattaci"
       }
     },
     "business": {
-      "metaTitle": "Cognos per le aziende — IA privata al lavoro",
+      "metaTitle": "Cognos per le aziende - IA privata al lavoro",
       "metaDescription": "Usa l'IA nel lavoro con i clienti senza consegnare i loro dati. Le chat sono conservate in una forma che non possiamo leggere, gestite in Svizzera o in Europa e mai usate per addestrare l'IA.",
       "eyebrow": "Cognos per le aziende",
       "title": "Un'IA che i tuoi clienti approverebbero.",
@@ -734,7 +736,7 @@
           },
           {
             "title": "Commercialisti e fiduciarie",
-            "body": "Lavora su cifre e dichiarazioni — nomi, conti e altri dati vengono nascosti prima che qualcosa venga inviato."
+            "body": "Lavora su cifre e dichiarazioni - nomi, conti e altri dati vengono nascosti prima che qualcosa venga inviato."
           },
           {
             "title": "Sanità",
@@ -750,36 +752,36 @@
         "eyebrow": "Perché Cognos al lavoro",
         "title": "La stessa IA. Senza l'esposizione.",
         "body": [
-          "La maggior parte degli strumenti di IA conserva ciò che il tuo team scrive — e può leggerlo. Ogni contratto incollato, nota di un paziente o email di un cliente diventa un rischio. Cognos funziona al contrario: non conserviamo alcuna copia leggibile delle chat del tuo team, e i dati personali vengono nascosti prima ancora che il messaggio parta.",
+          "La maggior parte degli strumenti di IA conserva ciò che il tuo team scrive - e può leggerlo. Ogni contratto incollato, nota di un paziente o email di un cliente diventa un rischio. Cognos funziona al contrario: non conserviamo alcuna copia leggibile delle chat del tuo team, e i dati personali vengono nascosti prima ancora che il messaggio parta.",
           "Tutto viene gestito in Svizzera o in Europa, sotto alcune delle leggi sulla privacy più severe al mondo. Quando un cliente chiede dove vanno i suoi dati, hai una risposta chiara."
         ],
         "points": [
-          "<b>Nessuna copia che possiamo leggere</b> — le chat di ogni persona si aprono solo con la sua chiave",
+          "<b>Nessuna copia che possiamo leggere</b> - le chat di ogni persona si aprono solo con la sua chiave",
           "<b>Dati dei clienti nascosti automaticamente</b> prima che qualcosa venga inviato",
-          "<b>Gestito in Svizzera o in Europa</b> — scegli tu",
-          "<b>Mai usato per addestrare l'IA</b> — né la nostra né quella di altri"
+          "<b>Gestito in Svizzera o in Europa</b> - scegli tu",
+          "<b>Mai usato per addestrare l'IA</b> - né la nostra né quella di altri"
         ]
       },
       "pricing": {
         "title": "Prezzo semplice per persona",
-        "body": "Il piano Illimitato costa CHF 150 per persona / mese, IVA aggiunta al pagamento — chat illimitate su tutti i modelli di IA che offriamo. Oppure paghi quanto usi, da CHF 15/mese."
+        "body": "Il piano Illimitato costa CHF 150 per persona / mese, IVA aggiunta al pagamento - chat illimitate su tutti i modelli di IA che offriamo. Oppure paghi quanto usi, da CHF 15/mese."
       },
       "team": {
         "eyebrow": "Per i team",
-        "title": "Un'organizzazione, una fattura — per partner pilota",
+        "title": "Un'organizzazione, una fattura - per partner pilota",
         "lead": "L'offerta Team è disponibile per un piccolo gruppo di partner pilota. Include:",
         "points": [
-          "<b>Un'organizzazione, una fattura</b> — da CHF 45/mese come minimo (tre posti a CHF 15 ciascuno), più quello che il tuo team usa davvero, tutto insieme",
-          "<b>Invita e rimuovi le persone quando vuoi</b> — senza bisogno di un progetto IT",
-          "<b>Gli amministratori vedono l'uso e i costi</b> — mai le chat di nessuno",
-          "<b>Il lavoro resta all'azienda</b> — i progetti appartengono all'organizzazione, le chat personali restano personali",
-          "<b>Un'uscita pulita</b> — l'accesso termina subito, e l'account personale di quella persona resta intatto"
+          "<b>Un'organizzazione, una fattura</b> - da CHF 45/mese come minimo (tre posti a CHF 15 ciascuno), più quello che il tuo team usa davvero, tutto insieme",
+          "<b>Invita e rimuovi le persone quando vuoi</b> - senza bisogno di un progetto IT",
+          "<b>Gli amministratori vedono l'uso e i costi</b> - mai le chat di nessuno",
+          "<b>Il lavoro resta all'azienda</b> - i progetti appartengono all'organizzazione, le chat personali restano personali",
+          "<b>Un'uscita pulita</b> - l'accesso termina subito, e l'account personale di quella persona resta intatto"
         ],
         "footnote": "L'accesso unico non è incluso. Le politiche di amministrazione sono già disponibili. Raccontaci del tuo team qui sotto; seguiamo personalmente i partner pilota selezionati."
       },
       "form": {
         "heading": "Chiedici quello che vuoi",
-        "note": "Raccontaci qualcosa del tuo team e ti rispondiamo entro una settimana lavorativa. Questo modulo apre la tua app di posta — nulla passa da questo sito né vi viene salvato.",
+        "note": "Raccontaci qualcosa del tuo team e ti rispondiamo entro una settimana lavorativa. Questo modulo apre la tua app di posta - nulla passa da questo sito né vi viene salvato.",
         "name": "Nome",
         "email": "Email di lavoro",
         "company": "Azienda",
@@ -791,11 +793,11 @@
       }
     },
     "contact": {
-      "metaTitle": "Contatti — Cognos",
-      "metaDescription": "Domande sulla cifratura, un deployment aziendale o qualcosa che hai trovato nel protocollo — ecco come raggiungere il team di Cognos.",
+      "metaTitle": "Contatti - Cognos",
+      "metaDescription": "Domande sulla cifratura, un deployment aziendale o qualcosa che hai trovato nel protocollo - ecco come raggiungere il team di Cognos.",
       "eyebrow": "Contatti",
       "title": "Parla con una persona, non con una coda di ticket.",
-      "lead": "Che sia una domanda sulla cifratura, un deployment aziendale o qualcosa che hai trovato nel protocollo — ecco come raggiungerci.",
+      "lead": "Che sia una domanda sulla cifratura, un deployment aziendale o qualcosa che hai trovato nel protocollo - ecco come raggiungerci.",
       "channels": [
         {
           "title": "Supporto generale",
@@ -807,7 +809,7 @@
         },
         {
           "title": "Segnalazioni di sicurezza",
-          "body": "Hai trovato una vulnerabilità? Dillo prima a noi — le segnalazioni arrivano direttamente a chi può correggerle."
+          "body": "Hai trovato una vulnerabilità? Dillo prima a noi - le segnalazioni arrivano direttamente a chi può correggerle."
         },
         {
           "title": "Stampa",
@@ -829,7 +831,7 @@
       },
       "form": {
         "heading": "Invia un messaggio",
-        "note": "Questo modulo apre la tua app di posta — nulla passa da questo sito né vi viene salvato.",
+        "note": "Questo modulo apre la tua app di posta - nulla passa da questo sito né vi viene salvato.",
         "name": "Nome",
         "email": "E-mail",
         "topic": "Argomento",
@@ -839,16 +841,32 @@
       }
     },
     "notFound": {
-      "metaTitle": "Pagina non trovata — Cognos",
+      "metaTitle": "Pagina non trovata - Cognos",
       "metaDescription": "Questa pagina non esiste. Torna alla pagina iniziale di Cognos.",
       "eyebrow": "404",
       "title": "Questa pagina non esiste.",
-      "lead": "Il link potrebbe essere vecchio, o l'indirizzo scritto male. Non è andato perso nulla — qui non c'è mai stato niente.",
+      "lead": "Il link potrebbe essere vecchio, o l'indirizzo scritto male. Non è andato perso nulla - qui non c'è mai stato niente.",
       "cta": "Torna alla pagina iniziale"
     }
   },
   "a11y": {
-    "skipToContent": "Vai al contenuto principale"
+    "skipToContent": "Vai al contenuto principale",
+    "media": {
+      "viewer": "Visualizzatore di immagini",
+      "close": "Chiudi il visualizzatore di immagini",
+      "previousImage": "Immagine precedente",
+      "nextImage": "Immagine successiva",
+      "counter": "{{ current }} di {{ total }}",
+      "enlarge": "Ingrandisci l'immagine: {{ alt }}",
+      "carousel": "carosello",
+      "carouselLabel": "Immagini",
+      "slide": "diapositiva",
+      "slideCounter": "{{ current }} di {{ total }}",
+      "slideStatus": "Immagine {{ current }} di {{ total }}",
+      "goToSlide": "Mostra l'immagine {{ current }} di {{ total }}",
+      "previousSlide": "Diapositiva precedente",
+      "nextSlide": "Diapositiva successiva"
+    }
   },
   "docs": {
     "meta": {
@@ -876,10 +894,10 @@
       "organisations": "Organizzazioni"
     },
     "home": {
-      "metaTitle": "Assistenza e documentazione — Cognos",
+      "metaTitle": "Assistenza e documentazione - Cognos",
       "metaDescription": "Scopri come usare Cognos: crea un account, salva la tua Chiave dell'account, chatta in privato e gestisci i tuoi dati. Guide chiare, passo dopo passo.",
       "title": "Assistenza e documentazione di Cognos",
-      "lead": "Tutto ciò che ti serve per iniziare e chattare in privato — dal tuo primo account ai dettagli su come i tuoi dati restano solo tuoi.",
+      "lead": "Tutto ciò che ti serve per iniziare e chattare in privato - dal tuo primo account ai dettagli su come i tuoi dati restano solo tuoi.",
       "sections": [
         {
           "heading": "Nuovo qui? Inizia da qui",
@@ -958,10 +976,10 @@
     "pages": {
       "what-is-cognos": {
         "navTitle": "Cos'è Cognos?",
-        "metaTitle": "Cos'è Cognos? — Documentazione Cognos",
+        "metaTitle": "Cos'è Cognos? - Documentazione Cognos",
         "metaDescription": "Cognos è una chat IA che conserva le tue conversazioni salvate in una forma che non possiamo leggere. Ecco come funziona, in parole semplici.",
         "title": "Cos'è Cognos?",
-        "lead": "Cognos è una chat IA che conserva le tue conversazioni salvate in una forma che non possiamo leggere — solo tu puoi sbloccarle.",
+        "lead": "Cognos è una chat IA che conserva le tue conversazioni salvate in una forma che non possiamo leggere - solo tu puoi sbloccarle.",
         "time": "3 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -969,7 +987,7 @@
             "heading": "La versione breve",
             "blocks": [
               {
-                "p": "Chatti con i principali modelli di IA e i tuoi messaggi salvati vengono chiusi a chiave sui nostri server in una forma che non possiamo leggere. Vengono sbloccati solo sul tuo dispositivo, con una chiave che solo tu possiedi — la tua <a href=\"/docs/account-key\">Chiave dell'account</a>."
+                "p": "Chatti con i principali modelli di IA e i tuoi messaggi salvati vengono chiusi a chiave sui nostri server in una forma che non possiamo leggere. Vengono sbloccati solo sul tuo dispositivo, con una chiave che solo tu possiedi - la tua <a href=\"/docs/account-key\">Chiave dell'account</a>."
               },
               {
                 "p": "Tre parti lavorano insieme, e a ciascuna viene affidato il meno possibile:"
@@ -991,7 +1009,7 @@
                 "figure": {
                   "src": "/docs-media/chat-exchange.png",
                   "alt": "Una conversazione Cognos: una domanda del titolare dell'account e la risposta dell'assistente.",
-                  "caption": "Una conversazione in Cognos — salvata e crittografata man mano che procedi."
+                  "caption": "Una conversazione in Cognos - salvata e crittografata man mano che procedi."
                 }
               }
             ]
@@ -1002,7 +1020,7 @@
               {
                 "ul": [
                   "<b>Non possiamo leggere</b> il contenuto delle tue conversazioni salvate, degli allegati o dei segnalibri.",
-                  "<b>Possiamo vedere</b> alcuni metadati necessari per far funzionare il servizio — quando un messaggio è stato salvato e quanto è costata una richiesta.",
+                  "<b>Possiamo vedere</b> alcuni metadati necessari per far funzionare il servizio - quando un messaggio è stato salvato e quanto è costata una richiesta.",
                   "<b>Il fornitore di IA</b> vede davvero il tuo messaggio mentre lo elabora. Questo vale per qualsiasi assistente IA; Cognos limita dove questo avviene con i <a href=\"/docs/privacy-tiers\">livelli di privacy</a>."
                 ]
               },
@@ -1010,7 +1028,7 @@
                 "note": {
                   "variant": "info",
                   "title": "Archiviazione privata, non chat invisibile",
-                  "body": "\"Privata\" significa che non ne conserviamo una copia che possiamo leggere. Non significa che il tuo messaggio sia nascosto all'IA che lo elabora — non può rispondere a ciò che non vede."
+                  "body": "\"Privata\" significa che non ne conserviamo una copia che possiamo leggere. Non significa che il tuo messaggio sia nascosto all'IA che lo elabora - non può rispondere a ciò che non vede."
                 }
               }
             ]
@@ -1047,10 +1065,10 @@
       },
       "create-account": {
         "navTitle": "Crea il tuo account",
-        "metaTitle": "Crea il tuo account — Documentazione Cognos",
+        "metaTitle": "Crea il tuo account - Documentazione Cognos",
         "metaDescription": "Registrati su Cognos con email e password o Continua con Google, poi salva la tua Chiave dell'account.",
         "title": "Crea il tuo account",
-        "lead": "Crea un account con email e password, o scegli Continua con Google — poi salva la tua Chiave dell'account. Il passaggio della Chiave dell'account è lo stesso in entrambi i casi.",
+        "lead": "Crea un account con email e password, o scegli Continua con Google - poi salva la tua Chiave dell'account. Il passaggio della Chiave dell'account è lo stesso in entrambi i casi.",
         "time": "2 min",
         "updated": "26 luglio 2026",
         "needs": [
@@ -1094,7 +1112,7 @@
                   },
                   {
                     "title": "Inserisci la tua email e una password",
-                    "body": "Usa almeno 12 caratteri. La tua password serve solo per accedere — non sblocca mai i tuoi dati, e potrai reimpostarla in seguito via email. Oppure salta questo passaggio e scegli <b>Continua con Google</b>."
+                    "body": "Usa almeno 12 caratteri. La tua password serve solo per accedere - non sblocca mai i tuoi dati, e potrai reimpostarla in seguito via email. Oppure salta questo passaggio e scegli <b>Continua con Google</b>."
                   },
                   {
                     "title": "Seleziona Crea account",
@@ -1115,7 +1133,7 @@
             "heading": "Salva la tua Chiave dell'account",
             "blocks": [
               {
-                "p": "Subito dopo la registrazione, Cognos mostra una schermata intitolata <b>Proteggi il tuo backup crittografato</b>. È qui che salvi la tua <a href=\"/docs/account-key\">Chiave dell'account</a> come <a href=\"/docs/emergency-kit\">kit di emergenza</a> — non saltare questo passaggio."
+                "p": "Subito dopo la registrazione, Cognos mostra una schermata intitolata <b>Proteggi il tuo backup crittografato</b>. È qui che salvi la tua <a href=\"/docs/account-key\">Chiave dell'account</a> come <a href=\"/docs/emergency-kit\">kit di emergenza</a> - non saltare questo passaggio."
               },
               {
                 "note": {
@@ -1133,7 +1151,7 @@
                 "p": "Se ti sei registrato con email e password, Cognos ti invia un'email con un link di conferma. Puoi leggere e gestire il tuo account prima di confermare, ma non potrai inviare messaggi all'IA finché la tua email non sarà verificata."
               },
               {
-                "p": "Se hai scelto <b>Continua con Google</b>, la tua email è già verificata — non serve un link di conferma Cognos."
+                "p": "Se hai scelto <b>Continua con Google</b>, la tua email è già verificata - non serve un link di conferma Cognos."
               },
               {
                 "p": "Una volta verificata, il tuo <a href=\"/docs/trial-credit\">credito di prova</a> è pronto e puoi iniziare la <a href=\"/docs/your-first-chat\">tua prima chat</a>."
@@ -1145,7 +1163,7 @@
       },
       "account-key": {
         "navTitle": "La tua Chiave dell'account",
-        "metaTitle": "La tua Chiave dell'account — Documentazione Cognos",
+        "metaTitle": "La tua Chiave dell'account - Documentazione Cognos",
         "metaDescription": "La Chiave dell'account è l'unico segreto che sblocca i tuoi dati crittografati in Cognos. Cos'è, in cosa differisce dalla password e perché non può essere reimpostata.",
         "title": "La tua Chiave dell'account",
         "lead": "La Chiave dell'account è l'unico segreto che sblocca i tuoi dati crittografati. Cognos non la conserva mai, quindi conservala con cura.",
@@ -1160,7 +1178,7 @@
               },
               {
                 "ul": [
-                  "Generata una sola volta, alla registrazione — ce n'è sempre e solo una.",
+                  "Generata una sola volta, alla registrazione - ce n'è sempre e solo una.",
                   "Mostrata una sola volta, nel <a href=\"/docs/emergency-kit\">kit di emergenza</a>.",
                   "Mai conservata da Cognos in una forma che possiamo leggere.",
                   "Necessaria per <a href=\"/docs/unlock-and-lock\">sbloccare</a> i tuoi dati su un nuovo dispositivo."
@@ -1179,8 +1197,8 @@
                   "head": ["", "Password dell'account", "Chiave dell'account"],
                   "rows": [
                     ["Compito", "Ti fa accedere", "Sblocca i tuoi dati"],
-                    ["Reimpostabile via email?", "Sì", "No — mai"],
-                    ["Riguarda le tue chat?", "No", "Sì — è la chiave"],
+                    ["Reimpostabile via email?", "Sì", "No - mai"],
+                    ["Riguarda le tue chat?", "No", "Sì - è la chiave"],
                     [
                       "Se la perdi",
                       "<a href=\"/docs/resetting-your-password\">Reimpostala</a> e continua",
@@ -1198,11 +1216,11 @@
                 "note": {
                   "variant": "security",
                   "title": "Non esiste un'opzione \"Chiave dell'account dimenticata\"",
-                  "body": "La Chiave dell'account è fissa per tutta la vita del tuo account — non esiste modifica o reimpostazione, e l'assistenza non può recuperarla. Se la perdi, puoi comunque accedere ed <a href=\"/docs/deleting-your-account\">eliminare il tuo account</a>, ma le tue chat esistenti restano chiuse per sempre."
+                  "body": "La Chiave dell'account è fissa per tutta la vita del tuo account - non esiste modifica o reimpostazione, e l'assistenza non può recuperarla. Se la perdi, puoi comunque accedere ed <a href=\"/docs/deleting-your-account\">eliminare il tuo account</a>, ma le tue chat esistenti restano chiuse per sempre."
                 }
               },
               {
-                "p": "Salvala durante la registrazione — quello è l'unico momento affidabile. In quella stessa prima sessione puoi ancora riaprirla da <a href=\"https://app.cognos.io/account/security\">Sicurezza e chiavi</a>, ma una volta terminata la sessione Cognos non può più davvero mostrartela di nuovo. Quindi non considerarlo un modo per rimandare — salva subito il kit di emergenza."
+                "p": "Salvala durante la registrazione - quello è l'unico momento affidabile. In quella stessa prima sessione puoi ancora riaprirla da <a href=\"https://app.cognos.io/account/security\">Sicurezza e chiavi</a>, ma una volta terminata la sessione Cognos non può più davvero mostrartela di nuovo. Quindi non considerarlo un modo per rimandare - salva subito il kit di emergenza."
               },
               {
                 "figure": {
@@ -1220,7 +1238,7 @@
                 "ul": [
                   "Conserva il <a href=\"/docs/emergency-kit\">kit di emergenza</a> in un gestore di password o su un'unità crittografata.",
                   "Non incollarla in una nota condivisa, una chat o un documento cloud non protetto.",
-                  "Chiunque abbia la tua Chiave dell'account può decifrare i tuoi dati — trattala come la chiave di una cassaforte."
+                  "Chiunque abbia la tua Chiave dell'account può decifrare i tuoi dati - trattala come la chiave di una cassaforte."
                 ]
               }
             ]
@@ -1230,7 +1248,7 @@
       },
       "emergency-kit": {
         "navTitle": "Kit di emergenza",
-        "metaTitle": "Il kit di emergenza — Documentazione Cognos",
+        "metaTitle": "Il kit di emergenza - Documentazione Cognos",
         "metaDescription": "Il kit di emergenza è il file di testo che contiene la tua Chiave dell'account Cognos. Come salvarlo, dove conservarlo e cosa succede se lo perdi.",
         "title": "Il kit di emergenza",
         "lead": "Il kit di emergenza è il file di testo che contiene la tua Chiave dell'account. Salvalo in un posto sicuro nel momento in cui ti registri.",
@@ -1246,7 +1264,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Non è un segreto separato — è solo il formato con cui ricevi la tua Chiave dell'account."
+                  "body": "Non è un segreto separato - è solo il formato con cui ricevi la tua Chiave dell'account."
                 }
               }
             ]
@@ -1274,7 +1292,7 @@
                 "figure": {
                   "src": "/docs-media/emergency-kit-dialog.png",
                   "alt": "La schermata Proteggi il tuo backup crittografato con la Chiave dell'account, i pulsanti Copia e Scarica e una casella di conferma.",
-                  "caption": "Salva il kit di emergenza prima di continuare — questa schermata appare una sola volta."
+                  "caption": "Salva il kit di emergenza prima di continuare - questa schermata appare una sola volta."
                 }
               }
             ]
@@ -1289,7 +1307,7 @@
                 }
               },
               {
-                "p": "Evita unità condivise, email a te stesso senza protezione o note cloud non protette — chiunque legga il file può sbloccare i tuoi dati."
+                "p": "Evita unità condivise, email a te stesso senza protezione o note cloud non protette - chiunque legga il file può sbloccare i tuoi dati."
               }
             ]
           },
@@ -1299,7 +1317,7 @@
               {
                 "note": {
                   "variant": "security",
-                  "body": "Senza la Chiave dell'account, le tue chat salvate non possono essere recuperate — né da te, né da Cognos. Non c'è reimpostazione. Consulta <a href=\"/docs/account-key\">La tua Chiave dell'account</a> per capire perché."
+                  "body": "Senza la Chiave dell'account, le tue chat salvate non possono essere recuperate - né da te, né da Cognos. Non c'è reimpostazione. Consulta <a href=\"/docs/account-key\">La tua Chiave dell'account</a> per capire perché."
                 }
               }
             ]
@@ -1309,7 +1327,7 @@
       },
       "signing-in": {
         "navTitle": "Accesso",
-        "metaTitle": "Accesso — Documentazione Cognos",
+        "metaTitle": "Accesso - Documentazione Cognos",
         "metaDescription": "Accedi a Cognos con email e password o Continua con Google. Su un nuovo dispositivo dovrai anche inserire la tua Chiave dell'account.",
         "title": "Accesso",
         "lead": "Accedi con la tua email e password, o scegli Continua con Google. Su un nuovo dispositivo, dovrai anche inserire la tua Chiave dell'account per sbloccare i tuoi dati.",
@@ -1323,7 +1341,7 @@
                 "p": "Nella <a href=\"https://app.cognos.io/auth/login\">pagina di accesso</a>, scegli <b>Continua con Google</b>. Dopo che Google conferma chi sei, Cognos ti connette."
               },
               {
-                "p": "Se è la prima volta, passi comunque per i passaggi della Chiave dell'account e del kit di emergenza — come con la registrazione via email."
+                "p": "Se è la prima volta, passi comunque per i passaggi della Chiave dell'account e del kit di emergenza - come con la registrazione via email."
               },
               {
                 "note": {
@@ -1388,10 +1406,10 @@
       },
       "unlock-and-lock": {
         "navTitle": "Sblocco e blocco",
-        "metaTitle": "Sblocco e blocco — Documentazione Cognos",
+        "metaTitle": "Sblocco e blocco - Documentazione Cognos",
         "metaDescription": "Sblocca apre i tuoi dati crittografati su un dispositivo con la tua Chiave dell'account. Blocca li nasconde di nuovo senza disconnetterti. In cosa differiscono dall'uscita.",
         "title": "Sblocco e blocco",
-        "lead": "Sbloccare apre i tuoi dati su un dispositivo con la tua Chiave dell'account. Bloccare li nasconde di nuovo — senza disconnetterti.",
+        "lead": "Sbloccare apre i tuoi dati su un dispositivo con la tua Chiave dell'account. Bloccare li nasconde di nuovo - senza disconnetterti.",
         "time": "3 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -1404,7 +1422,7 @@
               {
                 "note": {
                   "variant": "tip",
-                  "body": "Lo sblocco esegue un lavoro crittografico deliberato, quindi può richiedere un secondo o due su un dispositivo più datato — è normale, non un blocco del sistema."
+                  "body": "Lo sblocco esegue un lavoro crittografico deliberato, quindi può richiedere un secondo o due su un dispositivo più datato - è normale, non un blocco del sistema."
                 }
               },
               {
@@ -1420,7 +1438,7 @@
             "heading": "Blocco",
             "blocks": [
               {
-                "p": "Seleziona <b>Blocca</b> nella barra laterale per cancellare i tuoi dati sbloccati da questo dispositivo — utile su un computer condiviso o pubblico. Resti connesso; per continuare, sblocca di nuovo con la tua Chiave dell'account. Non serve la password."
+                "p": "Seleziona <b>Blocca</b> nella barra laterale per cancellare i tuoi dati sbloccati da questo dispositivo - utile su un computer condiviso o pubblico. Resti connesso; per continuare, sblocca di nuovo con la tua Chiave dell'account. Non serve la password."
               }
             ]
           },
@@ -1440,7 +1458,7 @@
                     [
                       "Influisce su altri dispositivi?",
                       "No",
-                      "Sì — disconnette anche quelli"
+                      "Sì - disconnette anche quelli"
                     ]
                   ]
                 }
@@ -1455,7 +1473,7 @@
       },
       "your-first-chat": {
         "navTitle": "La tua prima chat",
-        "metaTitle": "La tua prima chat — Documentazione Cognos",
+        "metaTitle": "La tua prima chat - Documentazione Cognos",
         "metaDescription": "Invia il tuo primo messaggio in Cognos, scegli un modello e scopri come la tua conversazione viene salvata e crittografata automaticamente.",
         "title": "La tua prima chat",
         "lead": "Scrivi un messaggio, scegli un modello se vuoi, e invia. La tua conversazione viene salvata e crittografata automaticamente.",
@@ -1506,7 +1524,7 @@
                 "figure": {
                   "src": "/docs-media/chat-exchange.png",
                   "alt": "Un messaggio inviato e la risposta dell'assistente in una conversazione.",
-                  "caption": "Il tuo messaggio e la risposta — salvati e crittografati automaticamente."
+                  "caption": "Il tuo messaggio e la risposta - salvati e crittografati automaticamente."
                 }
               }
             ]
@@ -1515,7 +1533,7 @@
             "heading": "Prova un modello diverso",
             "blocks": [
               {
-                "p": "Sopra la casella del messaggio puoi <a href=\"/docs/choosing-a-model\">scegliere un modello diverso</a> — alcuni sono più veloci, altri più bravi nel ragionamento, altri ancora possono cercare sul web o creare immagini."
+                "p": "Sopra la casella del messaggio puoi <a href=\"/docs/choosing-a-model\">scegliere un modello diverso</a> - alcuni sono più veloci, altri più bravi nel ragionamento, altri ancora possono cercare sul web o creare immagini."
               }
             ]
           }
@@ -1524,10 +1542,10 @@
       },
       "choosing-a-model": {
         "navTitle": "Scegliere un modello",
-        "metaTitle": "Scegliere un modello — Documentazione Cognos",
-        "metaDescription": "Cognos offre molti modelli di IA. Scegline uno per nome o filtra in base a ciò di cui hai bisogno — velocità, ragionamento, ricerca web o immagini.",
+        "metaTitle": "Scegliere un modello - Documentazione Cognos",
+        "metaDescription": "Cognos offre molti modelli di IA. Scegline uno per nome o filtra in base a ciò di cui hai bisogno - velocità, ragionamento, ricerca web o immagini.",
         "title": "Scegliere un modello",
-        "lead": "Cognos offre molti modelli. Scegline uno per nome, oppure filtra in base a ciò di cui hai bisogno — velocità, ragionamento, ricerca web o immagini.",
+        "lead": "Cognos offre molti modelli. Scegline uno per nome, oppure filtra in base a ciò di cui hai bisogno - velocità, ragionamento, ricerca web o immagini.",
         "time": "3 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -1563,7 +1581,7 @@
             "heading": "Modello e fornitore a confronto",
             "blocks": [
               {
-                "p": "Il <b>modello</b> è la scelta che fai. Il <b>fornitore</b> è l'azienda che lo esegue davvero e vede il tuo messaggio mentre risponde. Cognos registra il fornitore su ogni risposta — puoi verificarlo in qualsiasi momento nei <a href=\"/docs/your-privacy\">dettagli sulla privacy per singola risposta</a>."
+                "p": "Il <b>modello</b> è la scelta che fai. Il <b>fornitore</b> è l'azienda che lo esegue davvero e vede il tuo messaggio mentre risponde. Cognos registra il fornitore su ogni risposta - puoi verificarlo in qualsiasi momento nei <a href=\"/docs/your-privacy\">dettagli sulla privacy per singola risposta</a>."
               }
             ]
           },
@@ -1572,7 +1590,7 @@
             "blocks": [
               {
                 "ul": [
-                  "Il selettore attiva solo ciò che un modello supporta davvero — un modello solo immagini non può sostenere una chat testuale, per esempio.",
+                  "Il selettore attiva solo ciò che un modello supporta davvero - un modello solo immagini non può sostenere una chat testuale, per esempio.",
                   "La <a href=\"/docs/web-search\">ricerca web</a> viene semplicemente saltata sui modelli che non la supportano, invece di bloccare il tuo messaggio.",
                   "Il tuo <a href=\"/docs/privacy-tiers\">livello di privacy</a> limita quali modelli puoi usare. I modelli sopra il tuo livello appaiono in grigio così puoi vedere cosa sbloccherebbe un livello superiore."
                 ]
@@ -1584,10 +1602,10 @@
       },
       "privacy-tiers": {
         "navTitle": "Livelli di privacy",
-        "metaTitle": "Livelli di privacy — Documentazione Cognos",
-        "metaDescription": "Il tuo livello di privacy stabilisce quanto lontano possono viaggiare i tuoi messaggi per ottenere una risposta. Cambia quali modelli puoi usare — e nient'altro.",
+        "metaTitle": "Livelli di privacy - Documentazione Cognos",
+        "metaDescription": "Il tuo livello di privacy stabilisce quanto lontano possono viaggiare i tuoi messaggi per ottenere una risposta. Cambia quali modelli puoi usare - e nient'altro.",
         "title": "Livelli di privacy",
-        "lead": "Il tuo livello di privacy stabilisce la distanza massima che i tuoi messaggi possono percorrere per ottenere una risposta. Cambia quali modelli puoi usare — e nient'altro.",
+        "lead": "Il tuo livello di privacy stabilisce la distanza massima che i tuoi messaggi possono percorrere per ottenere una risposta. Cambia quali modelli puoi usare - e nient'altro.",
         "time": "3 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -1600,7 +1618,7 @@
                   "rows": [
                     [
                       "<b>Solo Svizzera</b>",
-                      "Solo su suolo svizzero — l'opzione più rigorosa."
+                      "Solo su suolo svizzero - l'opzione più rigorosa."
                     ],
                     [
                       "<b>Europa + Svizzera + Regno Unito</b>",
@@ -1608,7 +1626,7 @@
                     ],
                     [
                       "<b>Globale</b>",
-                      "In data center selezionati in tutto il mondo — sblocca ogni modello."
+                      "In data center selezionati in tutto il mondo - sblocca ogni modello."
                     ]
                   ]
                 }
@@ -1645,7 +1663,7 @@
               {
                 "ul": [
                   "<b>Cambia:</b> quali modelli sei autorizzato a usare.",
-                  "<b>Non cambia:</b> come vengono conservate le tue chat — sono sempre custodite in una forma che non possiamo leggere, qualunque livello tu scelga."
+                  "<b>Non cambia:</b> come vengono conservate le tue chat - sono sempre custodite in una forma che non possiamo leggere, qualunque livello tu scelga."
                 ]
               },
               {
@@ -1661,10 +1679,10 @@
       },
       "personas": {
         "navTitle": "Persona",
-        "metaTitle": "Persona — Documentazione Cognos",
-        "metaDescription": "Una persona è un insieme di istruzioni riutilizzabile che modella il modo in cui l'IA risponde — un tono, un ruolo, un formato. Usane una integrata o creane una tua.",
+        "metaTitle": "Persona - Documentazione Cognos",
+        "metaDescription": "Una persona è un insieme di istruzioni riutilizzabile che modella il modo in cui l'IA risponde - un tono, un ruolo, un formato. Usane una integrata o creane una tua.",
         "title": "Persona",
-        "lead": "Una persona è un insieme di istruzioni riutilizzabile che modella il modo in cui l'IA risponde — un tono, un ruolo o un formato. Non è un bot separato.",
+        "lead": "Una persona è un insieme di istruzioni riutilizzabile che modella il modo in cui l'IA risponde - un tono, un ruolo o un formato. Non è un bot separato.",
         "time": "3 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -1711,7 +1729,7 @@
                 "ul": [
                   "Le tue persona personalizzate sono private e <a href=\"/docs/your-privacy\">crittografate</a>.",
                   "La tua persona predefinita ti segue su tutti i dispositivi.",
-                  "Se una persona viene eliminata o non può essere caricata, la chat funziona comunque — semplicemente torna a nessuna persona.",
+                  "Se una persona viene eliminata o non può essere caricata, la chat funziona comunque - semplicemente torna a nessuna persona.",
                   "Le persona sono personali per il tuo account; non esiste una persona condivisa."
                 ]
               }
@@ -1722,10 +1740,10 @@
       },
       "reasoning": {
         "navTitle": "Ragionamento",
-        "metaTitle": "Ragionamento — Documentazione Cognos",
+        "metaTitle": "Ragionamento - Documentazione Cognos",
         "metaDescription": "Alcuni modelli possono mostrare il loro ragionamento prima della risposta finale. Scopri come vedere il ragionamento e impostare quanto impegno dedica un modello.",
         "title": "Ragionamento",
-        "lead": "Alcuni modelli possono mostrare il loro ragionamento prima della risposta finale — e tu controlli quanto impegno vi dedicano.",
+        "lead": "Alcuni modelli possono mostrare il loro ragionamento prima della risposta finale - e tu controlli quanto impegno vi dedicano.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -1758,7 +1776,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Il ragionamento è un aiuto alla trasparenza, non una prova — può essere incompleto o ripetere semplicemente la tua richiesta. Giudica la risposta, non il ragionamento."
+                  "body": "Il ragionamento è un aiuto alla trasparenza, non una prova - può essere incompleto o ripetere semplicemente la tua richiesta. Giudica la risposta, non il ragionamento."
                 }
               },
               {
@@ -1774,7 +1792,7 @@
       },
       "web-search": {
         "navTitle": "Ricerca web",
-        "metaTitle": "Ricerca web — Documentazione Cognos",
+        "metaTitle": "Ricerca web - Documentazione Cognos",
         "metaDescription": "Su alcuni modelli, l'IA può cercare informazioni sul web mentre risponde e citare le sue fonti. Come attivarla e quanto costa.",
         "title": "Ricerca web",
         "lead": "Su alcuni modelli, l'IA può cercare informazioni sul web mentre risponde, e citarne le fonti.",
@@ -1803,13 +1821,13 @@
                 "ul": [
                   "La tua domanda può essere inviata a un motore di ricerca dal fornitore di IA per trovare fonti.",
                   "I risultati e le citazioni sono <a href=\"/docs/your-privacy\">crittografati</a> come il resto del tuo messaggio, e mostrati in linea come fonti selezionabili.",
-                  "Ogni ricerca eseguita aggiunge una piccola tariffa fissa oltre al costo abituale — consulta <a href=\"/docs/plans-and-pricing\">piani e prezzi</a>."
+                  "Ogni ricerca eseguita aggiunge una piccola tariffa fissa oltre al costo abituale - consulta <a href=\"/docs/plans-and-pricing\">piani e prezzi</a>."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Cognos non esegue direttamente la ricerca — lo fa il fornitore di IA. La ricerca web funziona solo sui modelli che la supportano (attualmente alcuni ospitati in Europa); il tuo <a href=\"/docs/privacy-tiers\">livello di privacy</a> non cambia questo."
+                  "body": "Cognos non esegue direttamente la ricerca - lo fa il fornitore di IA. La ricerca web funziona solo sui modelli che la supportano (attualmente alcuni ospitati in Europa); il tuo <a href=\"/docs/privacy-tiers\">livello di privacy</a> non cambia questo."
                 }
               }
             ]
@@ -1819,8 +1837,8 @@
       },
       "temporary-conversations": {
         "navTitle": "Conversazioni temporanee",
-        "metaTitle": "Conversazioni temporanee — Documentazione Cognos",
-        "metaDescription": "Una conversazione temporanea non viene mai salvata — i messaggi restano nel tuo browser finché non lo chiudi. Quando usarne una e in cosa differisce dai messaggi che scompaiono.",
+        "metaTitle": "Conversazioni temporanee - Documentazione Cognos",
+        "metaDescription": "Una conversazione temporanea non viene mai salvata - i messaggi restano nel tuo browser finché non lo chiudi. Quando usarne una e in cosa differisce dai messaggi che scompaiono.",
         "title": "Conversazioni temporanee",
         "lead": "Una conversazione temporanea non viene mai salvata. I messaggi restano nel tuo browser finché non lo chiudi.",
         "time": "2 min",
@@ -1830,7 +1848,7 @@
             "heading": "Avviane una",
             "blocks": [
               {
-                "p": "Su una chat nuova e non salvata, attiva l'interruttore <b>Chat temporanea</b>. Nulla viene scritto come Conversazione salvata — i messaggi vivono solo in questo browser."
+                "p": "Su una chat nuova e non salvata, attiva l'interruttore <b>Chat temporanea</b>. Nulla viene scritto come Conversazione salvata - i messaggi vivono solo in questo browser."
               },
               {
                 "figure": {
@@ -1886,7 +1904,7 @@
       },
       "disappearing-messages": {
         "navTitle": "Messaggi che scompaiono ed eliminazione automatica",
-        "metaTitle": "Messaggi che scompaiono ed eliminazione automatica — Documentazione Cognos",
+        "metaTitle": "Messaggi che scompaiono ed eliminazione automatica - Documentazione Cognos",
         "metaDescription": "Imposta i messaggi in modo che scadano dopo un timer, oppure un'intera conversazione perché si elimini automaticamente dopo un periodo di inattività. Entrambe le azioni sono permanenti.",
         "title": "Messaggi che si eliminano da soli",
         "lead": "Imposta i messaggi in modo che scadano dopo un timer, oppure un'intera conversazione perché si elimini da sola dopo un periodo di inattività.",
@@ -1921,7 +1939,7 @@
                 "p": "In una chat salvata, apri il menu <b>⋯</b> e scegli <b>Eliminazione automatica</b> per rimuovere l'intera conversazione dopo un periodo di inattività (predefinito dell'account, Mai, 7 giorni o 30 giorni). Imposta il valore predefinito a livello di account in <a href=\"https://app.cognos.io/account\">Account</a>."
               },
               {
-                "p": "Il conto alla rovescia si basa sull'ultima attività della chat — restringerlo in seguito non eliminerà retroattivamente una chat vecchia ma usata di recente."
+                "p": "Il conto alla rovescia si basa sull'ultima attività della chat - restringerlo in seguito non eliminerà retroattivamente una chat vecchia ma usata di recente."
               }
             ]
           },
@@ -1931,7 +1949,7 @@
               {
                 "note": {
                   "variant": "security",
-                  "body": "I contenuti eliminati non possono essere recuperati — né da te, né da Cognos. Non c'è backup e non c'è annullamento."
+                  "body": "I contenuti eliminati non possono essere recuperati - né da te, né da Cognos. Non c'è backup e non c'è annullamento."
                 }
               }
             ]
@@ -1941,10 +1959,10 @@
       },
       "redaction": {
         "navTitle": "Oscuramento",
-        "metaTitle": "Oscuramento: nascondere dettagli sensibili — Documentazione Cognos",
-        "metaDescription": "Cognos può individuare dettagli sensibili nel tuo messaggio — come un IBAN o un'email — e nasconderli all'IA prima dell'invio. Come funziona e come rivederlo.",
+        "metaTitle": "Oscuramento: nascondere dettagli sensibili - Documentazione Cognos",
+        "metaDescription": "Cognos può individuare dettagli sensibili nel tuo messaggio - come un IBAN o un'email - e nasconderli all'IA prima dell'invio. Come funziona e come rivederlo.",
         "title": "Oscuramento",
-        "lead": "Cognos può individuare dettagli sensibili nel tuo messaggio — un IBAN, un'email, un numero di carta — e nasconderli prima che l'IA li veda mai.",
+        "lead": "Cognos può individuare dettagli sensibili nel tuo messaggio - un IBAN, un'email, un numero di carta - e nasconderli prima che l'IA li veda mai.",
         "time": "4 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -1952,7 +1970,7 @@
             "heading": "Come funziona",
             "blocks": [
               {
-                "p": "Il rilevamento avviene <b>nel tuo browser</b> prima che venga inviato qualsiasi cosa. Ogni valore sensibile viene sostituito con un segnaposto come <code>[[PII_IBAN_Q7K9M2]]</code>. Il fornitore di IA e il messaggio salvato vedono solo il segnaposto — tu continui a vedere il valore reale."
+                "p": "Il rilevamento avviene <b>nel tuo browser</b> prima che venga inviato qualsiasi cosa. Ogni valore sensibile viene sostituito con un segnaposto come <code>[[PII_IBAN_Q7K9M2]]</code>. Il fornitore di IA e il messaggio salvato vedono solo il segnaposto - tu continui a vedere il valore reale."
               }
             ]
           },
@@ -2002,7 +2020,7 @@
             "heading": "Rivelare i valori più tardi",
             "blocks": [
               {
-                "p": "Seleziona un segnaposto in un messaggio inviato per aprire <b>Informazioni personali oscurate</b>, che confronta ciò che vedi tu con ciò che ha visto il modello. Solo chi possiede la chiave di oscuramento può rivelare il valore reale — per impostazione predefinita, sei solo tu."
+                "p": "Seleziona un segnaposto in un messaggio inviato per aprire <b>Informazioni personali oscurate</b>, che confronta ciò che vedi tu con ciò che ha visto il modello. Solo chi possiede la chiave di oscuramento può rivelare il valore reale - per impostazione predefinita, sei solo tu."
               },
               {
                 "note": {
@@ -2024,7 +2042,7 @@
       },
       "attachments": {
         "navTitle": "Allegati e Libreria",
-        "metaTitle": "Allegati e la tua Libreria — Documentazione Cognos",
+        "metaTitle": "Allegati e la tua Libreria - Documentazione Cognos",
         "metaDescription": "Allega file a un messaggio in Cognos. Vengono crittografati nel tuo browser e conservati nella tua Libreria personale per essere riutilizzati tra una chat e l'altra.",
         "title": "Allegati e la tua Libreria",
         "lead": "Allega file a un messaggio. Vengono crittografati nel tuo browser e conservati nella tua Libreria personale, pronti per essere riutilizzati tra una chat e l'altra.",
@@ -2059,7 +2077,7 @@
             "heading": "La tua Libreria",
             "blocks": [
               {
-                "p": "I file appartengono a <b>te</b>, non alla chat — una conversazione punta solo a un file. Gestiscili in <a href=\"https://app.cognos.io/account/library\">Libreria file</a>: rinomina, scarica o rimuovi."
+                "p": "I file appartengono a <b>te</b>, non alla chat - una conversazione punta solo a un file. Gestiscili in <a href=\"https://app.cognos.io/account/library\">Libreria file</a>: rinomina, scarica o rimuovi."
               }
             ]
           },
@@ -2077,7 +2095,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Gli allegati sono sempre personali — anche all'interno di un <a href=\"/docs/projects\">Progetto</a> condiviso, gli altri non possono aprire i tuoi file."
+                  "body": "Gli allegati sono sempre personali - anche all'interno di un <a href=\"/docs/projects\">Progetto</a> condiviso, gli altri non possono aprire i tuoi file."
                 }
               }
             ]
@@ -2087,10 +2105,10 @@
       },
       "generating-documents": {
         "navTitle": "Generare documenti",
-        "metaTitle": "Generare documenti — Documentazione Cognos",
-        "metaDescription": "Trasforma qualsiasi risposta in un vero file Word, PDF o Markdown — creato nel tuo browser, mai sui server di Cognos.",
+        "metaTitle": "Generare documenti - Documentazione Cognos",
+        "metaDescription": "Trasforma qualsiasi risposta in un vero file Word, PDF o Markdown - creato nel tuo browser, mai sui server di Cognos.",
         "title": "Generare documenti",
-        "lead": "Trasforma qualsiasi risposta in un vero file Word, PDF o Markdown — creato nel tuo browser, mai sui nostri server.",
+        "lead": "Trasforma qualsiasi risposta in un vero file Word, PDF o Markdown - creato nel tuo browser, mai sui nostri server.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -2098,7 +2116,7 @@
             "heading": "Scarica una risposta",
             "blocks": [
               {
-                "p": "Usa l'opzione di download su qualsiasi risposta dell'assistente e scegli un formato — Word, PDF o Markdown. Il file viene creato sul tuo dispositivo; i byte non toccano mai i server di Cognos."
+                "p": "Usa l'opzione di download su qualsiasi risposta dell'assistente e scegli un formato - Word, PDF o Markdown. Il file viene creato sul tuo dispositivo; i byte non toccano mai i server di Cognos."
               },
               {
                 "figure": {
@@ -2122,8 +2140,8 @@
             "blocks": [
               {
                 "ul": [
-                  "I file generati non riportano alcun dettaglio personale sull'autore — solo \"Cognos\" — e le date sono arrotondate al giorno.",
-                  "I fogli di calcolo generati non possono \"telefonare a casa\" — le formule di rete sono disattivate e mostrate come testo semplice.",
+                  "I file generati non riportano alcun dettaglio personale sull'autore - solo \"Cognos\" - e le date sono arrotondate al giorno.",
+                  "I fogli di calcolo generati non possono \"telefonare a casa\" - le formule di rete sono disattivate e mostrate come testo semplice.",
                   "Disattivare <b>Crea documenti</b> per una chat rimuove del tutto la funzione lì."
                 ]
               }
@@ -2134,7 +2152,7 @@
       },
       "generating-images": {
         "navTitle": "Generare immagini",
-        "metaTitle": "Generare immagini — Documentazione Cognos",
+        "metaTitle": "Generare immagini - Documentazione Cognos",
         "metaDescription": "Descrivi un'immagine e un modello capace la crea. Il risultato viene crittografato come qualsiasi altro messaggio.",
         "title": "Generare immagini",
         "lead": "Descrivi un'immagine e un modello capace la creerà. Il risultato viene crittografato come qualsiasi altro messaggio.",
@@ -2170,10 +2188,10 @@
             "blocks": [
               {
                 "ul": [
-                  "Il modello potrebbe rispondere con una domanda di chiarimento invece che con un'immagine — è normale, non un errore.",
+                  "Il modello potrebbe rispondere con una domanda di chiarimento invece che con un'immagine - è normale, non un errore.",
                   "Seleziona <b>rigenera</b> per creare una versione alternativa accanto all'originale.",
                   "Una chat che contiene immagini viene esportata come <code>.zip</code> (le chat solo testuali vengono esportate come <code>.json</code>).",
-                  "La generazione di immagini viene fatturata per immagine — consulta <a href=\"/docs/plans-and-pricing\">piani e prezzi</a>."
+                  "La generazione di immagini viene fatturata per immagine - consulta <a href=\"/docs/plans-and-pricing\">piani e prezzi</a>."
                 ]
               }
             ]
@@ -2183,7 +2201,7 @@
       },
       "projects": {
         "navTitle": "Progetti",
-        "metaTitle": "Progetti — Documentazione Cognos",
+        "metaTitle": "Progetti - Documentazione Cognos",
         "metaDescription": "Un Progetto raggruppa conversazioni correlate in un unico posto. I progetti personali sono solo per te; i progetti dell'Organizzazione sono condivisi con il tuo team.",
         "title": "Progetti",
         "lead": "Un Progetto raggruppa conversazioni correlate in un unico posto. I progetti personali sono solo per te; i progetti dell'Organizzazione sono condivisi con un team.",
@@ -2219,8 +2237,8 @@
             "blocks": [
               {
                 "ul": [
-                  "<b>Progetto personale</b> — solo tu. Non può essere condiviso con altre persone.",
-                  "<b>Progetto dell'Organizzazione</b> — condiviso con i <a href=\"/docs/organisation-projects\">membri della tua Organizzazione</a>, ciascuno con un ruolo di Lettore, Editor o Amministratore."
+                  "<b>Progetto personale</b> - solo tu. Non può essere condiviso con altre persone.",
+                  "<b>Progetto dell'Organizzazione</b> - condiviso con i <a href=\"/docs/organisation-projects\">membri della tua Organizzazione</a>, ciascuno con un ruolo di Lettore, Editor o Amministratore."
                 ]
               }
             ]
@@ -2234,7 +2252,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Gli <a href=\"/docs/attachments\">allegati</a> restano personali anche all'interno di un progetto condiviso — i membri non possono aprire i file altrui."
+                  "body": "Gli <a href=\"/docs/attachments\">allegati</a> restano personali anche all'interno di un progetto condiviso - i membri non possono aprire i file altrui."
                 }
               }
             ]
@@ -2244,10 +2262,10 @@
       },
       "bookmarks": {
         "navTitle": "Segnalibri",
-        "metaTitle": "Segnalibri — Documentazione Cognos",
+        "metaTitle": "Segnalibri - Documentazione Cognos",
         "metaDescription": "Evidenzia una qualsiasi parte di un messaggio e salvala. I tuoi segnalibri sono privati per te, anche in una conversazione condivisa.",
         "title": "Segnalibri",
-        "lead": "Evidenzia una qualsiasi parte di un messaggio e salvala. I tuoi segnalibri sono privati per te — anche in una chat condivisa.",
+        "lead": "Evidenzia una qualsiasi parte di un messaggio e salvala. I tuoi segnalibri sono privati per te - anche in una chat condivisa.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -2279,8 +2297,8 @@
             "blocks": [
               {
                 "ul": [
-                  "I segnalibri sono <a href=\"/docs/your-privacy\">crittografati</a> e leggibili solo da te — anche se la chat è condivisa, gli altri non li vedono mai.",
-                  "Se un messaggio è cambiato troppo per trovare la citazione esatta, il segnalibro viene comunque elencato — semplicemente non evidenzierà un punto."
+                  "I segnalibri sono <a href=\"/docs/your-privacy\">crittografati</a> e leggibili solo da te - anche se la chat è condivisa, gli altri non li vedono mai.",
+                  "Se un messaggio è cambiato troppo per trovare la citazione esatta, il segnalibro viene comunque elencato - semplicemente non evidenzierà un punto."
                 ]
               }
             ]
@@ -2290,10 +2308,10 @@
       },
       "searching-conversations": {
         "navTitle": "Cercare nelle tue chat",
-        "metaTitle": "Cercare nelle tue conversazioni — Documentazione Cognos",
-        "metaDescription": "Cerca nelle tue chat dalla barra laterale. Funziona interamente sul tuo dispositivo — ciò che cerchi non lascia mai il tuo browser.",
+        "metaTitle": "Cercare nelle tue conversazioni - Documentazione Cognos",
+        "metaDescription": "Cerca nelle tue chat dalla barra laterale. Funziona interamente sul tuo dispositivo - ciò che cerchi non lascia mai il tuo browser.",
         "title": "Cercare nelle tue chat",
-        "lead": "Cerca nelle tue conversazioni dalla barra laterale. Funziona tutto sul tuo dispositivo — ciò che cerchi non lascia il tuo browser.",
+        "lead": "Cerca nelle tue conversazioni dalla barra laterale. Funziona tutto sul tuo dispositivo - ciò che cerchi non lascia il tuo browser.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -2316,7 +2334,7 @@
             "heading": "Privata per design",
             "blocks": [
               {
-                "p": "L'indice di ricerca viene creato e usato solo sul tuo dispositivo — nulla di ciò che digiti viene inviato a noi o registrato. L'indice viene cancellato ogni volta che <a href=\"/docs/unlock-and-lock\">blocchi</a>, <a href=\"/docs/sessions-and-logout\">esci</a> o cambi account."
+                "p": "L'indice di ricerca viene creato e usato solo sul tuo dispositivo - nulla di ciò che digiti viene inviato a noi o registrato. L'indice viene cancellato ogni volta che <a href=\"/docs/unlock-and-lock\">blocchi</a>, <a href=\"/docs/sessions-and-logout\">esci</a> o cambi account."
               },
               {
                 "note": {
@@ -2331,8 +2349,8 @@
       },
       "importing-conversations": {
         "navTitle": "Importare conversazioni",
-        "metaTitle": "Importare conversazioni — Documentazione Cognos",
-        "metaDescription": "Porta le tue conversazioni di ChatGPT o Claude in Cognos. La tua esportazione viene letta e crittografata nel tuo browser — il file grezzo non viene caricato.",
+        "metaTitle": "Importare conversazioni - Documentazione Cognos",
+        "metaDescription": "Porta le tue conversazioni di ChatGPT o Claude in Cognos. La tua esportazione viene letta e crittografata nel tuo browser - il file grezzo non viene caricato.",
         "title": "Importare conversazioni",
         "lead": "Porta le tue conversazioni di ChatGPT o Claude in Cognos. La tua esportazione viene letta e crittografata nel tuo browser.",
         "time": "3 min di lettura",
@@ -2371,17 +2389,17 @@
             "blocks": [
               {
                 "ul": [
-                  "La lettura e la crittografia avvengono nel tuo browser — l'esportazione grezza non viene caricata da noi.",
+                  "La lettura e la crittografia avvengono nel tuo browser - l'esportazione grezza non viene caricata da noi.",
                   "Fino a 10.000 messaggi per conversazione.",
                   "I thread ramificati vengono suddivisi in conversazioni separate ed etichettate chiaramente, mai indovinati o uniti.",
-                  "Reimportare lo stesso file è sicuro — non creerà duplicati.",
+                  "Reimportare lo stesso file è sicuro - non creerà duplicati.",
                   "Le chat importate arrivano come conversazioni autonome; spostale in un <a href=\"/docs/projects\">Progetto</a> in seguito se vuoi."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "I contenuti non supportati (PDF, immagini, registri di strumenti) vengono lasciati fuori intenzionalmente — i conteggi dell'anteprima mostrano cosa arriverà e cosa no."
+                  "body": "I contenuti non supportati (PDF, immagini, registri di strumenti) vengono lasciati fuori intenzionalmente - i conteggi dell'anteprima mostrano cosa arriverà e cosa no."
                 }
               }
             ]
@@ -2391,10 +2409,10 @@
       },
       "sharing-conversations": {
         "navTitle": "Condividere una conversazione",
-        "metaTitle": "Condividere una conversazione — Documentazione Cognos",
-        "metaDescription": "Pubblica un link di sola lettura a una conversazione che chiunque può aprire — con o senza i dettagli sensibili rivelati.",
+        "metaTitle": "Condividere una conversazione - Documentazione Cognos",
+        "metaDescription": "Pubblica un link di sola lettura a una conversazione che chiunque può aprire - con o senza i dettagli sensibili rivelati.",
         "title": "Condividere una conversazione",
-        "lead": "Pubblica un link di sola lettura a una conversazione che chiunque può aprire — con o senza i dettagli sensibili rivelati.",
+        "lead": "Pubblica un link di sola lettura a una conversazione che chiunque può aprire - con o senza i dettagli sensibili rivelati.",
         "time": "3 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -2454,7 +2472,7 @@
                 "figure": {
                   "src": "/docs-media/share-public.png",
                   "alt": "Una vista pubblica di sola lettura di una conversazione condivisa con i valori sensibili nascosti.",
-                  "caption": "Un link condiviso in modalità solo oscurata — i valori sensibili restano nascosti."
+                  "caption": "Un link condiviso in modalità solo oscurata - i valori sensibili restano nascosti."
                 }
               }
             ]
@@ -2463,7 +2481,7 @@
             "heading": "Come un link condiviso resta privato",
             "blocks": [
               {
-                "p": "La chiave che sblocca una conversazione condivisa vive all'interno del link stesso (dopo il <code>#</code>), che i browser non inviano mai ai nostri server — quindi non possiamo leggere una conversazione condivisa dai nostri log. Revocare una condivisione interrompe immediatamente il link, senza influire sulla conversazione."
+                "p": "La chiave che sblocca una conversazione condivisa vive all'interno del link stesso (dopo il <code>#</code>), che i browser non inviano mai ai nostri server - quindi non possiamo leggere una conversazione condivisa dai nostri log. Revocare una condivisione interrompe immediatamente il link, senza influire sulla conversazione."
               },
               {
                 "note": {
@@ -2478,10 +2496,10 @@
       },
       "multi-factor-authentication": {
         "navTitle": "Accesso a due fattori",
-        "metaTitle": "Autenticazione a due fattori — Documentazione Cognos",
-        "metaDescription": "Aggiungi un secondo passaggio all'accesso: un codice a 6 cifre da un'app di autenticazione. Protegge il tuo accesso — la tua Chiave dell'account protegge comunque i tuoi dati.",
+        "metaTitle": "Autenticazione a due fattori - Documentazione Cognos",
+        "metaDescription": "Aggiungi un secondo passaggio all'accesso: un codice a 6 cifre da un'app di autenticazione. Protegge il tuo accesso - la tua Chiave dell'account protegge comunque i tuoi dati.",
         "title": "Autenticazione a due fattori",
-        "lead": "Aggiungi un secondo passaggio all'accesso — un codice a 6 cifre da un'app di autenticazione. Protegge il tuo accesso, non i tuoi dati.",
+        "lead": "Aggiungi un secondo passaggio all'accesso - un codice a 6 cifre da un'app di autenticazione. Protegge il tuo accesso, non i tuoi dati.",
         "time": "4 min di lettura",
         "updated": "26 luglio 2026",
         "sections": [
@@ -2507,7 +2525,7 @@
                   },
                   {
                     "title": "Salva i tuoi codici di recupero",
-                    "body": "Conserva i <a href=\"/docs/recovery-codes\">codici di recupero</a> che ti vengono mostrati — sono la tua via di rientro se perdi l'app."
+                    "body": "Conserva i <a href=\"/docs/recovery-codes\">codici di recupero</a> che ti vengono mostrati - sono la tua via di rientro se perdi l'app."
                   }
                 ]
               },
@@ -2533,7 +2551,7 @@
             "blocks": [
               {
                 "ul": [
-                  "Solo app di autenticazione — Cognos non invia codici via email.",
+                  "Solo app di autenticazione - Cognos non invia codici via email.",
                   "I dispositivi attendibili vengono cancellati quando esci, disattivi l'autenticazione a due fattori, rigeneri i codici di recupero o cambi la password.",
                   "L'autenticazione a due fattori protegge il tuo accesso. I tuoi dati sono ancora sbloccati dalla tua <a href=\"/docs/account-key\">Chiave dell'account</a>."
                 ]
@@ -2541,7 +2559,7 @@
               {
                 "note": {
                   "variant": "security",
-                  "body": "Non esiste una reimpostazione dell'autenticazione a due fattori. Se perdi sia la tua app di autenticazione sia tutti i tuoi <a href=\"/docs/recovery-codes\">codici di recupero</a>, non potrai accedere — quindi conserva quei codici al sicuro."
+                  "body": "Non esiste una reimpostazione dell'autenticazione a due fattori. Se perdi sia la tua app di autenticazione sia tutti i tuoi <a href=\"/docs/recovery-codes\">codici di recupero</a>, non potrai accedere - quindi conserva quei codici al sicuro."
                 }
               }
             ]
@@ -2562,7 +2580,7 @@
       },
       "recovery-codes": {
         "navTitle": "Codici di recupero",
-        "metaTitle": "Codici di recupero — Documentazione Cognos",
+        "metaTitle": "Codici di recupero - Documentazione Cognos",
         "metaDescription": "I codici di recupero sono codici di riserva monouso che ti permettono di accedere se perdi la tua app di autenticazione. Come salvarli, usarli e rigenerarli.",
         "title": "Codici di recupero",
         "lead": "I codici di recupero sono codici di riserva monouso che ti permettono di accedere se perdi la tua app di autenticazione.",
@@ -2573,7 +2591,7 @@
             "heading": "Salvali",
             "blocks": [
               {
-                "p": "Quando attivi l'<a href=\"/docs/multi-factor-authentication\">autenticazione a due fattori</a>, Cognos mostra 10 codici di recupero <b>una sola volta</b>. Copiali o scaricali e conservali al sicuro — non potranno essere mostrati di nuovo."
+                "p": "Quando attivi l'<a href=\"/docs/multi-factor-authentication\">autenticazione a due fattori</a>, Cognos mostra 10 codici di recupero <b>una sola volta</b>. Copiali o scaricali e conservali al sicuro - non potranno essere mostrati di nuovo."
               },
               {
                 "figure": {
@@ -2601,7 +2619,7 @@
               {
                 "note": {
                   "variant": "security",
-                  "body": "Perdi la tua app di autenticazione e tutti i tuoi codici di recupero e non c'è modo di rientrare — non esiste una reimpostazione da parte dell'assistenza. Questo protegge solo l'accesso; i tuoi dati sono regolati dalla tua <a href=\"/docs/account-key\">Chiave dell'account</a>."
+                  "body": "Perdi la tua app di autenticazione e tutti i tuoi codici di recupero e non c'è modo di rientrare - non esiste una reimpostazione da parte dell'assistenza. Questo protegge solo l'accesso; i tuoi dati sono regolati dalla tua <a href=\"/docs/account-key\">Chiave dell'account</a>."
                 }
               }
             ]
@@ -2611,7 +2629,7 @@
       },
       "resetting-your-password": {
         "navTitle": "Reimpostare la password",
-        "metaTitle": "Reimpostare la password — Documentazione Cognos",
+        "metaTitle": "Reimpostare la password - Documentazione Cognos",
         "metaDescription": "Hai dimenticato la password? Reimpostala via email. Questo non influisce mai sulle tue chat crittografate o sulla tua Chiave dell'account.",
         "title": "Reimpostare la password",
         "lead": "Hai dimenticato la password di Cognos? Reimpostala via email. Questo non influisce mai sulle tue chat crittografate o sulla tua Chiave dell'account. Gli account solo Google recuperano l'accesso tramite Google, non con la reimpostazione della password Cognos.",
@@ -2657,7 +2675,7 @@
                 }
               },
               {
-                "p": "Se hai attivato l'<a href=\"/docs/multi-factor-authentication\">autenticazione a due fattori</a>, una reimpostazione della password non la aggira — avrai comunque bisogno del tuo codice."
+                "p": "Se hai attivato l'<a href=\"/docs/multi-factor-authentication\">autenticazione a due fattori</a>, una reimpostazione della password non la aggira - avrai comunque bisogno del tuo codice."
               }
             ]
           },
@@ -2677,10 +2695,10 @@
       },
       "your-privacy": {
         "navTitle": "La tua privacy",
-        "metaTitle": "La tua privacy — Documentazione Cognos",
+        "metaTitle": "La tua privacy - Documentazione Cognos",
         "metaDescription": "Un riepilogo in parole semplici di cosa Cognos può vedere e cosa no, e i controlli che mantengono le tue conversazioni tue.",
         "title": "La tua privacy",
-        "lead": "Un riepilogo in parole semplici di cosa Cognos può vedere e cosa no — e i controlli che lo mantengono così.",
+        "lead": "Un riepilogo in parole semplici di cosa Cognos può vedere e cosa no - e i controlli che lo mantengono così.",
         "time": "3 min di lettura",
         "updated": "26 luglio 2026",
         "sections": [
@@ -2708,12 +2726,12 @@
             "blocks": [
               {
                 "ul": [
-                  "I metadati necessari per far funzionare il servizio — quando un messaggio è stato salvato e quanto è costata una richiesta.",
+                  "I metadati necessari per far funzionare il servizio - quando un messaggio è stato salvato e quanto è costata una richiesta.",
                   "Il <a href=\"/docs/choosing-a-model\">fornitore</a> di IA che ha risposto a ogni messaggio (registrato sulla risposta)."
                 ]
               },
               {
-                "p": "Il fornitore di IA vede davvero il tuo messaggio mentre risponde — è così che funziona qualsiasi assistente IA. I <a href=\"/docs/privacy-tiers\">livelli di privacy</a> controllano dove ciò avviene."
+                "p": "Il fornitore di IA vede davvero il tuo messaggio mentre risponde - è così che funziona qualsiasi assistente IA. I <a href=\"/docs/privacy-tiers\">livelli di privacy</a> controllano dove ciò avviene."
               }
             ]
           },
@@ -2721,7 +2739,7 @@
             "heading": "Verifica qualsiasi risposta",
             "blocks": [
               {
-                "p": "Il pulsante <b>Sicurezza</b> su una conversazione mostra, per ogni risposta, quale modello e fornitore l'hanno gestita e dove — così puoi verificare che corrisponda alle tue impostazioni."
+                "p": "Il pulsante <b>Sicurezza</b> su una conversazione mostra, per ogni risposta, quale modello e fornitore l'hanno gestita e dove - così puoi verificare che corrisponda alle tue impostazioni."
               },
               {
                 "figure": {
@@ -2759,7 +2777,7 @@
                     "to": "/docs/account-memory",
                     "icon": "Brain",
                     "title": "Memoria",
-                    "body": "Decidi cosa ricorda l'IA — privatamente, o condiviso in un progetto."
+                    "body": "Decidi cosa ricorda l'IA - privatamente, o condiviso in un progetto."
                   }
                 ]
               },
@@ -2776,10 +2794,10 @@
       },
       "account-memory": {
         "navTitle": "Memoria",
-        "metaTitle": "Memoria — Documentazione Cognos",
-        "metaDescription": "La memoria permette all'IA di ricordare fatti e preferenze che scegli tu — nelle tue chat, o all'interno di un progetto. È facoltativa e crittografata.",
+        "metaTitle": "Memoria - Documentazione Cognos",
+        "metaDescription": "La memoria permette all'IA di ricordare fatti e preferenze che scegli tu - nelle tue chat, o all'interno di un progetto. È facoltativa e crittografata.",
         "title": "Memoria",
-        "lead": "La memoria permette all'IA di ricordare fatti e preferenze che scegli tu — nelle tue chat, o all'interno di un progetto.",
+        "lead": "La memoria permette all'IA di ricordare fatti e preferenze che scegli tu - nelle tue chat, o all'interno di un progetto.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -2800,7 +2818,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "La memoria è facoltativa — Cognos non costruisce un profilo su di te a meno che tu non ne aggiunga uno. Modificare o eliminare una voce influisce solo sui messaggi futuri."
+                  "body": "La memoria è facoltativa - Cognos non costruisce un profilo su di te a meno che tu non ne aggiunga uno. Modificare o eliminare una voce influisce solo sui messaggi futuri."
                 }
               },
               {
@@ -2817,7 +2835,7 @@
       },
       "sessions-and-logout": {
         "navTitle": "Sessioni e uscita",
-        "metaTitle": "Sessioni e uscita — Documentazione Cognos",
+        "metaTitle": "Sessioni e uscita - Documentazione Cognos",
         "metaDescription": "Uscire da Cognos termina la tua sessione ovunque e cancella i tuoi dati sbloccati. Cosa fa esattamente, e come disconnettere altri dispositivi.",
         "title": "Sessioni e uscita",
         "lead": "Uscire termina la tua sessione ovunque e cancella i tuoi dati sbloccati. Ecco esattamente cosa fa.",
@@ -2866,7 +2884,7 @@
       },
       "deleting-your-account": {
         "navTitle": "Eliminare il tuo account",
-        "metaTitle": "Eliminare il tuo account — Documentazione Cognos",
+        "metaTitle": "Eliminare il tuo account - Documentazione Cognos",
         "metaDescription": "Elimina definitivamente il tuo account Cognos. Gli account con password confermano con la password; gli account solo Google si riautenticano con Google.",
         "title": "Eliminare il tuo account",
         "lead": "Puoi eliminare definitivamente il tuo account e tutti i tuoi dati personali. Questo non può essere annullato.",
@@ -2905,7 +2923,7 @@
               {
                 "note": {
                   "variant": "warning",
-                  "body": "Una sessione attiva da sola non basta — devi completare il passaggio Google."
+                  "body": "Una sessione attiva da sola non basta - devi completare il passaggio Google."
                 }
               }
             ]
@@ -2950,13 +2968,13 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Esiste anche <b>Elimina tutte le chat</b>, che cancella le tue conversazioni ma mantiene il tuo account. Perdere la tua <a href=\"/docs/account-key\">Chiave dell'account</a> non è una via per l'eliminazione — puoi comunque accedere ed eliminare."
+                  "body": "Esiste anche <b>Elimina tutte le chat</b>, che cancella le tue conversazioni ma mantiene il tuo account. Perdere la tua <a href=\"/docs/account-key\">Chiave dell'account</a> non è una via per l'eliminazione - puoi comunque accedere ed eliminare."
                 }
               },
               {
                 "note": {
                   "variant": "security",
-                  "body": "L'eliminazione è permanente — non c'è recupero."
+                  "body": "L'eliminazione è permanente - non c'è recupero."
                 }
               }
             ]
@@ -2966,7 +2984,7 @@
       },
       "plans-and-pricing": {
         "navTitle": "Piani e prezzi",
-        "metaTitle": "Piani e prezzi — Documentazione Cognos",
+        "metaTitle": "Piani e prezzi - Documentazione Cognos",
         "metaDescription": "Inizia con credito di prova gratuito, poi scegli Pay as you go o Unlimited. Come Cognos stabilisce i prezzi dell'utilizzo, e dove scegliere un piano.",
         "title": "Piani e prezzi",
         "lead": "Inizia con credito di prova gratuito, poi scegli Pay as you go o Unlimited. I pagamenti passano attraverso Paddle.",
@@ -3021,7 +3039,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Le tue chat di prova restano completamente leggibili anche dopo che il credito si è esaurito — semplicemente non puoi inviare nuovi messaggi finché non scegli un piano."
+                  "body": "Le tue chat di prova restano completamente leggibili anche dopo che il credito si è esaurito - semplicemente non puoi inviare nuovi messaggi finché non scegli un piano."
                 }
               }
             ]
@@ -3031,7 +3049,7 @@
       },
       "trial-credit": {
         "navTitle": "Credito di prova",
-        "metaTitle": "Credito di prova — Documentazione Cognos",
+        "metaTitle": "Credito di prova - Documentazione Cognos",
         "metaDescription": "Ogni nuovo account Cognos inizia con una piccola quantità di credito gratuito così puoi provarlo prima di scegliere un piano.",
         "title": "Credito di prova",
         "lead": "Ogni nuovo account inizia con una piccola quantità di credito gratuito, così puoi provare Cognos prima di scegliere un piano.",
@@ -3062,7 +3080,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Non esiste una prova gratuita per le Organizzazioni — il <a href=\"/docs/seats-and-billing\">lavoro dell'Organizzazione</a> viene fatturato fin dall'inizio."
+                  "body": "Non esiste una prova gratuita per le Organizzazioni - il <a href=\"/docs/seats-and-billing\">lavoro dell'Organizzazione</a> viene fatturato fin dall'inizio."
                 }
               }
             ]
@@ -3072,10 +3090,10 @@
       },
       "managing-your-subscription": {
         "navTitle": "Gestire la fatturazione",
-        "metaTitle": "Gestire il tuo abbonamento — Documentazione Cognos",
-        "metaDescription": "Visualizza l'utilizzo, scarica le fatture, cambia piano o annulla — tutto dalle tue impostazioni di fatturazione. I pagamenti sono gestiti da Paddle.",
+        "metaTitle": "Gestire il tuo abbonamento - Documentazione Cognos",
+        "metaDescription": "Visualizza l'utilizzo, scarica le fatture, cambia piano o annulla - tutto dalle tue impostazioni di fatturazione. I pagamenti sono gestiti da Paddle.",
         "title": "Gestire il tuo abbonamento",
-        "lead": "Visualizza l'utilizzo, scarica le fatture, cambia piano o annulla — tutto dalle tue impostazioni di fatturazione.",
+        "lead": "Visualizza l'utilizzo, scarica le fatture, cambia piano o annulla - tutto dalle tue impostazioni di fatturazione.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -3108,7 +3126,7 @@
               {
                 "ul": [
                   "Un rapido controllo prima di ogni messaggio assicura che tu possa coprirne il costo, così non ti viene mai addebitato qualcosa che non puoi permetterti.",
-                  "Quel controllo usa una stima nel caso peggiore — l'addebito reale è di solito più piccolo, e la differenza resta a tuo favore."
+                  "Quel controllo usa una stima nel caso peggiore - l'addebito reale è di solito più piccolo, e la differenza resta a tuo favore."
                 ]
               },
               {
@@ -3124,10 +3142,10 @@
       },
       "organisations-overview": {
         "navTitle": "Panoramica sulle Organizzazioni",
-        "metaTitle": "Organizzazioni — Documentazione Cognos",
+        "metaTitle": "Organizzazioni - Documentazione Cognos",
         "metaDescription": "Un'Organizzazione è un confine di fatturazione e amministrazione per un team. Paga per il lavoro condiviso e mantiene privato il contenuto delle conversazioni, anche dagli amministratori.",
         "title": "Organizzazioni",
-        "lead": "Un'Organizzazione è un confine di fatturazione e amministrazione per un team. Paga per il lavoro condiviso — e mantiene privati i contenuti, anche dagli amministratori.",
+        "lead": "Un'Organizzazione è un confine di fatturazione e amministrazione per un team. Paga per il lavoro condiviso - e mantiene privati i contenuti, anche dagli amministratori.",
         "time": "4 min di lettura",
         "updated": "22 luglio 2026",
         "sections": [
@@ -3139,9 +3157,9 @@
               },
               {
                 "ul": [
-                  "<b>Proprietario</b> — fatturazione e scioglimento dell'Organizzazione.",
-                  "<b>Amministratore</b> — membri, posti, criteri e la dashboard di utilizzo.",
-                  "<b>Membro</b> — lavora nei progetti a cui è stato aggiunto."
+                  "<b>Proprietario</b> - fatturazione e scioglimento dell'Organizzazione.",
+                  "<b>Amministratore</b> - membri, posti, criteri e la dashboard di utilizzo.",
+                  "<b>Membro</b> - lavora nei progetti a cui è stato aggiunto."
                 ]
               },
               {
@@ -3170,7 +3188,7 @@
                   },
                   {
                     "title": "Invialo come preferisci",
-                    "body": "Condividi il link come vuoi — Cognos non lo invia via email per te."
+                    "body": "Condividi il link come vuoi - Cognos non lo invia via email per te."
                   },
                   {
                     "title": "Accettano, tu li aggiungi",
@@ -3192,7 +3210,7 @@
               {
                 "note": {
                   "variant": "security",
-                  "title": "Solo metadati — mai il contenuto",
+                  "title": "Solo metadati - mai il contenuto",
                   "body": "Gli amministratori vedono i metadati di utilizzo: posti, costo per membro e mix di modelli. Non vedono mai il contenuto dei messaggi, i titoli delle conversazioni o la memoria."
                 }
               }
@@ -3203,7 +3221,7 @@
       },
       "seats-and-billing": {
         "navTitle": "Posti e fatturazione",
-        "metaTitle": "Posti e fatturazione dell'Organizzazione — Documentazione Cognos",
+        "metaTitle": "Posti e fatturazione dell'Organizzazione - Documentazione Cognos",
         "metaDescription": "Le Organizzazioni pagano un'unica fattura: CHF 15 per posto al mese, con un minimo di tre posti (CHF 45). Come funzionano l'utilizzo condiviso e il superamento.",
         "title": "Posti e fatturazione",
         "lead": "Le Organizzazioni pagano un'unica fattura: CHF 15 per posto al mese, con un minimo di tre posti (CHF 45).",
@@ -3229,7 +3247,7 @@
             "heading": "Utilizzo condiviso",
             "blocks": [
               {
-                "p": "Il lavoro di tutti i membri nei progetti dell'Organizzazione confluisce in un'unica fattura. L'utilizzo oltre la soglia combinata dei posti viene fatturato come un'unica voce di superamento alla fine del ciclo. Il lavoro dell'Organizzazione fattura sempre l'Organizzazione — mai il saldo personale di un membro."
+                "p": "Il lavoro di tutti i membri nei progetti dell'Organizzazione confluisce in un'unica fattura. L'utilizzo oltre la soglia combinata dei posti viene fatturato come un'unica voce di superamento alla fine del ciclo. Il lavoro dell'Organizzazione fattura sempre l'Organizzazione - mai il saldo personale di un membro."
               }
             ]
           },
@@ -3238,7 +3256,7 @@
             "blocks": [
               {
                 "ul": [
-                  "Non esiste una prova gratuita per le Organizzazioni — la fatturazione inizia dal primo giorno.",
+                  "Non esiste una prova gratuita per le Organizzazioni - la fatturazione inizia dal primo giorno.",
                   "Rimuovere un posto a metà ciclo non viene rimborsato; il conteggio scende al ciclo successivo, e mai sotto i tre.",
                   "Se la fatturazione dell'Organizzazione scade, i suoi <a href=\"/docs/organisation-projects\">progetti</a> diventano di sola lettura per tutti finché non viene risolta."
                 ]
@@ -3254,7 +3272,7 @@
       },
       "organisation-projects": {
         "navTitle": "Progetti dell'Organizzazione",
-        "metaTitle": "Progetti dell'Organizzazione — Documentazione Cognos",
+        "metaTitle": "Progetti dell'Organizzazione - Documentazione Cognos",
         "metaDescription": "I progetti dell'Organizzazione sono spazi di lavoro condivisi di proprietà dell'organizzazione. Il lavoro al loro interno viene fatturato all'organizzazione.",
         "title": "Progetti dell'Organizzazione",
         "lead": "I progetti dell'Organizzazione sono spazi di lavoro condivisi di proprietà dell'Organizzazione. Il lavoro al loro interno viene fatturato all'Organizzazione.",
@@ -3271,7 +3289,7 @@
                 "figure": {
                   "src": "/docs-media/projects.png",
                   "alt": "La pagina Progetti che elenca i progetti.",
-                  "caption": "Progetti — personali o di proprietà dell'Organizzazione."
+                  "caption": "Progetti - personali o di proprietà dell'Organizzazione."
                 }
               }
             ]
@@ -3293,7 +3311,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Gli <a href=\"/docs/attachments\">allegati</a> sono personali anche qui — i membri non possono aprire i file altrui, e le librerie file condivise non sono ancora disponibili."
+                  "body": "Gli <a href=\"/docs/attachments\">allegati</a> sono personali anche qui - i membri non possono aprire i file altrui, e le librerie file condivise non sono ancora disponibili."
                 }
               }
             ]
@@ -3303,10 +3321,10 @@
       },
       "branches": {
         "navTitle": "Modifica, rigenera e versioni",
-        "metaTitle": "Modifica, rigenerazione e versioni — Documentazione Cognos",
-        "metaDescription": "Cambia una domanda o chiedi un'altra risposta — Cognos conserva ogni versione così puoi passare dall'una all'altra in qualsiasi momento.",
+        "metaTitle": "Modifica, rigenerazione e versioni - Documentazione Cognos",
+        "metaDescription": "Cambia una domanda o chiedi un'altra risposta - Cognos conserva ogni versione così puoi passare dall'una all'altra in qualsiasi momento.",
         "title": "Modifica, rigenerazione e versioni",
-        "lead": "Cambia una domanda o chiedi un'altra risposta, e Cognos conserva ogni versione — passa dall'una all'altra quando vuoi.",
+        "lead": "Cambia una domanda o chiedi un'altra risposta, e Cognos conserva ogni versione - passa dall'una all'altra quando vuoi.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -3343,12 +3361,12 @@
             "heading": "Passa da una versione all'altra",
             "blocks": [
               {
-                "p": "Quando un turno ha più di una versione, appare un piccolo controllo <code>&lsaquo; 1/2 &rsaquo;</code>. Usa le frecce per spostarti tra le versioni — il resto della conversazione segue qualunque versione tu stia visualizzando."
+                "p": "Quando un turno ha più di una versione, appare un piccolo controllo <code>&lsaquo; 1/2 &rsaquo;</code>. Usa le frecce per spostarti tra le versioni - il resto della conversazione segue qualunque versione tu stia visualizzando."
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Cambiare versione modifica solo ciò che vedi e ciò che l'IA usa come contesto. Niente viene eliminato — ogni versione resta nella tua cronologia."
+                  "body": "Cambiare versione modifica solo ciò che vedi e ciò che l'IA usa come contesto. Niente viene eliminato - ogni versione resta nella tua cronologia."
                 }
               },
               {
@@ -3365,10 +3383,10 @@
       },
       "exporting-your-data": {
         "navTitle": "Esporta i tuoi dati",
-        "metaTitle": "Esporta i tuoi dati — Documentazione Cognos",
-        "metaDescription": "Le tue conversazioni sono tue. Scaricale in qualsiasi momento in un formato leggibile — nessun vincolo, e l'esportazione avviene sul tuo dispositivo.",
+        "metaTitle": "Esporta i tuoi dati - Documentazione Cognos",
+        "metaDescription": "Le tue conversazioni sono tue. Scaricale in qualsiasi momento in un formato leggibile - nessun vincolo, e l'esportazione avviene sul tuo dispositivo.",
         "title": "Esporta i tuoi dati",
-        "lead": "Le tue conversazioni sono tue. Scaricale in qualsiasi momento, in un formato leggibile — nessun vincolo.",
+        "lead": "Le tue conversazioni sono tue. Scaricale in qualsiasi momento, in un formato leggibile - nessun vincolo.",
         "time": "2 min",
         "updated": "22 luglio 2026",
         "sections": [
@@ -3393,14 +3411,14 @@
               {
                 "ul": [
                   "Le tue conversazioni come file leggibili (un <code>.zip</code> quando una chat include immagini).",
-                  "Qualsiasi singola risposta, su richiesta, come file Word, PDF o Markdown — consulta <a href=\"/docs/generating-documents\">generare documenti</a>.",
-                  "L'esportazione viene eseguita sul tuo dispositivo — non ci viene inviato nulla in più per produrla."
+                  "Qualsiasi singola risposta, su richiesta, come file Word, PDF o Markdown - consulta <a href=\"/docs/generating-documents\">generare documenti</a>.",
+                  "L'esportazione viene eseguita sul tuo dispositivo - non ci viene inviato nulla in più per produrla."
                 ]
               },
               {
                 "note": {
                   "variant": "info",
-                  "body": "Il <a href=\"/docs/reasoning\">ragionamento</a> del modello (il suo «pensiero») non è ancora incluso nelle esportazioni — solo i tuoi messaggi e le risposte."
+                  "body": "Il <a href=\"/docs/reasoning\">ragionamento</a> del modello (il suo «pensiero») non è ancora incluso nelle esportazioni - solo i tuoi messaggi e le risposte."
                 }
               }
             ]
@@ -3409,7 +3427,7 @@
             "heading": "Mai vincolato",
             "blocks": [
               {
-                "p": "Poiché puoi esportare in qualsiasi momento — e né la tua password né il tuo piano bloccano i tuoi dati — non resti mai bloccato. Anche se il tuo piano scade, le tue chat esistenti restano leggibili; semplicemente non puoi inviare nuovi messaggi finché non scegli un <a href=\"/docs/plans-and-pricing\">piano</a>."
+                "p": "Poiché puoi esportare in qualsiasi momento - e né la tua password né il tuo piano bloccano i tuoi dati - non resti mai bloccato. Anche se il tuo piano scade, le tue chat esistenti restano leggibili; semplicemente non puoi inviare nuovi messaggi finché non scegli un <a href=\"/docs/plans-and-pricing\">piano</a>."
               },
               {
                 "note": {
@@ -3424,10 +3442,10 @@
       },
       "cognos-on-your-phone": {
         "navTitle": "Cognos sul tuo telefono",
-        "metaTitle": "Cognos sul tuo telefono — Documentazione Cognos",
+        "metaTitle": "Cognos sul tuo telefono - Documentazione Cognos",
         "metaDescription": "Non esiste ancora un'app Cognos negli store, ma puoi aggiungere Cognos alla schermata Home del tuo telefono per un accesso con un tocco su iPhone e Android.",
         "title": "Cognos sul tuo telefono",
-        "lead": "Non esiste ancora un'app Cognos negli store — e non ne hai bisogno. Aggiungi Cognos alla schermata Home e si apre con un tocco, in una finestra tutta sua, proprio come un'app.",
+        "lead": "Non esiste ancora un'app Cognos negli store - e non ne hai bisogno. Aggiungi Cognos alla schermata Home e si apre con un tocco, in una finestra tutta sua, proprio come un'app.",
         "time": "2 min",
         "updated": "26 luglio 2026",
         "sections": [
@@ -3471,7 +3489,7 @@
                   },
                   {
                     "title": "Tocca <b>Aggiungi a schermata Home</b>",
-                    "body": "Su alcuni telefoni è indicato come <b>Installa app</b> — fanno entrambi la stessa cosa."
+                    "body": "Su alcuni telefoni è indicato come <b>Installa app</b> - fanno entrambi la stessa cosa."
                   },
                   {
                     "title": "Conferma con <b>Aggiungi</b>",
@@ -3482,7 +3500,7 @@
               {
                 "note": {
                   "variant": "info",
-                  "body": "Usi un browser diverso? La maggior parte dei browser ha un'opzione simile — cerca <b>Aggiungi a schermata Home</b> o <b>Installa</b> nel menu o nel foglio di condivisione del browser."
+                  "body": "Usi un browser diverso? La maggior parte dei browser ha un'opzione simile - cerca <b>Aggiungi a schermata Home</b> o <b>Installa</b> nel menu o nel foglio di condivisione del browser."
                 }
               }
             ]
@@ -3491,7 +3509,7 @@
             "heading": "Cosa aspettarti",
             "blocks": [
               {
-                "p": "Toccando l'icona, Cognos si apre in una finestra tutta sua, senza la barra degli indirizzi o le schede del browser. È lo stesso Cognos del tuo computer — le tue chat, i progetti e le impostazioni sono tutti lì, e hai sempre l'ultima versione senza dover aggiornare nulla."
+                "p": "Toccando l'icona, Cognos si apre in una finestra tutta sua, senza la barra degli indirizzi o le schede del browser. È lo stesso Cognos del tuo computer - le tue chat, i progetti e le impostazioni sono tutti lì, e hai sempre l'ultima versione senza dover aggiornare nulla."
               },
               {
                 "figure": {
@@ -3504,7 +3522,7 @@
                 "note": {
                   "variant": "tip",
                   "title": "Tieni pronta la tua Chiave dell'account la prima volta",
-                  "body": "Su iPhone, Cognos aggiunto alla schermata Home mantiene una propria memoria, separata da Safari — quindi la prima volta che lo apri dovrai <a href=\"/docs/signing-in\">accedere</a> e inserire la tua <a href=\"/docs/account-key\">Chiave dell'account</a> una volta. Su Android di solito risulti già connesso da Chrome. In entrambi i casi, dopo quel primo sblocco si comporta come qualsiasi altro dispositivo che hai già sbloccato."
+                  "body": "Su iPhone, Cognos aggiunto alla schermata Home mantiene una propria memoria, separata da Safari - quindi la prima volta che lo apri dovrai <a href=\"/docs/signing-in\">accedere</a> e inserire la tua <a href=\"/docs/account-key\">Chiave dell'account</a> una volta. Su Android di solito risulti già connesso da Chrome. In entrambi i casi, dopo quel primo sblocco si comporta come qualsiasi altro dispositivo che hai già sbloccato."
                 }
               }
             ]

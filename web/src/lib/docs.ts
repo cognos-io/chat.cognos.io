@@ -16,7 +16,7 @@ export type DocsBlock =
   | { h3: string }
   // A plain bullet list.
   | { ul: string[] }
-  // Numbered, titled steps — the backbone of a how-to.
+  // Numbered, titled steps - the backbone of a how-to.
   | { steps: { title: string; body?: string }[] }
   // A highlighted aside. `variant` tints it; `security` is the strongest.
   | {
@@ -28,6 +28,14 @@ export type DocsBlock =
     }
   // A cropped screenshot with an accessible description and optional caption.
   | { figure: { src: string; alt: string; caption?: string } }
+  // Several images as a single slideshow. Falls back to a plain scrollable
+  // strip without JavaScript; `label` names the carousel for screen readers.
+  | {
+      gallery: {
+        label?: string;
+        images: { src: string; alt: string; caption?: string }[];
+      };
+    }
   // A comparison / reference table.
   | { table: { head: string[]; rows: string[][] } }
   // A grid of navigational cards (used on the docs home and "related" rails).

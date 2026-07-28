@@ -1,0 +1,283 @@
+/* =========================================================================
+   Image viewer chrome - the zoomable figure, the slideshow and the lightbox.
+
+   Shared by the blog and (opt-in) the docs, so it lives apart from both
+   layouts. Everything resolves to a `--cog-*` token via the aliases in
+   tokens.css.
+
+   Both widgets are progressive enhancement. Without JavaScript the slideshow
+   is a plain horizontally scrollable strip and every image is still visible at
+   its inline size; the buttons that need scripting are rendered `hidden` and
+   unhidden by the component's script.
+   ========================================================================= */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------- Zoomable figure ----------------------------- */
+
+/* The trigger is a real button wrapping the image, so it is reachable by
+   keyboard and announced with the image's alt text. */
+.zoom-trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: var(--cog-radius-md);
+  cursor: zoom-in;
+  overflow: hidden;
+}
+.zoom-trigger > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: inherit;
+  transition: transform 0.3s var(--ease);
+}
+@media (hover: hover) {
+  .zoom-trigger:hover > img {
+    transform: scale(1.015);
+  }
+}
+.zoom-trigger:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .zoom-trigger > img {
+    transition: none;
+  }
+  .zoom-trigger:hover > img {
+    transform: none;
+  }
+}
+
+/* ------------------------------ Slideshow -------------------------------- */
+
+.slideshow {
+  margin: var(--cog-space-400) 0;
+}
+
+/* Focusable because it scrolls: a keyboard user must be able to reach and pan
+   it even before the arrow-key handler is attached. */
+.slideshow__viewport {
+  display: flex;
+  gap: var(--cog-space-200);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  border-radius: var(--cog-radius-lg);
+}
+.slideshow__viewport:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slideshow__viewport {
+    scroll-behavior: auto;
+  }
+}
+
+.slideshow__slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: center;
+  margin: 0;
+}
+.slideshow__slide > img,
+.slideshow__slide .zoom-trigger {
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-lg);
+  background: var(--surface);
+}
+.slideshow__slide > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.slideshow__caption {
+  margin: var(--cog-space-150) 0 0;
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body-sm);
+  line-height: var(--cog-lh-body-sm);
+  text-align: center;
+}
+
+.slideshow__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cog-space-150);
+  margin-top: var(--cog-space-200);
+}
+
+.slideshow__arrow,
+.lightbox__arrow,
+.lightbox__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background 0.16s var(--ease),
+    border-color 0.16s var(--ease),
+    color 0.16s var(--ease);
+}
+.slideshow__arrow:hover:not(:disabled) {
+  background: var(--brand-bg);
+  border-color: var(--brand);
+  color: var(--brand-deep);
+}
+.slideshow__arrow:disabled {
+  color: var(--ink-subtle);
+  cursor: default;
+  opacity: 0.55;
+}
+.slideshow__arrow:focus-visible,
+.lightbox__arrow:focus-visible,
+.lightbox__close:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.slideshow__dots {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-075);
+}
+.slideshow__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cog-radius-pill);
+  background: var(--line);
+  cursor: pointer;
+  transition:
+    width 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+.slideshow__dot[aria-current='true'] {
+  width: 1.25rem;
+  background: var(--brand);
+}
+.slideshow__dot:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slideshow__dot {
+    transition: none;
+  }
+}
+
+/* ------------------------------- Lightbox -------------------------------- */
+
+.lightbox {
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: hidden;
+}
+.lightbox::backdrop {
+  background: color-mix(in srgb, var(--cog-text) 88%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.lightbox__inner {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--cog-space-200);
+  height: 100%;
+  padding: var(--cog-space-200);
+}
+
+.lightbox__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cog-space-200);
+}
+.lightbox__counter {
+  color: var(--on-brand);
+  font-family: var(--ff-mono);
+  font-size: var(--cog-fs-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.lightbox__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.lightbox__image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  border-radius: var(--cog-radius-md);
+  background: var(--surface);
+  box-shadow: var(--cog-shadow-overlay);
+  object-fit: contain;
+}
+
+.lightbox__foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cog-space-300);
+}
+.lightbox__caption {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--cta-muted);
+  font-size: var(--cog-fs-body-sm);
+  line-height: var(--cog-lh-body-sm);
+  text-align: center;
+}
+
+/* The viewer sits on a dark scrim, so its controls invert. */
+.lightbox__arrow,
+.lightbox__close {
+  border-color: var(--cta-ghost-border);
+  background: transparent;
+  color: var(--on-brand);
+  flex: none;
+}
+.lightbox__arrow:hover:not(:disabled),
+.lightbox__close:hover {
+  background: var(--cta-ghost-hover);
+}
+.lightbox__arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (min-width: 45rem) {
+  .lightbox__inner {
+    padding: var(--cog-space-400);
+  }
+}
