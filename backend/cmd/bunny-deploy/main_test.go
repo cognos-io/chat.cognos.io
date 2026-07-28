@@ -37,3 +37,21 @@ func TestStorageURL(t *testing.T) {
 		t.Errorf("storageURL(%q, %q, %q) = %q, want %q", "https://storage.bunnycdn.com/", "cognos app", "assets/a b.svg", got, want)
 	}
 }
+
+func TestContentTypeFor(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		path string
+		want string
+	}{
+		{".well-known/change-password", "text/html; charset=utf-8"},
+		{".well-known/security.txt", "application/octet-stream"},
+		{"index.html", "application/octet-stream"},
+		{"chunk-abc.js", "application/octet-stream"},
+	}
+	for _, tc := range cases {
+		if got := contentTypeFor(tc.path); got != tc.want {
+			t.Errorf("contentTypeFor(%q) = %q, want %q", tc.path, got, tc.want)
+		}
+	}
+}

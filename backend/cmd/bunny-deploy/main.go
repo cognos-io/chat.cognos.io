@@ -18,6 +18,13 @@ import (
 	"time"
 )
 
+// contentTypesByPath covers extensionless files Bunny would otherwise store as
+// application/octet-stream. With nosniff on the edge, those would never run as
+// HTML, so the W3C change-password meta-refresh must be uploaded as text/html.
+var contentTypesByPath = map[string]string{
+	".well-known/change-password": "text/html; charset=utf-8",
+}
+
 var (
 	hashedAsset = regexp.MustCompile(`(?i)[.-][a-z0-9_-]{8,}\.(css|js|mjs|map|woff2?|png|jpe?g|gif|svg|webp|avif)$`)
 	htmlFile    = regexp.MustCompile(`(?i)\.html$`)
@@ -91,7 +98,7 @@ func deploy(ctx context.Context, cfg config, client *http.Client, stdout io.Writ
 		headers := map[string]string{
 			"AccessKey":    cfg.storageKey,
 			"Checksum":     strings.ToUpper(hex.EncodeToString(digest[:])),
-			"Content-Type": "application/octet-stream",
+			"Content-Type": contentTypeFor(relativePath),
 		}
 		if err := requestWithRetry(ctx, client, http.MethodPut, storageURL(cfg.storageEndpoint, cfg.storageZone, relativePath), headers, body, http.StatusCreated); err != nil {
 			return err
@@ -153,6 +160,13 @@ func compareDeploymentFiles(left, right string) int {
 		return difference
 	}
 	return strings.Compare(left, right)
+}
+
+func contentTypeFor(relativePath string) string {
+	if contentType, ok := contentTypesByPath[filepath.ToSlash(relativePath)]; ok {
+		return contentType
+	}
+	return "application/octet-stream"
 }
 
 func storageURL(endpoint, zone, relativePath string) string {
