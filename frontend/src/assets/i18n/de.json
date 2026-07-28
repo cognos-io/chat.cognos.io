@@ -361,7 +361,7 @@
         "retrying": "Zahlung wird erneut versucht",
         "trial": "Testphase"
       },
-      "guarantee": "60-Tage-Rückerstattungsfenster",
+      "guarantee": "14-Tage-Rückerstattungsfenster",
       "heading": {
         "current": "Aktueller Tarif",
         "previous": "Vorheriger Tarif"
@@ -450,8 +450,8 @@
         "text": "Preise in CHF, MwSt. beim Checkout berechnet. Fragen zu einem Tarif?"
       },
       "guarantee": {
-        "body": "Nicht das Richtige? Kündige jederzeit — dein Tarif läuft bis zum Ende des bezahlten Zeitraums weiter. Rückerstattungsanträge innerhalb von 60 Tagen nach einer Zahlung prüfen wir Fall für Fall.",
-        "title": "60-Tage-Rückerstattungsfenster"
+        "body": "Nicht das Richtige? Kündige jederzeit — dein Tarif läuft bis zum Ende des bezahlten Zeitraums weiter. Beantrage innerhalb von 14 Tagen nach einer Zahlung eine Rückerstattung, und wir erstatten sie vollständig.",
+        "title": "14-Tage-Rückerstattungsfenster"
       },
       "intervalAria": "Abrechnungsintervall",
       "monthly": "Monatlich",
@@ -502,7 +502,7 @@
       "currentPlan": "Aktueller Tarif",
       "monthly": "Monatlich",
       "monthsFree": "2 Monate gratis",
-      "note": "Änderungen werden sofort wirksam. Rückerstattungsanträge innerhalb von 60 Tagen prüfen wir Fall für Fall.",
+      "note": "Änderungen werden sofort wirksam. Innerhalb von 14 Tagen nach einer Zahlung kannst du eine Rückerstattung beantragen.",
       "payg": {
         "desc": "Zahle für das, was du nutzt — auf jedem Modell. Deine Monatsrechnung beträgt mindestens CHF 15.",
         "name": "Pay as you go",
@@ -647,7 +647,7 @@
       "locked": {
         "body": "Du kannst hier alles lesen. Wähle einen Tarif, um neue Nachrichten zu senden.",
         "comparePlans": "Tarife vergleichen",
-        "guarantee": "60-Tage-Rückerstattungsfenster · jederzeit kündbar",
+        "guarantee": "14-Tage-Rückerstattungsfenster · jederzeit kündbar",
         "title": "Senden ist pausiert",
         "upgrade": "Upgrade"
       },

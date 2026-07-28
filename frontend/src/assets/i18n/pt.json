@@ -361,7 +361,7 @@
         "retrying": "A repetir o pagamento",
         "trial": "Teste"
       },
-      "guarantee": "Prazo de reembolso de 60 dias",
+      "guarantee": "Prazo de reembolso de 14 dias",
       "heading": {
         "current": "Plano atual",
         "previous": "Plano anterior"
@@ -450,8 +450,8 @@
         "text": "Preços em CHF, IVA acrescentado no pagamento. Dúvidas sobre um plano?"
       },
       "guarantee": {
-        "body": "Não é o ideal para ti? Cancela quando quiseres — o teu plano continua ativo até ao fim do período pago. Os pedidos de reembolso no prazo de 60 dias após um pagamento são analisados caso a caso.",
-        "title": "Prazo de reembolso de 60 dias"
+        "body": "Não é o ideal para ti? Cancela quando quiseres — o teu plano continua ativo até ao fim do período pago. Pede um reembolso no prazo de 14 dias após um pagamento e devolvemos o valor por inteiro.",
+        "title": "Prazo de reembolso de 14 dias"
       },
       "intervalAria": "Intervalo de faturação",
       "monthly": "Mensal",
@@ -502,7 +502,7 @@
       "currentPlan": "Plano atual",
       "monthly": "Mensal",
       "monthsFree": "2 meses grátis",
-      "note": "As alterações têm efeito imediato. Os pedidos de reembolso no prazo de 60 dias são analisados caso a caso.",
+      "note": "As alterações têm efeito imediato. Podes pedir um reembolso no prazo de 14 dias após um pagamento.",
       "payg": {
         "desc": "Paga pelo que usas em qualquer modelo. A tua fatura mensal é de pelo menos CHF 15.",
         "name": "Pay as you go",
@@ -647,7 +647,7 @@
       "locked": {
         "body": "Podes ler tudo aqui. Escolhe um plano para enviares novas mensagens.",
         "comparePlans": "Comparar planos",
-        "guarantee": "Prazo de reembolso de 60 dias · cancela quando quiseres",
+        "guarantee": "Prazo de reembolso de 14 dias · cancela quando quiseres",
         "title": "O envio está em pausa",
         "upgrade": "Atualizar plano"
       },
