@@ -20,7 +20,7 @@ Prices exclude applicable tax/VAT, which Paddle calculates at checkout. Subscrip
 the same billing period until cancelled. Cancellation stops the next renewal; access continues to
 the end of the paid period. The published Refund Policy (cognos.io/refund) offers an unconditional
 14-day full-refund window, matching Paddle's own refund policy (a Paddle payment-verification
-requirement — do not reintroduce case-by-case wording). Grant requests inside the window without
+requirement - do not reintroduce case-by-case wording). Grant requests inside the window without
 argument; refuse only where Paddle flags fraud or refund abuse. A refund cancels the plan it paid
 for. Follow the refund procedure in §4.
 
@@ -33,13 +33,13 @@ usage is CHF 8.00, there is no overage and the charge remains CHF 15, plus appli
 ### 1.1 Paddle dashboard (live account)
 
 - Create the five prices (CHF, excl. tax) and copy their `pri_…` ids:
-    - `cognos-payg` — recurring monthly, **CHF 15.00** (the minimum commit).
-    - `cognos-payg-overage` — **one-time**, **CHF 0.01** unit (overage is billed
+    - `cognos-payg` - recurring monthly, **CHF 15.00** (the minimum commit).
+    - `cognos-payg-overage` - **one-time**, **CHF 0.01** unit (overage is billed
       as `quantity = overage in Rappen` of this price).
-    - `cognos-unlimited-m` — recurring monthly, **CHF 150.00**.
-    - `cognos-unlimited-y` — recurring annual, **CHF 1500.00** (two months free compared with
+    - `cognos-unlimited-m` - recurring monthly, **CHF 150.00**.
+    - `cognos-unlimited-y` - recurring annual, **CHF 1500.00** (two months free compared with
       monthly billing).
-    - `cognos-org-seat` — recurring monthly, **CHF 15.00 per Seat**. Allow the quantity range
+    - `cognos-org-seat` - recurring monthly, **CHF 15.00 per Seat**. Allow the quantity range
       required by the product (at least **3–100**); Cognos sends
       `max(active Memberships, 3)` as the checkout and sync quantity.
 - Create a **notification destination** → `https://<prod-host>/webhooks/paddle`,
@@ -53,7 +53,7 @@ usage is CHF 8.00, there is no overage and the charge remains CHF 15, plus appli
 
 ### 1.2 Backend config (prod)
 
-Config is koanf — set via `configs/api.production.yaml` or `COGNOS_*` env vars.
+Config is koanf - set via `configs/api.production.yaml` or `COGNOS_*` env vars.
 Secrets should come from files/secret-store, never committed.
 
 | Setting                                   | Env var                                                | Notes                                |
@@ -72,7 +72,7 @@ Secrets should come from files/secret-store, never committed.
 
 Without `paddle.api_key` the checkout/portal/cancel/change-plan routes return
 `503`. Without `price_payg_overage` the PAYG overage is **not** posted (logged
-instead) — set it. Organisation checkout also returns `503 Billing is not configured` when either
+instead) - set it. Organisation checkout also returns `503 Billing is not configured` when either
 the API key or `price_org_seat` is empty. If personal checkout works but Organisation checkout does
 not, `price_org_seat` is the missing setting.
 
@@ -111,30 +111,30 @@ not exist in the sandbox.
 - **Unlimited** never bills per request; usage is recorded (`amount_rappen=0`,
   cost in `user_cost_rappen`) for fair-use only.
 - **Organisation** bills `max(N × CHF 15, pooled usage)` per cycle where
-  `N = max(active Seats, 3)` — minimum **CHF 45/month** even for a solo Owner.
+  `N = max(active Seats, 3)` - minimum **CHF 45/month** even for a solo Owner.
   Paddle charges `N × CHF 15` at renewal; at cycle rollover we sum org-attributed
   ledger usage and, if it exceeds the pooled floor, post one overage charge
   (`org_cycle_summaries`, same CHF 0.01-unit mechanism as personal PAYG).
   Seat adds prorate when quantity rises above the current count; Seat removes
-  schedule `pending_seat_quantity = max(remaining members, 3)` at the next cycle
-  — never below three Seats, no mid-cycle refund.
+  schedule `pending_seat_quantity = max(remaining members, 3)` at the next cycle,
+  never below three Seats, with no mid-cycle refund.
 - **Dunning**: a failed renewal → `subscription.past_due` sets `user_billing.past_due`;
   the user keeps working (banner shows "update your card"). Recovery
   (`subscription.activated`) clears it; if Paddle gives up, `subscription.canceled`
   → `inactive`.
 - **Refunds / chargebacks**: issue the refund in the Paddle dashboard (or via the
   adjustments API). The resulting `adjustment.created` writes a `refunds` row,
-  sets `users.refund_used` (one per lifetime), and — for a chargeback — drops the
+  sets `users.refund_used` (one per lifetime), and - for a chargeback - drops the
   user to `inactive`. The dashboard then shows the invoice as REFUNDED.
 - **Commercial risk**: a nightly job reports rolling Provider-cost percentiles by Account and Model,
   and PAYG ledger contribution margin by Model. It warns when one Model reaches CHF 50 Provider COGS
   in 30 days or an Unlimited Account reaches CHF 200 Account-facing cost. CHF 450 escalates to an
   immediate shutdown review. Alerts never silently change access.
 
-## 3. Triage — when something looks wrong
+## 3. Triage - when something looks wrong
 
 - **A webhook failed**: `paddle_events` rows have `processing_error` set and
-  `processed_at` empty. The raw payload is in `payload_json` — inspect, fix the
+  `processed_at` empty. The raw payload is in `payload_json` - inspect, fix the
   cause, and (if needed) re-send the event from the Paddle dashboard. Re-delivery
   is idempotent (deduped on `paddle_event_id`).
 - **An overage charge didn't land**: a `payg_cycle_summaries` row with
@@ -145,13 +145,26 @@ not exist in the sandbox.
 - **Plan/Paddle out of sync**: `user_billing` is our snapshot; the Paddle
   dashboard is the source of truth for the subscription. A missed
   `subscription.updated` can be healed by re-sending it. Switching plans always
-  modifies the one subscription — if a customer has duplicate active
+  modifies the one subscription - if a customer has duplicate active
   subscriptions, they pre-date the change-plan flow and should be cancelled in
   Paddle.
 - **Organisation checkout says “Billing is not configured”**: check that the backend has both a
   Paddle API key and `paddle.price_org_seat` / `COGNOS_PADDLE_PRICE_ORG_SEAT`. Create the recurring
   CHF 15 monthly per-Seat price in the matching sandbox or live catalogue, copy its `pri_…` id,
   restart the API, then retry. A client-side token does not replace the server API key or price id.
+- **A billing request returned 502** (`Failed to start checkout`, `Failed to change plan`,
+  `Failed to open billing portal`, `Failed to cancel subscription`, `Failed to fetch invoice`): open
+  the log entry in the PocketBase admin **Logs** view and read `data.details`. It holds the upstream
+  cause, e.g. `paddle transactions returned 403: {"error":{"code":…},"meta":{"request_id":…}}`.
+  Quote that `request_id` to Paddle support. `data.error` alone is the public message and never says
+  why.
+- **Where to look for logs**: only the PocketBase admin **Logs** view. Outside dev mode the API does
+  not print request logs to stdout, so `journalctl` / container logs will not have them. Every 502
+  above also writes a second `ERROR` entry at the same timestamp (`paddle checkout failed`,
+  `paddle org checkout failed`, …) whose `data.err` carries the same cause plus context such as
+  `plan`, `org_id` or `seats`. Filter with `data.type != "request"` to list those on their own.
+  If nothing appears at all, check Settings → Logs: `MaxDays` of `0` disables log storage entirely,
+  and `MinLevel` above `8` drops errors.
 - **Reconciliation**: `payg_cycle_summaries.reconciled` is set when
   `transaction.completed` records a billed amount ≥ the local expected. See the
   open item below before treating a `reconciled=false` as drift.
@@ -169,14 +182,14 @@ There is no `cognos refund` CLI. For now:
    → `inactive`).
 
 The user-facing "Request a refund" button (in-window) only **logs** a request
-for follow-up — it does not issue anything.
+for follow-up - it does not issue anything.
 
 ## 5. Overage reconciliation
 
 The overage is posted with `effective_from: next_billing_period`, so it rides a
 later renewal transaction. With "commit in advance + overage in arrears", a
 single Paddle transaction can span two cycles' charges, so exact per-cycle
-`reconciled` equality is **not** asserted yet — we record for audit and assert
+`reconciled` equality is **not** asserted yet - we record for audit and assert
 only the safe lower bound (`billed ≥ expected`). After the first real PAYG cycle
 with overage in production, confirm which transaction the overage lands on and
 tighten the `reconciled` check and add a drift alert; see
@@ -288,8 +301,8 @@ Before issuing a discretionary refund:
    cancel the Subscription if service should end. Never promise that clicking “Request a refund”
    issues it automatically.
 
-Pause refund processing—not customer data access—if adjustment webhooks, transaction identity or
-Paddle totals cannot be reconciled. Resume only after the billing owner signs off.
+Pause refund processing, but never customer data access, if adjustment webhooks, transaction
+identity or Paddle totals cannot be reconciled. Resume only after the billing owner signs off.
 
 ## 10. System shutdown thresholds
 
