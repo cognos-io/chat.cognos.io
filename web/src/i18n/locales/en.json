@@ -216,7 +216,7 @@
     "eyebrow": "Simple pricing",
     "titleLine1": "Pay for the AI.",
     "titleLine2": "The privacy comes free.",
-    "lead": "Two ways to pay. The same privacy either way. Not for you? Cancel anytime — and you can request a refund within 60 days.",
+    "lead": "Two ways to pay. The same privacy either way. Not for you? Cancel anytime — and you can request a refund within 14 days.",
     "vatNote": "Prices in CHF, VAT added at checkout.",
     "individuals": {
       "title": "Pay as you go",
@@ -1243,10 +1243,13 @@
           "heading": "Refunds",
           "blocks": [
             {
-              "p": "How refunds work is described in our <a href=\"/refund\">Refund Policy</a>. In short: you can request a refund within 60 days of a payment, and we review every request individually, case by case. Refunds are not automatic."
+              "p": "How refunds work is described in our <a href=\"/refund\">Refund Policy</a>. In short: you can request a refund within 14 days of a payment, and we refund it in full."
             },
             {
-              "p": "Refund decisions depend on fair use. We may decline requests where we reasonably believe there has been abuse, excessive usage, fraud, breach of these Terms, repeated refund requests, chargeback abuse, or other unfair use of the refund process."
+              "p": "Because Paddle.com is the Merchant of Record for our orders, refunds follow <a href=\"https://www.paddle.com/legal/refund-policy\">Paddle’s refund policy</a> and are paid back through Paddle to your original payment method. Paddle does not issue refunds where there is evidence of fraud, refund abuse, or other manipulative behaviour."
+            },
+            {
+              "p": "A refunded payment ends the access it paid for. Separately from refunds, we may suspend or close an account where we reasonably believe there has been fraud, automated abuse, credential sharing, resale of Cognos, or a breach of these Terms."
             },
             {
               "p": "Nothing in these Terms limits mandatory refund, withdrawal, cancellation, or consumer rights that apply under the law where you live."
@@ -1470,12 +1473,12 @@
     },
     "refund": {
       "metaTitle": "Refund Policy — Cognos",
-      "metaDescription": "How cancelling and refunds work at Cognos. Cancel anytime; refund requests within 60 days are reviewed case by case.",
+      "metaDescription": "How cancelling and refunds work at Cognos. Cancel anytime, and ask for a refund within 14 days of a payment.",
       "eyebrow": "Refunds",
       "title": "Refund Policy",
-      "lead": "Cancel anytime. Ask for a refund within 60 days of a payment — we review every request, case by case.",
+      "lead": "Cancel anytime. Ask for a refund within 14 days of a payment and we refund it in full.",
       "effectiveLabel": "Effective",
-      "effectiveDate": "26 July 2026",
+      "effectiveDate": "28 July 2026",
       "facts": [
         {
           "label": "Provider",
@@ -1483,7 +1486,7 @@
         },
         {
           "label": "Refund window",
-          "value": "60 days"
+          "value": "14 days"
         },
         {
           "label": "Contact",
@@ -1495,10 +1498,10 @@
           "p": "Cognos is an encrypted AI chat application provided by <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Switzerland."
         },
         {
-          "p": "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders, and refunds are paid back through Paddle to your original payment method."
+          "p": "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders, and refunds are paid back through Paddle to your original payment method. This policy follows <a href=\"https://www.paddle.com/legal/refund-policy\">Paddle’s refund policy</a>."
         },
         {
-          "p": "This policy explains how to cancel, how to ask for a refund, and how we decide. If anything is unclear, write to <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
+          "p": "This policy explains how to cancel and how to ask for a refund. If anything is unclear, write to <a href=\"mailto:support@cognos.io\">support@cognos.io</a>."
         }
       ],
       "sections": [
@@ -1508,9 +1511,9 @@
             {
               "ul": [
                 "You can cancel any plan yourself, anytime, in the app. Your plan then runs to the end of the period you have already paid for.",
-                "You can request a refund within 60 days of a payment.",
-                "We review every refund request individually, case by case — refunds are not automatic.",
-                "Refunds are paid through Paddle to your original payment method.",
+                "Ask for a refund within 14 days of a payment and we refund that payment in full.",
+                "You do not need to give a reason, and there is nothing to justify.",
+                "Refunds are paid through Paddle to the payment method you used.",
                 "Your statutory consumer rights always apply on top of this policy."
               ]
             }
@@ -1524,9 +1527,6 @@
             },
             {
               "p": "Cancellation stops the next renewal. You keep full access until the end of the period you have paid for, and nothing renews after that."
-            },
-            {
-              "p": "On pay as you go, the monthly minimum for the billing month already under way still applies, along with any usage above it."
             }
           ]
         },
@@ -1534,51 +1534,42 @@
           "heading": "Requesting a refund",
           "blocks": [
             {
-              "p": "You can request a refund within <b>60 days</b> of the payment concerned."
+              "p": "Ask within <b>14 days</b> of the payment you want refunded, and we refund it in full."
             },
             {
-              "p": "Use the “Request a refund” option in the app, or email <a href=\"mailto:support@cognos.io\">support@cognos.io</a> from your account email address. Please include the invoice or receipt reference so we can find the payment."
+              "p": "Use the “Request a refund” option in the app, or email <a href=\"mailto:support@cognos.io\">support@cognos.io</a> from your account email address. You can also request a refund straight from the receipt Paddle emailed you."
             },
             {
-              "p": "We aim to reply within a few business days. If we grant the refund, Paddle pays it back to your original payment method; how long that takes depends on your bank or card provider."
+              "p": "We reply within a few business days. Paddle then pays the refund back to your original payment method, within 14 days of the request being approved; how long it takes to show up depends on your bank or card provider."
+            },
+            {
+              "p": "We never read your chats to handle a refund. We only look at the payment itself; your conversations stay locked."
             }
           ]
         },
         {
-          "heading": "How we decide",
+          "heading": "What a refund changes",
           "blocks": [
             {
-              "p": "We look at every request individually. There is no automatic guarantee, and no hidden rules — this is what we consider:"
+              "p": "A refunded payment ends the access it paid for: the plan is cancelled and paid features stop. You are welcome to subscribe again whenever you like."
             },
             {
-              "ul": [
-                "How much of the service you used. AI answers cost us real money with the AI providers, so heavy usage weighs against a full refund.",
-                "Whether we have refunded you before. We normally grant at most one goodwill refund per account.",
-                "Signs of abuse — for example automated usage, fraud, chargeback history, or a breach of our Terms."
-              ]
+              "p": "Each payment can be refunded once."
             },
             {
-              "p": "Depending on the case, we may grant a full refund, a partial refund, or decline the request — and we will tell you why."
+              "p": "Paddle does not issue refunds where there is evidence of fraud, refund abuse, or other manipulative behaviour — see <a href=\"https://www.paddle.com/legal/refund-policy\">Paddle’s refund policy</a>."
             },
             {
-              "p": "We never read your chats to make this decision. Refund reviews use billing and usage amounts only; your conversations stay locked."
-            }
-          ]
-        },
-        {
-          "heading": "Usage charges, credit, and trials",
-          "blocks": [
-            {
-              "p": "On pay as you go, charges reflect AI usage that has already happened and has already cost us money with the providers. That usage is part of the case-by-case review above."
-            },
-            {
-              "p": "Free starter credit and promotional credit have no cash value and cannot be refunded or paid out."
+              "p": "Separately from refunds, our <a href=\"/terms\">Terms</a> let us suspend or close accounts used for fraud, automated abuse, shared credentials, or resale of Cognos. That is about how an account may be used, not about whether you can get your money back."
             }
           ]
         },
         {
           "heading": "Your statutory rights",
           "blocks": [
+            {
+              "p": "Consumers in Switzerland, the EU, the EEA and the UK also have a 14-day right to withdraw from a purchase under <a href=\"https://www.paddle.com/legal/refund-policy\">Paddle’s refund policy</a> and, where it applies, under local law."
+            },
             {
               "p": "Nothing in this policy limits mandatory refund, withdrawal, cancellation, or other consumer rights that apply under the law where you live. Where those rights go further than this policy, they come first."
             },

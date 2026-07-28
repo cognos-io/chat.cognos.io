@@ -216,7 +216,7 @@
     "eyebrow": "Des tarifs simples",
     "titleLine1": "Payez pour l'IA.",
     "titleLine2": "La confidentialité est offerte.",
-    "lead": "Deux façons de payer. La même confidentialité dans les deux cas. Pas convaincu ? Résiliez à tout moment — et vous pouvez demander un remboursement sous 60 jours.",
+    "lead": "Deux façons de payer. La même confidentialité dans les deux cas. Pas convaincu ? Résiliez à tout moment — et vous pouvez demander un remboursement sous 14 jours.",
     "vatNote": "Prix en CHF, TVA ajoutée au paiement.",
     "individuals": {
       "title": "À l'usage",
@@ -335,12 +335,12 @@
     },
     "refund": {
       "metaTitle": "Politique de remboursement — Cognos",
-      "metaDescription": "Comment fonctionnent la résiliation et les remboursements chez Cognos. Résiliez à tout moment ; les demandes de remboursement sous 60 jours sont examinées au cas par cas.",
+      "metaDescription": "Comment fonctionnent la résiliation et les remboursements chez Cognos. Résiliez à tout moment ; demandez un remboursement dans les 14 jours suivant un paiement.",
       "eyebrow": "Remboursements",
       "title": "Politique de remboursement",
-      "lead": "Résiliez à tout moment. Demandez un remboursement dans les 60 jours suivant un paiement — nous examinons chaque demande au cas par cas.",
+      "lead": "Résiliez à tout moment. Demandez un remboursement dans les 14 jours suivant un paiement et nous vous remboursons intégralement.",
       "effectiveLabel": "En vigueur depuis",
-      "effectiveDate": "26 juillet 2026"
+      "effectiveDate": "28 juillet 2026"
     },
     "subprocessors": {
       "metaTitle": "Sous-traitants — Cognos",

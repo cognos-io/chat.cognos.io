@@ -246,13 +246,17 @@ payment provider or merchant of record handles them directly.
 
 ## 13. Refunds
 
-We may offer a money-back guarantee, refund window, trial credit, or similar promotion for certain
-plans. Where offered, the applicable terms will be shown in the app, checkout page, plan page, or
-refund policy.
+You can request a refund within 14 days of a payment and we will refund it in full, as described in
+our Refund Policy (cognos.io/refund).
 
-A refund or money-back guarantee may depend on fair use. We may deny refund requests where we
-reasonably believe there has been abuse, excessive usage, fraud, breach of these Terms, repeated
-refund requests, chargeback abuse, or other unfair use of the refund policy.
+Because Paddle.com is the Merchant of Record for our orders, refunds follow Paddle's refund policy
+(paddle.com/legal/refund-policy) and are paid back through Paddle to your original payment method.
+Paddle does not issue refunds where there is evidence of fraud, refund abuse, or other manipulative
+behaviour.
+
+A refunded payment ends the access it paid for. Separately from refunds, we may suspend or close an
+account where we reasonably believe there has been fraud, automated abuse, credential sharing,
+resale of Cognos, or a breach of these Terms.
 
 Nothing in these Terms limits mandatory refund, withdrawal, cancellation, or consumer rights that
 apply under the law where you live.

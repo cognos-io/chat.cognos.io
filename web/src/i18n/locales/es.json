@@ -216,7 +216,7 @@
     "eyebrow": "Precios sencillos",
     "titleLine1": "Paga por la IA.",
     "titleLine2": "La privacidad es gratis.",
-    "lead": "Dos formas de pagar. La misma privacidad en ambos casos. ¿No es para ti? Cancela cuando quieras — y puedes solicitar un reembolso en un plazo de 60 días.",
+    "lead": "Dos formas de pagar. La misma privacidad en ambos casos. ¿No es para ti? Cancela cuando quieras — y puedes solicitar un reembolso en un plazo de 14 días.",
     "vatNote": "Precios en CHF, IVA añadido al pagar.",
     "individuals": {
       "title": "Paga según lo que uses",
@@ -335,12 +335,12 @@
     },
     "refund": {
       "metaTitle": "Política de reembolso — Cognos",
-      "metaDescription": "Cómo funcionan la cancelación y los reembolsos en Cognos. Cancela cuando quieras; las solicitudes de reembolso en un plazo de 60 días se revisan caso por caso.",
+      "metaDescription": "Cómo funcionan la cancelación y los reembolsos en Cognos. Cancela cuando quieras; solicita un reembolso en un plazo de 14 días desde el pago.",
       "eyebrow": "Reembolsos",
       "title": "Política de reembolso",
-      "lead": "Cancela cuando quieras. Solicita un reembolso en los 60 días siguientes a un pago — revisamos cada solicitud caso por caso.",
+      "lead": "Cancela cuando quieras. Solicita un reembolso en los 14 días siguientes a un pago y te lo devolvemos íntegro.",
       "effectiveLabel": "En vigor desde",
-      "effectiveDate": "26 de julio de 2026"
+      "effectiveDate": "28 de julio de 2026"
     },
     "subprocessors": {
       "metaTitle": "Subencargados — Cognos",

@@ -216,7 +216,7 @@
     "eyebrow": "Prezzi semplici",
     "titleLine1": "Paghi per l'IA.",
     "titleLine2": "La privacy è inclusa.",
-    "lead": "Due modi per pagare. La stessa privacy in entrambi i casi. Non fa per te? Disdici quando vuoi — e puoi chiedere un rimborso entro 60 giorni.",
+    "lead": "Due modi per pagare. La stessa privacy in entrambi i casi. Non fa per te? Disdici quando vuoi — e puoi chiedere un rimborso entro 14 giorni.",
     "vatNote": "Prezzi in CHF, IVA aggiunta al pagamento.",
     "individuals": {
       "title": "Paghi quanto usi",
@@ -335,12 +335,12 @@
     },
     "refund": {
       "metaTitle": "Politica di rimborso — Cognos",
-      "metaDescription": "Come funzionano disdetta e rimborsi su Cognos. Disdici quando vuoi; le richieste di rimborso entro 60 giorni sono valutate caso per caso.",
+      "metaDescription": "Come funzionano disdetta e rimborsi su Cognos. Disdici quando vuoi; chiedi un rimborso entro 14 giorni dal pagamento.",
       "eyebrow": "Rimborsi",
       "title": "Politica di rimborso",
-      "lead": "Disdici quando vuoi. Chiedi un rimborso entro 60 giorni da un pagamento — valutiamo ogni richiesta caso per caso.",
+      "lead": "Disdici quando vuoi. Chiedi un rimborso entro 14 giorni da un pagamento e te lo rimborsiamo per intero.",
       "effectiveLabel": "In vigore dal",
-      "effectiveDate": "26 luglio 2026"
+      "effectiveDate": "28 luglio 2026"
     },
     "subprocessors": {
       "metaTitle": "Subincaricati — Cognos",

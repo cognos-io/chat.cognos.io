@@ -216,7 +216,7 @@
     "eyebrow": "Einfache Preise",
     "titleLine1": "Bezahl für die KI.",
     "titleLine2": "Die Privatsphäre gibt's gratis.",
-    "lead": "Zwei Wege zu zahlen. Die gleiche Privatsphäre bei beiden. Nichts für dich? Kündige jederzeit — und innerhalb von 60 Tagen kannst du eine Rückerstattung beantragen.",
+    "lead": "Zwei Wege zu zahlen. Die gleiche Privatsphäre bei beiden. Nichts für dich? Kündige jederzeit — und innerhalb von 14 Tagen kannst du eine Rückerstattung beantragen.",
     "vatNote": "Preise in CHF, MwSt. beim Checkout berechnet.",
     "individuals": {
       "title": "Zahl nach Verbrauch",
@@ -335,12 +335,12 @@
     },
     "refund": {
       "metaTitle": "Rückerstattungsrichtlinie — Cognos",
-      "metaDescription": "So funktionieren Kündigung und Rückerstattung bei Cognos. Jederzeit kündbar; Rückerstattungsanträge innerhalb von 60 Tagen prüfen wir Fall für Fall.",
+      "metaDescription": "So funktionieren Kündigung und Rückerstattung bei Cognos. Jederzeit kündbar; beantrage innerhalb von 14 Tagen nach einer Zahlung eine Rückerstattung.",
       "eyebrow": "Rückerstattung",
       "title": "Rückerstattungsrichtlinie",
-      "lead": "Kündige jederzeit. Beantrage innerhalb von 60 Tagen nach einer Zahlung eine Rückerstattung — wir prüfen jeden Antrag einzeln, Fall für Fall.",
+      "lead": "Kündige jederzeit. Beantrage innerhalb von 14 Tagen nach einer Zahlung eine Rückerstattung — wir erstatten sie vollständig.",
       "effectiveLabel": "Gültig ab",
-      "effectiveDate": "26. Juli 2026"
+      "effectiveDate": "28. Juli 2026"
     },
     "subprocessors": {
       "metaTitle": "Unterauftragsverarbeiter — Cognos",

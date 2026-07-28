@@ -18,9 +18,11 @@ The production Paddle catalogue and every customer-facing surface must use these
 
 Prices exclude applicable tax/VAT, which Paddle calculates at checkout. Subscriptions renew for
 the same billing period until cancelled. Cancellation stops the next renewal; access continues to
-the end of the paid period. The published Refund Policy (cognos.io/refund) offers a 60-day window
-with case-by-case review — no automatic guarantee. Discretionary refunds remain limited to one per
-Account lifetime; follow the refund procedure in §4.
+the end of the paid period. The published Refund Policy (cognos.io/refund) offers an unconditional
+14-day full-refund window, matching Paddle's own refund policy (a Paddle payment-verification
+requirement — do not reintroduce case-by-case wording). Grant requests inside the window without
+argument; refuse only where Paddle flags fraud or refund abuse. A refund cancels the plan it paid
+for. Follow the refund procedure in §4.
 
 **Example PAYG invoice:** an Account uses CHF 22.40 of AI in a monthly cycle. Paddle has already
 charged the CHF 15 minimum at renewal, so Cognos posts CHF 7.40 as overage for that closed cycle. If
