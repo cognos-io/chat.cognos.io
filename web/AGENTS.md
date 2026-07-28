@@ -18,6 +18,12 @@ Content blocks (steps, callouts, figures, tables, cards, galleries) are shared: 
 union in `src/lib/docs.ts` describes them, `DocsBlock.astro` renders them, and
 `src/styles/content-blocks.css` styles them. The docs and the blog both use all three.
 
+Docs screenshots are cropped captures of the app, named `<slug-topic>.png` -
+`emergency-kit-dialog.png`, `model-picker.png` - and `scripts/capture-docs-screenshots.mjs` takes
+them. A `figure` block renders only once its file exists, so a page written ahead of its screenshots
+shows no broken image; the capture simply appears when it lands. Everything under `public/` is
+served verbatim, so keep notes for contributors here rather than in a README beside the images.
+
 ## Adding a blog post
 
 1. Add an entry to `posts` in `src/lib/blog.ts` - slug, absolute ISO `date`, `author`, `tags`,
