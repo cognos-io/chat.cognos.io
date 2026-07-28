@@ -40,11 +40,15 @@
               "src/safari-pinned-tab.svg",
               "src/site.webmanifest",
               "src/robots.txt",
-              "src/security.txt",
+              {
+                "glob": "**/*",
+                "input": "src/.well-known",
+                "output": ".well-known"
+              },
               {
                 "glob": "security.txt",
-                "input": "src",
-                "output": ".well-known"
+                "input": "src/.well-known",
+                "output": "/"
               },
               {
                 "glob": "pdf.worker.min.mjs",
