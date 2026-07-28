@@ -29,10 +29,18 @@ export function absoluteUrl(path: string, lang: Lang = defaultLang): string {
   return `${siteOrigin}${localizedPath(lang, path)}`;
 }
 
+/**
+ * The site-relative path of a page's markdown twin (`/terms` → `/de/terms.md`).
+ * The homepage becomes `/index.md`, there being no `/.md`.
+ */
+export function markdownPath(path: string, lang: Lang = defaultLang): string {
+  const clean = path === '/' ? '/index' : path;
+  return `${localizedPath(lang, clean)}.md`;
+}
+
 /** The absolute URL of a page's markdown twin (`/terms` → `https://…/terms.md`). */
 export function markdownUrl(path: string, lang: Lang = defaultLang): string {
-  const clean = path === '/' ? '/index' : path;
-  return `${absoluteUrl(clean, lang)}.md`;
+  return `${siteOrigin}${markdownPath(path, lang)}`;
 }
 
 // Only the entities the six locale files actually use, plus the handful a

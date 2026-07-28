@@ -541,6 +541,16 @@ export function mdPathParam(route: MdRoute, lang: Lang): string {
   return prefixed.slice(1);
 }
 
+const routePaths = new Set(mdRoutes.map((route) => route.path));
+
+/**
+ * Whether a page path has a markdown twin. `BaseLayout` asks before advertising
+ * one, so the 404 page does not point at a file that was never generated.
+ */
+export function hasMdRoute(path: string): boolean {
+  return routePaths.has(path);
+}
+
 const routesByParam = new Map<string, { route: MdRoute; lang: Lang }>();
 
 /** Look up a route by the `mdpath` the endpoint was called with. */

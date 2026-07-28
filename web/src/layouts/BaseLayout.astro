@@ -2,6 +2,8 @@
 import '../styles/tokens.css';
 import '../styles/home.css';
 import { bcp47, locales, localizedPath, useTranslations, type Lang } from '../i18n/ui';
+import { hasMdRoute } from '../lib/md-routes';
+import { markdownPath } from '../lib/markdown';
 
 export interface Props {
   lang: Lang;
@@ -104,6 +106,21 @@ const ogLocales = Object.fromEntries(
           rel="alternate"
           hreflang="x-default"
           href={new URL(localizedPath('en', path), site).href}
+        />
+      )
+    }
+
+    {
+      /* The page's markdown twin, for agents that would rather read prose than
+         parse a layout. `/llms.txt` indexes them all.
+
+         Gated on the raw prop rather than the `/` default: the 404 page passes
+         no path, and must not advertise the homepage's twin as its own. */
+      site && Astro.props.path && hasMdRoute(Astro.props.path) && (
+        <link
+          rel="alternate"
+          type="text/markdown"
+          href={new URL(markdownPath(path, lang), site).href}
         />
       )
     }
