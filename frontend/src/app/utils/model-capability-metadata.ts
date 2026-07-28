@@ -54,7 +54,7 @@ export const MODEL_CAPABILITY_METADATA: Readonly<
     recommendedDefaultFor: ['chat'],
     fast: true,
   },
-  'qwen-qwen3-5-122b-a10b-fp8-infomaniak': {
+  'moonshotai-kimi-k2-6-infomaniak': {
     recommended: true,
     recommendedForPrivacyTiers: ['ch_only'],
     recommendedDefaultFor: ['chat'],
