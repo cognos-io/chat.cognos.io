@@ -1,10 +1,10 @@
 # Cognos
 
 This is the monorepo for [cognos.io](https://cognos.io/), an AI chat application like ChatGPT that
-encrypts Messages server-side so only the Account holder can decrypt them — similar in spirit to
+encrypts Messages server-side so only the Account holder can decrypt them - similar in spirit to
 ProtonMail for email.
 
-**Domain language:** see [`CONTEXT.md`](./CONTEXT.md) for canonical terms — use it when writing
+**Domain language:** see [`CONTEXT.md`](./CONTEXT.md) for canonical terms - use it when writing
 docs or user-facing copy so we stay consistent (e.g. Account vs User, Account Key).
 [`docs/business_processes/`](./docs/business_processes/) is the current behavioural source of truth;
 unresolved work lives in [`docs/open-points.md`](./docs/open-points.md). Both follow the glossary in
@@ -54,10 +54,16 @@ knowledge because that is how you can make the best decisions.
 - ask clarifying questions. minimise assumptions. use the decision maker skill for fast decisions
   but ask if that also is unsure.
 - Write and maintain documentation for humans with poor attention spans.
+- **Write plainly: no em dashes, no AI-slop phrasing.** Pre-commit rewrites em dashes and
+  zero-width characters, then fails the commit on filler openers, hedging stacks,
+  not-just-X-but-Y reveals, three-adjective triads and a short banned-word list. Checks cover
+  English prose only (`*.md` and `en.json`); the rules live in `scripts/remove-ai-slop.mjs`. Run
+  `node scripts/remove-ai-slop.mjs $(git ls-files)` to check everything, and reserve `--no-verify`
+  for a deliberate exception explained in the commit message.
 - **Accessibility is very important.** Ship accessible UI by default: semantic HTML, correct ARIA
   (labels, live regions, expanded/haspopup, landmarks), keyboard operability and focus management
   (including traps in modals/drawers), visible focus styles, and meaningful alt/accessible names.
-  User-visible strings exposed to assistive tech must be translated in all six languages — never
+  User-visible strings exposed to assistive tech must be translated in all six languages - never
   hardcode English in shared components or `aria-label`/`title` attributes.
 - Use i18n and make sure all translations are provided in all supported languages and not just
   English.
@@ -66,7 +72,7 @@ knowledge because that is how you can make the best decisions.
 
 ## Internationalisation (i18n)
 
-We ship the same six languages everywhere. Provide every translation in all six — never
+We ship the same six languages everywhere. Provide every translation in all six - never
 English-only. Cognos is a **Swiss company serving a European audience**, so always translate to the
 **European regional variant**, not the Latin-American / Brazilian / US one:
 
@@ -87,7 +93,7 @@ English-only. Cognos is a **Swiss company serving a European audience**, so alwa
 - Marketing copy in `web/` is plain-language and privacy-first: write for non-technical readers, and
   **never** use "end-to-end", "zero-knowledge", "ciphertext"/"plaintext" or similar jargon. Keep
   every privacy claim aligned with `docs/security-model.md` (e.g. "we keep no copy we can read",
-  "kept in Switzerland or Europe" — not "the data never leaves your device").
+  "kept in Switzerland or Europe" - not "the data never leaves your device").
 
 ## Tools
 
@@ -112,7 +118,7 @@ and behaviour is expected.
 
 Some tests "pin" behaviour: they assert what the code **currently does** (a quirk, default, or
 wire contract we depend on) rather than what anyone designed. If a pin test fails after an
-intentional change, update the test deliberately — it exists to make behaviour changes
+intentional change, update the test deliberately - it exists to make behaviour changes
 conscious, never accidental. Write pin comments so the reader knows why the current behaviour
 was kept.
 
