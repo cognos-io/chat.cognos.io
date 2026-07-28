@@ -6,6 +6,7 @@
   gap: var(--cog-space-250);
   justify-self: center;
   padding-inline: var(--cog-space-200);
+  margin: 0 auto;
 }
 
 .first-value__intro {
