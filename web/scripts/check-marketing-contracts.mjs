@@ -189,10 +189,8 @@ for (const locale of locales) {
 /** Flatten nested object keys into dotted paths for catalogue-key parity.
  * Arrays are compared as present/absent only (`path[]`).
  *
- * Privacy/terms body arrays (`facts`, `intro`, `sections`) may be absent in
- * non-English catalogues on purpose: `useTranslations().raw` falls back to
- * English until native-speaker / counsel copy lands (OP-015). Do not add empty
- * `[]` stubs - empty arrays are truthy and block that fallback. */
+ * Privacy/terms body arrays are absent in non-English catalogues on purpose; see
+ * `englishOnlyLegalBodies` below. */
 function collectKeys(value, prefix = '') {
   if (Array.isArray(value)) {
     return [prefix ? `${prefix}[]` : '[]'];
@@ -205,18 +203,48 @@ function collectKeys(value, prefix = '') {
   return [prefix];
 }
 
-/** Keys that may be English-only until OP-015 / counsel translation. */
-const optionalUntilTranslated = new Set([
-  'pages.privacy.facts[]',
-  'pages.privacy.intro[]',
-  'pages.privacy.sections[]',
-  'pages.terms.facts[]',
-  'pages.terms.intro[]',
-  'pages.terms.sections[]',
-  'pages.refund.facts[]',
-  'pages.refund.intro[]',
-  'pages.refund.sections[]',
-]);
+/** The body arrays every legal page is built from. */
+const legalBodyFields = ['facts', 'intro', 'sections'];
+
+/**
+ * Legal pages that ship in English only for now, by decision rather than by
+ * omission.
+ *
+ * Privacy and Terms are drafted with counsel. A mistranslated warranty
+ * disclaimer or data-processing claim is legal exposure, not a UX papercut, so
+ * these are not translated speculatively; they wait for counsel-reviewed copy in
+ * each language (OP-015 in docs/open-points.md). `useTranslations().raw` falls
+ * back to English for a missing key, so a French reader gets the English body
+ * rather than a blank page.
+ *
+ * PIN: asserted in both directions below - present in `en`, absent everywhere
+ * else. Absent rather than merely optional, because an empty `[]` stub is truthy
+ * and would block the English fallback, and because a translation appearing here
+ * must be a deliberate decision taken with counsel. If that decision is made,
+ * update this list in the same commit as the copy.
+ */
+const englishOnlyLegalBodies = ['pages.privacy', 'pages.terms'];
+
+/**
+ * Legal pages that must be translated everywhere.
+ *
+ * Refund is the page a customer reads to find out whether they get their money
+ * back, and Paddle payment verification depends on it matching the published
+ * policy in every market we sell to - so an English fallback here is a real
+ * problem, not a cosmetic one. Translated in all six as of July 2026.
+ */
+const translatedLegalBodies = ['pages.refund'];
+
+/** Read a dotted path out of a catalogue. */
+function at(catalogue, path) {
+  return path.split('.').reduce((cursor, part) => cursor?.[part], catalogue);
+}
+
+const optionalUntilTranslated = new Set(
+  englishOnlyLegalBodies.flatMap((page) =>
+    legalBodyFields.map((field) => `${page}.${field}[]`),
+  ),
+);
 
 /** Key subtrees translated incrementally, English-only until native copy lands.
  * The documentation catalogue (`docs.*`) ships English first and is translated
@@ -254,17 +282,41 @@ for (const locale of locales) {
     );
   }
 
-  // Empty arrays are truthy and block useTranslations().raw English fallback.
-  for (const path of optionalUntilTranslated) {
-    const parts = path.replace(/\[\]$/, '').split('.');
-    let cursor = catalogue;
-    for (const part of parts) {
-      cursor = cursor?.[part];
-    }
-    if (Array.isArray(cursor) && cursor.length === 0) {
+  // PIN: the English-only legal bodies must be absent here, not empty and not
+  // translated. See englishOnlyLegalBodies for why, and update it deliberately
+  // if counsel-reviewed copy lands in this language.
+  for (const page of englishOnlyLegalBodies) {
+    for (const field of legalBodyFields) {
+      const value = at(catalogue, `${page}.${field}`);
+      if (value === undefined) continue;
+      if (Array.isArray(value) && value.length === 0) {
+        throw new Error(
+          `${locale}: ${page}.${field} must be omitted, not [] - an empty array is truthy and blocks the English fallback`,
+        );
+      }
       throw new Error(
-        `${locale}: ${path} must be omitted (not []) so English legal body fallback works until OP-015`,
+        `${locale}: ${page}.${field} is translated, but ${page} ships in English only. ` +
+          'If counsel has reviewed this language, remove the page from englishOnlyLegalBodies in the same commit.',
       );
+    }
+  }
+}
+
+// Refund must be translated in every locale, English included. Asserted
+// positively so the translations cannot be quietly dropped the way a catalogue
+// subtree can go missing without anything failing.
+for (const locale of locales) {
+  const catalogue = JSON.parse(
+    await readFile(new URL(`${locale}.json`, localeDirectory), 'utf8'),
+  );
+  for (const page of translatedLegalBodies) {
+    for (const field of legalBodyFields) {
+      const value = at(catalogue, `${page}.${field}`);
+      if (!Array.isArray(value) || value.length === 0) {
+        throw new Error(
+          `${locale}: ${page}.${field} must be a non-empty array - ${page} ships translated in all six locales`,
+        );
+      }
     }
   }
 }
