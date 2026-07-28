@@ -23,9 +23,23 @@ export const languages = {
 
 export type Lang = keyof typeof languages;
 
+/**
+ * BCP 47 tags for the European regional variants the copy is written in - used
+ * for `Intl` date formatting and (with `-` swapped for `_`) Open Graph locales.
+ * Keep in step with the variants documented in the root CLAUDE.md.
+ */
+export const bcp47 = {
+  en: 'en-GB',
+  de: 'de-CH',
+  fr: 'fr-CH',
+  es: 'es-ES',
+  pt: 'pt-PT',
+  it: 'it-CH',
+} as const satisfies Record<Lang, string>;
+
 export const locales = Object.keys(languages) as Lang[];
 
-/** The non-default locales — used to generate prefixed routes. */
+/** The non-default locales - used to generate prefixed routes. */
 export const nonDefaultLocales = locales.filter((l) => l !== defaultLang);
 
 const catalogs: Record<Lang, unknown> = { en, de, fr, es, pt, it };
@@ -48,7 +62,7 @@ export function localizedPath(lang: Lang, path = '/'): string {
 
 /**
  * An in-page anchor that stays a plain hash on the homepage but points back to
- * the (locale-aware) homepage from any other page — so the shared navbar and
+ * the (locale-aware) homepage from any other page - so the shared navbar and
  * footer section links work from the standalone pages too.
  */
 export function homeAnchor(lang: Lang, currentPath: string, hash: string): string {
@@ -83,7 +97,7 @@ export interface Translator {
 /**
  * Returns a translator bound to `lang`. Missing keys fall back to English,
  * then to the key itself, so a partially-translated catalog never blanks out
- * the page — it just shows English until a translator fills the gap.
+ * the page - it just shows English until a translator fills the gap.
  */
 export function useTranslations(lang: Lang): Translator {
   const active = catalogs[lang] ?? catalogs[defaultLang];

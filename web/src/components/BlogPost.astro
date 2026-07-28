@@ -1,0 +1,172 @@
+---
+import '../styles/blog.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import Icon from './Icon.astro';
+import DocsBlock from './DocsBlock.astro';
+import Lightbox from './Lightbox.astro';
+import { authors, formatDate, postBySlug, postNeighbours } from '../lib/blog';
+import { resolveMedia } from '../lib/media';
+import type { DocsSection } from '../lib/docs';
+import { localizedPath, useTranslations, type Lang } from '../i18n/ui';
+import { signUpUrl } from '../config';
+
+interface Props {
+  lang: Lang;
+  slug: string;
+}
+const { lang, slug } = Astro.props;
+const t = useTranslations(lang);
+
+const post = postBySlug(slug);
+if (!post) {
+  throw new Error(`[BlogPost] unknown post slug: "${slug}"`);
+}
+
+const base = `blog.posts.${slug}`;
+const path = `/blog/${slug}`;
+
+const sections = t.raw<DocsSection[]>(`${base}.sections`) ?? [];
+const author = authors[post.author];
+const avatar = author.avatar ? resolveMedia(author.avatar, 'en') : null;
+// Initials stand in for a portrait that has not been added yet.
+const initials = author.name
+  .split(/\s+/)
+  .map((part) => part[0])
+  .join('')
+  .slice(0, 2);
+
+// Resolved to null until the image lands under public/, so a post can be
+// published before its artwork is finished.
+const heroSrc = post.hero ? resolveMedia(post.hero.src, lang) : null;
+const heroAlt = t(`${base}.heroAlt`);
+const { prev, next } = postNeighbours(slug);
+---
+
+<BaseLayout
+  lang={lang}
+  title={t(`${base}.metaTitle`)}
+  description={t(`${base}.metaDescription`)}
+  path={path}
+  ogType="article"
+  article={{ published: post.date, author: author.name }}
+>
+  <Navbar t={t} lang={lang} path={path} />
+
+  <main id="main-content" class="blog-shell">
+    <div class="wrap">
+      <article class="blog-column">
+        <header>
+          <nav class="blog-breadcrumb" aria-label={t('blog.meta.breadcrumb')}>
+            <a href={localizedPath(lang, '/blog')}>{t('blog.meta.home')}</a>
+            <span aria-hidden="true">/</span>
+            <span>{t(`blog.tags.${post.tags[0]}`)}</span>
+          </nav>
+
+          <h1 class="blog-article__title">{t(`${base}.title`)}</h1>
+          <p class="blog-article__lead">{t(`${base}.lead`)}</p>
+
+          <div class="blog-byline">
+            {
+              avatar ? (
+                <img
+                  class="blog-byline__avatar"
+                  src={avatar}
+                  alt=""
+                  width="44"
+                  height="44"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <span class="blog-byline__initials" aria-hidden="true">
+                  {initials}
+                </span>
+              )
+            }
+            <div class="blog-byline__text">
+              <span class="blog-byline__name">{author.name}</span>
+              <span class="blog-byline__meta">
+                <span>{t(`blog.authors.${author.id}.role`)}</span>
+                <span class="blog-byline__sep" aria-hidden="true">·</span>
+                <time datetime={post.date}>{formatDate(post.date, lang)}</time>
+                <span class="blog-byline__sep" aria-hidden="true">·</span>
+                <span><Icon name="Clock" size={13} /> {t(`${base}.time`)}</span>
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {
+          heroSrc && (
+            <figure class="blog-hero">
+              <img src={heroSrc} alt={heroAlt} width="1200" height="630" decoding="async" />
+            </figure>
+          )
+        }
+
+        <div class="text-page__body docs-body">
+          {
+            sections.map((section, index) => (
+              <section id={`section-${index + 1}`}>
+                <h2>{section.heading}</h2>
+                {section.blocks.map((block) => (
+                  <DocsBlock block={block} lang={lang} zoomable />
+                ))}
+              </section>
+            ))
+          }
+        </div>
+
+        <aside class="blog-cta">
+          <h2>{t('blog.cta.title')}</h2>
+          <p>{t('blog.cta.body')}</p>
+          <a
+            class="btn btn-primary"
+            href={signUpUrl('blog')}
+            data-track="cta_click"
+            data-track-location="blog"
+            data-track-target="signup"
+          >
+            <Icon name="Lock" size={17} /> {t('blog.cta.action')}
+          </a>
+        </aside>
+
+        {
+          (prev || next) && (
+            <nav class="docs-pager" aria-label={t('blog.meta.pagerLabel')}>
+              {prev ? (
+                <a
+                  class="docs-pager__link docs-pager__link--prev"
+                  href={localizedPath(lang, `/blog/${prev.slug}`)}
+                >
+                  <span class="docs-pager__dir">
+                    <Icon name="ArrowLeft" size={14} /> {t('blog.meta.newer')}
+                  </span>
+                  <span class="docs-pager__title">{t(`blog.posts.${prev.slug}.title`)}</span>
+                </a>
+              ) : (
+                <span />
+              )}
+              {next && (
+                <a
+                  class="docs-pager__link docs-pager__link--next"
+                  href={localizedPath(lang, `/blog/${next.slug}`)}
+                >
+                  <span class="docs-pager__dir">
+                    {t('blog.meta.older')} <Icon name="ArrowRight" size={14} />
+                  </span>
+                  <span class="docs-pager__title">{t(`blog.posts.${next.slug}.title`)}</span>
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </article>
+    </div>
+  </main>
+
+  <Lightbox lang={lang} />
+  <Footer t={t} lang={lang} path={path} />
+</BaseLayout>

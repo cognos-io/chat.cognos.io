@@ -1,0 +1,13 @@
+---
+// Default locale (English) blog posts, served unprefixed at /blog/<slug>.
+import BlogPost from '../../components/BlogPost.astro';
+import { blogSlugs } from '../../lib/blog';
+
+export function getStaticPaths() {
+  return blogSlugs.map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params as { slug: string };
+---
+
+<BlogPost lang="en" slug={slug} />

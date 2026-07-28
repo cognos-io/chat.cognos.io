@@ -17,6 +17,7 @@ export type CtaLocation =
   | 'redaction'
   | 'about'
   | 'contact'
+  | 'blog'
   | 'footer';
 
 /** Signup URL carrying the CTA placement, so the app can attribute signups. */
@@ -24,7 +25,7 @@ export function signUpUrl(location: CtaLocation): string {
   return `${SIGN_UP_URL}?ref=${location}`;
 }
 
-// Contact channels, in the order they appear on /contact. One shared inbox —
+// Contact channels, in the order they appear on /contact. One shared inbox -
 // topic labels still differentiate sales / security / press in the UI.
 export const CONTACT_EMAILS = {
   support: 'support@cognos.io',

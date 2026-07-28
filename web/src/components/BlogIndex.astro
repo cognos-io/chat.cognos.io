@@ -1,0 +1,100 @@
+---
+import '../styles/blog.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import Icon from './Icon.astro';
+import { formatDate, postsByDate } from '../lib/blog';
+import { resolveMedia } from '../lib/media';
+import { localizedPath, useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const path = '/blog';
+
+// Cards are built here rather than in the template so the per-post catalog
+// lookups stay in one readable place.
+const cards = postsByDate.map((post) => ({
+  post,
+  href: localizedPath(lang, `/blog/${post.slug}`),
+  title: t(`blog.posts.${post.slug}.title`),
+  lead: t(`blog.posts.${post.slug}.lead`),
+  time: t(`blog.posts.${post.slug}.time`),
+  date: formatDate(post.date, lang),
+  thumb: post.hero ? resolveMedia(post.hero.src, lang) : null,
+  thumbAlt: t(`blog.posts.${post.slug}.heroAlt`),
+}));
+---
+
+<BaseLayout
+  lang={lang}
+  title={t('blog.index.metaTitle')}
+  description={t('blog.index.metaDescription')}
+  path={path}
+>
+  <link
+    slot="head"
+    rel="alternate"
+    type="application/rss+xml"
+    title={t('blog.index.feedTitle')}
+    href={localizedPath(lang, '/blog/rss.xml')}
+  />
+
+  <Navbar t={t} lang={lang} path={path} />
+
+  <main id="main-content" class="blog-shell">
+    <div class="wrap">
+      <header class="blog-index__head">
+        <p class="blog-eyebrow">
+          <Icon name="Newspaper" size={14} />
+          {t('blog.index.eyebrow')}
+        </p>
+        <h1 class="blog-index__title">{t('blog.index.title')}</h1>
+        <p class="blog-index__lead">{t('blog.index.lead')}</p>
+      </header>
+
+      <ul class="blog-list">
+        {
+          cards.map((card) => (
+            <li>
+              <a class="blog-card reveal" href={card.href}>
+                {card.thumb && (
+                  <img
+                    class="blog-card__thumb"
+                    src={card.thumb}
+                    alt={card.thumbAlt}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
+                <span class="blog-card__tags">
+                  {card.post.tags.map((tag) => (
+                    <span class="blog-tag">{t(`blog.tags.${tag}`)}</span>
+                  ))}
+                </span>
+                <h2 class="blog-card__title">{card.title}</h2>
+                <p class="blog-card__lead">{card.lead}</p>
+                <span class="blog-card__meta">
+                  <time datetime={card.post.date}>{card.date}</time>
+                  <span class="blog-byline__sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span>{card.time}</span>
+                </span>
+                <span class="blog-card__more">
+                  {t('blog.index.readMore')}
+                  <Icon name="ArrowRight" size={15} />
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </main>
+
+  <Footer t={t} lang={lang} path={path} />
+</BaseLayout>

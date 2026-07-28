@@ -18,8 +18,9 @@ export default defineConfig({
   },
   integrations: [
     sitemap({
-      // Keep the error page out of the sitemap.
-      filter: (page) => !page.includes('/404'),
+      // Keep the error page and the RSS feeds out of the sitemap - it indexes
+      // pages, and the feeds are already advertised from each blog index.
+      filter: (page) => !page.includes('/404') && !page.endsWith('rss.xml'),
       i18n: {
         defaultLocale: 'en',
         locales: {
