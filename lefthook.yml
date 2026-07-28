@@ -6,7 +6,7 @@ pre-commit:
       glob: "*"
       exclude:
         - "pnpm-lock.yaml"
-      run: scripts/remove-ai-slop.sh {staged_files}
+      run: node scripts/remove-ai-slop.mjs {staged_files}
       stage_fixed: true
 
     - group:
