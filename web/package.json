@@ -9,18 +9,22 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "check": "astro check",
     "test": "node scripts/check-analytics.mjs && node scripts/check-marketing-contracts.mjs",
     "test:e2e": "playwright test",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@cognos/ui": "workspace:*",
     "astro": "^7.1.1",
     "lucide": "catalog:"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@axe-core/playwright": "catalog:",
-    "@playwright/test": "catalog:"
+    "@playwright/test": "catalog:",
+    "typescript": "catalog:"
   }
 }
