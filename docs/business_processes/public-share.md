@@ -33,7 +33,8 @@ Share modes:
 | `include-sensitive`   | encrypted Messages plus encrypted mappings, so the client can Hydrate values   | exposed by token   |
 
 Public routes are IP rate-limited. Invalid, revoked, or unknown tokens return a
-neutral 404.
+neutral 404. Share pages set a `noindex, nofollow` robots meta tag (stopgap on
+top of the app's sitewide `Disallow: /` robots.txt).
 
 Revoking a Public share deletes the share row. Existing links stop working, but
 the Conversation and its Participants are unchanged.

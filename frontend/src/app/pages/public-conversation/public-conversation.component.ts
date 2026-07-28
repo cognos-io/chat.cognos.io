@@ -2,11 +2,13 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 
 import { EMPTY, catchError, forkJoin, map, of, switchMap } from 'rxjs';
@@ -460,6 +462,8 @@ export class PublicConversationComponent implements OnInit {
   private readonly _api = inject(CognosApiService);
   private readonly _crypto = inject(CryptoService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _meta = inject(Meta);
+  private readonly _destroyRef = inject(DestroyRef);
 
   readonly state = signal<ViewState>('loading');
   readonly lightboxUrl = signal<string | null>(null);
@@ -597,6 +601,13 @@ export class PublicConversationComponent implements OnInit {
   readonly path = computed(() => this._activeBranch().path);
 
   ngOnInit(): void {
+    // Stopgap: keep public share URLs out of search indexes. Sitewide robots.txt
+    // already Disallow: /; this per-page tag covers crawlers that render the SPA.
+    this._meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
+    this._destroyRef.onDestroy(() => {
+      this._meta.removeTag('name="robots"');
+    });
+
     // Load the public model-name catalogue independently; assistant labels fall
     // back to the raw model id if it never arrives.
     this._api.getPublicModelNames().subscribe({

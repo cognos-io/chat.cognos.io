@@ -12,6 +12,16 @@ import {
 
 const PB = 'http://localhost:8090';
 
+test('public share pages include a noindex robots meta tag', async ({ page }) => {
+  // The tag is set as soon as the public route boots — even when the share is
+  // unavailable — so we do not need a seeded conversation for this check.
+  await page.goto('/p/anytoken');
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    'content',
+    'noindex, nofollow',
+  );
+});
+
 const modelsCatalogue = {
   privacy_tier: 'eu',
   preferred_model_id: 'eu-model',
