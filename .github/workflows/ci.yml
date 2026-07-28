@@ -133,8 +133,9 @@ jobs:
 
       # Asserts the production build carries the Plausible tag + data-track
       # CTAs and that the vendor string stays confined to the adapter files,
-      # and that every locale carries the full blog catalogue.
-      - name: check web analytics build
+      # that every locale carries the full blog catalogue, and that every page
+      # has a markdown twin indexed by llms.txt.
+      - name: check web build guardrails
         run: pnpm --filter @cognos/web test
 
       - name: install marketing accessibility browser

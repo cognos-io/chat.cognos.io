@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node scripts/check-analytics.mjs && node scripts/check-marketing-contracts.mjs",
+    "test": "node --test src/lib/*.test.ts && node scripts/check-analytics.mjs && node scripts/check-marketing-contracts.mjs && node scripts/check-llms.mjs",
     "test:e2e": "playwright test",
     "astro": "astro"
   },

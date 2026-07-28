@@ -38,6 +38,40 @@ Use a `gallery` block for more than one image - it renders as a slideshow and it
 lightbox. `figure` blocks are zoomable only where `DocsBlock` is given `zoomable` (blog posts do,
 docs pages do not), and zooming needs `Lightbox.astro` on the page.
 
+## Markdown twins and llms.txt
+
+Every page is also served as plain markdown: append `.md` to any page URL
+(`/terms.md`, `/de/docs/account-key.md`, `/index.md` for the homepage). `/llms.txt` indexes them per
+[llmstxt.org](https://llmstxt.org/), `/llms-full.txt` concatenates them, and both exist per locale
+(`/de/llms.txt`). Each HTML page points at its own twin with
+`<link rel="alternate" type="text/markdown">`.
+
+The twins render from the same catalogues as the pages, so a translation lands in both at once.
+Three files do the work:
+
+| File                   | Job                                                                 |
+| ---------------------- | ------------------------------------------------------------------- |
+| `src/lib/markdown.ts`  | Blocks and inline HTML to markdown. Unit tested with `node --test`. |
+| `src/lib/md-routes.ts` | One entry per page. **Add a route here when you add a page.**       |
+| `src/lib/llms.ts`      | The two index files.                                                |
+
+Docs pages, blog posts and legal pages need nothing but their catalogue key - they already store
+content as blocks. The homepage, `/about`, `/business` and `/contact` shape their own keys, so each
+has a short hand-written body in `md-routes.ts`; extend it when you add a section to one of them.
+
+`scripts/check-llms.mjs` fails the build if a page in the sitemap has no twin, if a locale is
+missing one, if `llms.txt` links somewhere that was not built, or if a twin leaks an untranslated
+catalogue key or an HTML tag.
+
+Two conventions to know before editing the serializer:
+
+- Front matter carries the metadata (`title`, `source`, `locale`, `updated`). The field names are
+  machine identifiers, so they stay English in all six locales without being untranslated copy.
+  Callouts use GitHub alert syntax (`> [!CAUTION]`) for the same reason - the alternative was
+  inventing the word "Security" six times.
+- In-document links point at the **human** page, not its twin, so an agent quoting us cites a URL a
+  person can open. Only `llms.txt` links to `.md` files.
+
 ## Checks
 
 All four run in CI, in this order.
@@ -45,9 +79,9 @@ All four run in CI, in this order.
 - `pnpm check` - `astro check`. Typechecks `.astro` templates, component props and `src/**/*.ts`.
   `astro build` does **not** typecheck, so this is the only thing that catches a bad prop or a
   null-unsafe DOM script.
-- `pnpm build`, then `pnpm test` - analytics guardrails, pricing and support-response copy,
-  catalogue-key parity, and per-locale blog completeness. Run the build first; the analytics check
-  reads `dist/`.
+- `pnpm build`, then `pnpm test` - the `src/lib/*.test.ts` unit tests, analytics guardrails, pricing
+  and support-response copy, catalogue-key parity, per-locale blog completeness, and the markdown
+  twin / `llms.txt` checks. Run the build first; the analytics and markdown checks read `dist/`.
 - `pnpm test:e2e` - Playwright against a production build on port 4321. Includes an axe scan, a
   per-locale rendering check and an assertion that every referenced image actually decodes.
 
