@@ -11,18 +11,18 @@
 //   node web/scripts/capture-docs-screenshots.mjs [lang ...]
 //
 // Create the test account once (sign up in the app, save its Account Key). It
-// must be email-verified to reach the composer — on a dev DB that is
+// must be email-verified to reach the composer - on a dev DB that is
 // `UPDATE users SET verified=1 WHERE email='…'` in backend/pb_data/data.db.
 //
 // With no lang args it captures every locale (en de fr es pt it). English shots
 // go to public/docs-media/; other locales to public/docs-media/<lang>/, and are
 // captured in that language (the app is switched after login). Text-selector
 // shots (auth cards, the Tools menu, etc.) are English-only and fall back to the
-// English shot for other locales — DocsBlock resolves the localised file first.
+// English shot for other locales - DocsBlock resolves the localised file first.
 //
 // Playwright is resolved from e2e/'s install so no extra dependency is added.
 import { createRequire } from 'node:module';
-import { existsSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -103,7 +103,7 @@ async function run(lang) {
   const p = await ctx.newPage();
   p.setDefaultTimeout(15000);
 
-  // Auth screenshots (English only — the login page is pre-locale). en run captures them.
+  // Auth screenshots (English only - the login page is pre-locale). en run captures them.
   if (lang === 'en') {
     await step('login', 'all', async () => { await p.goto(`${BASE}/auth/login`, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(500); await cardByHeading(p, out('login.png'), /privacy-first AI|Get started/); });
     await step('forgot-password', 'all', async () => { await p.goto(`${BASE}/auth/forgot-password`, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(500); await cardByHeading(p, out('forgot-password.png'), /Reset your password|Forgot/); });
