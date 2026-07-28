@@ -67,15 +67,21 @@ for (const locale of locales) {
     throw new Error(`${locale}: Unlimited annual must show CHF 1500`);
   }
   if (!payg.items.at(-1)?.includes('CHF 15')) {
-    throw new Error(`${locale}: PAYG must not imply that an unused billing month is free`);
+    throw new Error(
+      `${locale}: PAYG must not imply that an unused billing month is free`,
+    );
   }
 
   if (!catalogue.audience.roadmap.includes('CHF 45')) {
-    throw new Error(`${locale}: team roadmap must mention the CHF 45 three-seat minimum`);
+    throw new Error(
+      `${locale}: team roadmap must mention the CHF 45 three-seat minimum`,
+    );
   }
   const teamPoint = catalogue.pages.business.team.points[0];
   if (!teamPoint.includes('CHF 45')) {
-    throw new Error(`${locale}: team pricing point must mention the CHF 45 three-seat minimum`);
+    throw new Error(
+      `${locale}: team pricing point must mention the CHF 45 three-seat minimum`,
+    );
   }
 
   const teamAvailabilityCopy = [
@@ -85,20 +91,97 @@ for (const locale of locales) {
   ];
   for (const copy of teamAvailabilityCopy) {
     if (!copy.includes(designPartnerPhrases[locale])) {
-      throw new Error(`${locale}: Teams must be described as available to design partners`);
+      throw new Error(
+        `${locale}: Teams must be described as available to design partners`,
+      );
     }
   }
   const combinedTeamAvailabilityCopy = teamAvailabilityCopy.join(' ').toLowerCase();
   for (const phrase of unshippedTeamPhrases[locale]) {
     if (combinedTeamAvailabilityCopy.includes(phrase)) {
-      throw new Error(`${locale}: Teams must not be described as unshipped (${phrase})`);
+      throw new Error(
+        `${locale}: Teams must not be described as unshipped (${phrase})`,
+      );
     }
   }
 
-  const supportCopy = [catalogue.pages.business.form.note, catalogue.pages.contact.channels[0].body];
+  const supportCopy = [
+    catalogue.pages.business.form.note,
+    catalogue.pages.contact.channels[0].body,
+  ];
   for (const copy of supportCopy) {
     if (!copy.includes(supportResponsePhrases[locale])) {
       throw new Error(`${locale}: support response target must be one working week`);
+    }
+  }
+}
+
+// Blog copy follows the same plain-language rule as the rest of the marketing
+// site (root CLAUDE.md): write for non-technical readers and never reach for
+// crypto jargon. The blog is the easiest place for it to creep back in, because
+// posts explain mechanisms, so the ban is enforced rather than remembered.
+const bannedBlogJargon = {
+  en: ['end-to-end', 'zero-knowledge', 'zero knowledge', 'ciphertext', 'plaintext'],
+  de: ['ende-zu-ende', 'zero-knowledge', 'geheimtext', 'klartext'],
+  fr: [
+    'de bout en bout',
+    'zero-knowledge',
+    'chiffré de bout',
+    'texte chiffré',
+    'texte clair',
+  ],
+  es: ['de extremo a extremo', 'zero-knowledge', 'texto cifrado', 'texto plano'],
+  pt: ['de ponta a ponta', 'zero-knowledge', 'texto cifrado', 'texto simples'],
+  it: ['end-to-end', 'zero-knowledge', 'testo cifrato', 'testo in chiaro'],
+};
+
+/** Every field a post needs before it can render. */
+const requiredPostFields = [
+  'title',
+  'metaTitle',
+  'metaDescription',
+  'lead',
+  'time',
+  'heroAlt',
+  'sections',
+];
+
+for (const locale of locales) {
+  const catalogue = JSON.parse(
+    await readFile(new URL(`${locale}.json`, localeDirectory), 'utf8'),
+  );
+  const blog = catalogue.blog;
+  if (!blog?.posts || Object.keys(blog.posts).length === 0) {
+    throw new Error(`${locale}: the blog catalogue must carry at least one post`);
+  }
+
+  for (const [slug, post] of Object.entries(blog.posts)) {
+    for (const field of requiredPostFields) {
+      if (!post[field] || (Array.isArray(post[field]) && post[field].length === 0)) {
+        throw new Error(`${locale}: blog post "${slug}" is missing ${field}`);
+      }
+    }
+    // Images carry meaning here, so every one needs its own description.
+    for (const section of post.sections) {
+      for (const block of section.blocks) {
+        for (const image of block.gallery?.images ?? []) {
+          if (!image.alt) {
+            throw new Error(`${locale}: a gallery image in "${slug}" has no alt text`);
+          }
+        }
+        if (block.figure && !block.figure.alt) {
+          throw new Error(`${locale}: a figure in "${slug}" has no alt text`);
+        }
+      }
+    }
+  }
+
+  const blogCopy = JSON.stringify(blog).toLowerCase();
+  for (const phrase of bannedBlogJargon[locale]) {
+    if (blogCopy.includes(phrase)) {
+      throw new Error(
+        `${locale}: blog copy must avoid crypto jargon - found "${phrase}". Say what it means instead.`,
+      );
     }
   }
 }
@@ -109,7 +192,7 @@ for (const locale of locales) {
  * Privacy/terms body arrays (`facts`, `intro`, `sections`) may be absent in
  * non-English catalogues on purpose: `useTranslations().raw` falls back to
  * English until native-speaker / counsel copy lands (OP-015). Do not add empty
- * `[]` stubs — empty arrays are truthy and block that fallback. */
+ * `[]` stubs - empty arrays are truthy and block that fallback. */
 function collectKeys(value, prefix = '') {
   if (Array.isArray(value)) {
     return [prefix ? `${prefix}[]` : '[]'];
@@ -138,12 +221,13 @@ const optionalUntilTranslated = new Set([
 /** Key subtrees translated incrementally, English-only until native copy lands.
  * The documentation catalogue (`docs.*`) ships English first and is translated
  * page-by-page; `useTranslations().raw` falls back to English for any key a
- * locale has not yet filled in. Same rationale as the legal bodies above — a
+ * locale has not yet filled in. Same rationale as the legal bodies above - a
  * locale may omit these keys (never stub them as empty arrays, which are truthy
  * and would block the English fallback). */
 const optionalKeyPrefixes = ['docs.'];
 const isOptionalKey = (key) =>
-  optionalUntilTranslated.has(key) || optionalKeyPrefixes.some((prefix) => key.startsWith(prefix));
+  optionalUntilTranslated.has(key) ||
+  optionalKeyPrefixes.some((prefix) => key.startsWith(prefix));
 
 const englishCatalogue = JSON.parse(
   await readFile(new URL('en.json', localeDirectory), 'utf8'),
@@ -158,7 +242,9 @@ for (const locale of locales) {
     await readFile(new URL(`${locale}.json`, localeDirectory), 'utf8'),
   );
   const keys = collectKeys(catalogue).sort();
-  const missing = englishKeys.filter((key) => !keys.includes(key) && !isOptionalKey(key));
+  const missing = englishKeys.filter(
+    (key) => !keys.includes(key) && !isOptionalKey(key),
+  );
   const extra = keys.filter((key) => !englishKeys.includes(key) && !isOptionalKey(key));
   if (missing.length > 0 || extra.length > 0) {
     throw new Error(
