@@ -52,70 +52,42 @@ volume snapshot only under the restore runbook after stopping the writer.
 Pushes to `main` publish the backend to `ghcr.io/<owner>/cognos-backend` with immutable
 `sha-<commit>` and convenience `main` tags. Deploy and roll back by digest; the `main` tag is not a
 promotion reference. The workflow attaches BuildKit SBOM/provenance and a GitHub artefact
-attestation to the published digest. After publishing, it updates the private deployment
-repository's Cognos image tag and digest on a bot-owned branch and opens or refreshes a promotion
-pull request. Forgejo is the default infrastructure host. The deployment job joins the tailnet as
-an ephemeral `tag:cognos-deploy` device before cloning the repository or calling the Forgejo API.
+attestation to the published digest.
+
+After publishing, this repository asks the deployment repository to promote the image. It dispatches
+that repository's promotion workflow with the Application name, image tag, image digest and build
+provenance, then finishes. It does not clone the deployment repository, edit its manifest, or open
+the pull request. The deployment repository owns all of that, and merging the pull request it opens
+remains the deployment authorisation boundary.
+
 Configure these values on the GitHub `production` environment:
 
-| Kind   | Name                                    | Meaning                                                          |
-| ------ | --------------------------------------- | ---------------------------------------------------------------- |
-| Secret | `FORGEJO_INFRASTRUCTURE_TOKEN`          | Repository contents and pull-request write access only           |
-| Secret | `TS_OAUTH_CLIENT_ID`                    | Tailscale federated identity client ID                           |
-| Secret | `TS_AUDIENCE`                           | Tailscale federated identity audience                            |
-| Var    | `FORGEJO_INFRASTRUCTURE_REPOSITORY_URL` | Tailnet-reachable HTTPS clone URL for the deployment repo        |
-| Var    | `FORGEJO_INFRASTRUCTURE_REPOSITORY`     | Forgejo repository in `owner/repository` form                    |
-| Var    | `FORGEJO_INFRASTRUCTURE_API_URL`        | Tailnet-reachable Forgejo API base URL ending in `/api/v1`       |
-| Var    | `FORGEJO_TAILSCALE_HOST`                | Forgejo MagicDNS name or Tailscale IP, used as a readiness probe |
-| Var    | `INFRASTRUCTURE_PROVIDER`               | Optional provider; defaults to `forgejo`                         |
+| Kind   | Name                               | Meaning                                                         |
+| ------ | ---------------------------------- | --------------------------------------------------------------- |
+| Secret | `INFRASTRUCTURE_DISPATCH_TOKEN`    | Fine-grained token granting `Actions: write` on that repository |
+| Var    | `INFRASTRUCTURE_REPOSITORY`        | Deployment repository in `owner/repository` form                |
 
-The Tailscale client ID and audience are not secret material, but storing them as environment
-secrets follows the action's convention and keeps all trust-credential configuration together.
-The job already has the `id-token: write` permission required to obtain its short-lived GitHub OIDC
-token. No Tailscale auth key or OAuth client secret is stored in GitHub.
+The token must be scoped to the deployment repository alone and grant nothing beyond
+`Actions: write`, which permits triggering and cancelling workflow runs. It deliberately cannot push
+code, modify the manifest, open a pull request or approve a deployment. Prefer a GitHub App
+installation token over a personal access token where the deployment repository's owner supports it.
 
-In the Tailscale admin console, create an OpenID Connect federated identity for GitHub Actions with
-the `auth_keys` scope and only the `tag:cognos-deploy` tag. Restrict it to this repository and
-workflow. With GitHub's default OIDC subject format, the `production` environment produces the
-subject `repo:cognos-io/chat.cognos.io:environment:production`; also match the custom claims
-`repository=cognos-io/chat.cognos.io` and
-`job_workflow_ref=cognos-io/chat.cognos.io/.github/workflows/deploy.yml@refs/heads/main`. Check the
-repository's GitHub OIDC settings before relying on the example subject if it uses a customised or
-immutable subject template.
+Two properties limit what a leaked dispatch token can achieve, and both are enforced in the
+deployment repository rather than here:
 
-Tag the Forgejo node `tag:forgejo` and add the narrow network grant below to the tailnet policy.
-Keep the existing tag owners, and make sure only tailnet administrators or a dedicated tag-owner
-identity can assign either tag:
+- The image **repository** is read from the deployment manifest, never from the dispatch payload.
+  Only the tag and digest are accepted from this repository, so a stolen token can at most move
+  Cognos to a different tag of the image it already runs.
+- The Application name, image tag and digest are format-checked, and the Application must already
+  exist in the manifest. An unrecognised name fails the promotion instead of creating an entry.
 
-```json
-{
-  "tagOwners": {
-    "tag:cognos-deploy": ["autogroup:admin"],
-    "tag:forgejo": ["autogroup:admin"]
-  },
-  "grants": [
-    {
-      "src": ["tag:cognos-deploy"],
-      "dst": ["tag:forgejo"],
-      "ip": ["tcp:443"]
-    }
-  ]
-}
-```
+Promotion is fire-and-forget: this workflow reports success once the dispatch is accepted. A
+promotion that fails afterwards surfaces in the deployment repository's own workflow run, not here.
+Check there when a build is green but no promotion pull request appears.
 
-Merge these entries into the existing policy rather than replacing it. If the tailnet-reachable
-Forgejo URL uses a port other than HTTPS `443`, grant only that TCP port and include it in both
-Forgejo URLs. The Forgejo token must belong to a dedicated automation identity scoped only to the
-deployment repository. Merging the generated pull request remains the deployment authorisation
-boundary.
-
-The GitHub provider remains available as a fallback. To use it, set `INFRASTRUCTURE_PROVIDER` to
-`github` and configure `GH_INFRASTRUCTURE_TOKEN`, `GH_INFRASTRUCTURE_REPOSITORY_URL`,
-`GH_INFRASTRUCTURE_REPOSITORY`, `GH_INFRASTRUCTURE_USERNAME` and, for GitHub Enterprise,
-`GH_INFRASTRUCTURE_API_URL`. The username is the GitHub Account that owns the token; it is
-non-secret and is used only for HTTPS Git authentication. GitHub promotion pull requests are
-assigned to `kisamoto`, who must retain push access to the infrastructure repository for GitHub to
-apply the assignment.
+Because the deployment repository is reached over the public GitHub API, the deployment job no
+longer joins the tailnet. If a future deployment host is reachable only over a private network, that
+connectivity belongs to the promotion workflow in the deployment repository, not to this one.
 
 The frontend is built with `pnpm --dir frontend build`; production values are currently compiled
 from `frontend/src/environments/environment.ts`. A release review must verify:
