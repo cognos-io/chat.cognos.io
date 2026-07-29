@@ -59,8 +59,6 @@ route only with the permission-map update and cross-Account denial tests require
 ## Supporting commands
 
 - [`cmd/bunny-deploy`](./cmd/bunny-deploy/README.md) uploads built frontend and marketing assets.
-- [`cmd/promote-deployment`](./cmd/promote-deployment/README.md) updates the private GitOps
-  deployment repository with an immutable image digest.
 - `cmd/mock-ai-provider` provides deterministic local and e2e Completion responses.
 - `cmd/generate-key-pair` generates development key material; never use its output as a production
   secret without the production runbook.

@@ -69,5 +69,7 @@ repository. Do not build on, or pull this repository directly onto, a production
 
 The [deployment interface](./docs/deployment-interface.md) defines the contract between this
 repository and production operations. Command-specific setup lives beside the
-[promotion command](./backend/cmd/promote-deployment/README.md) and
 [Bunny uploader](./backend/cmd/bunny-deploy/README.md).
+
+After publishing an image, this repository asks the deployment repository to promote it and does not
+edit that repository itself. The promotion logic and its runbook live there.

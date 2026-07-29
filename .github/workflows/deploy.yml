@@ -17,15 +17,9 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/cognos-backend
-  INFRASTRUCTURE_PROVIDER: ${{ vars.INFRASTRUCTURE_PROVIDER || 'forgejo' }}
-  GITHUB_INFRASTRUCTURE_REPOSITORY_URL: ${{ vars.GH_INFRASTRUCTURE_REPOSITORY_URL }}
-  GITHUB_INFRASTRUCTURE_API_URL: ${{ vars.GH_INFRASTRUCTURE_API_URL }}
-  GITHUB_INFRASTRUCTURE_REPOSITORY: ${{ vars.GH_INFRASTRUCTURE_REPOSITORY }}
-  GITHUB_INFRASTRUCTURE_USERNAME: ${{ vars.GH_INFRASTRUCTURE_USERNAME }}
-  FORGEJO_INFRASTRUCTURE_REPOSITORY_URL: ${{ vars.FORGEJO_INFRASTRUCTURE_REPOSITORY_URL }}
-  FORGEJO_INFRASTRUCTURE_API_URL: ${{ vars.FORGEJO_INFRASTRUCTURE_API_URL }}
-  FORGEJO_INFRASTRUCTURE_REPOSITORY: ${{ vars.FORGEJO_INFRASTRUCTURE_REPOSITORY }}
-  INFRASTRUCTURE_BRANCH: deploy/cognos-backend
+  # Name of this Application in the infrastructure repository's applications.yml.
+  APPLICATION: cognos
+  INFRASTRUCTURE_REPOSITORY: ${{ vars.INFRASTRUCTURE_REPOSITORY }}
   ARTIFACT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
@@ -43,15 +37,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ env.ARTIFACT_SHA }}
-
-      - name: connect to Tailscale
-        if: ${{ env.INFRASTRUCTURE_PROVIDER == 'forgejo' }}
-        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          audience: ${{ secrets.TS_AUDIENCE }}
-          tags: tag:cognos-deploy
-          ping: ${{ vars.FORGEJO_TAILSCALE_HOST }}
 
       - name: setup Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
@@ -88,22 +73,23 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-      - name: setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
-
-      - name: open infrastructure promotion pull request
-        working-directory: backend
+      - name: request infrastructure promotion
+        # The infrastructure repository owns applications.yml and opens its own
+        # promotion pull request. This token only grants Actions: write there,
+        # so it cannot push to that repository or authorise a deployment.
         env:
-          GITHUB_INFRASTRUCTURE_TOKEN: ${{ secrets.GH_INFRASTRUCTURE_TOKEN }}
-          FORGEJO_INFRASTRUCTURE_TOKEN: ${{ secrets.FORGEJO_INFRASTRUCTURE_TOKEN }}
+          GH_TOKEN: ${{ secrets.INFRASTRUCTURE_DISPATCH_TOKEN }}
           IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
-          IMAGE_TAG: sha-${{ env.ARTIFACT_SHA }}
         run: |
-          go test ./cmd/promote-deployment
-          go run ./cmd/promote-deployment
+          gh workflow run promote-application.yml \
+            --repo "${INFRASTRUCTURE_REPOSITORY}" \
+            --ref main \
+            -f application="${APPLICATION}" \
+            -f image-tag="sha-${ARTIFACT_SHA}" \
+            -f image-digest="${IMAGE_DIGEST}" \
+            -f source-repository="${GITHUB_REPOSITORY}" \
+            -f source-sha="${ARTIFACT_SHA}" \
+            -f source-run-id="${GITHUB_RUN_ID}"
 
   static-sites:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
